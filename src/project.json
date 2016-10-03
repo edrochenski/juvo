@@ -1,0 +1,23 @@
+{
+  "title": "Juvo",
+  "description": "Juvo is a helpful multi-protocol bot",
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "emitEntryPoint": true
+  },
+
+  "dependencies": {
+    "Microsoft.NETCore.App": {
+      "type": "platform",
+      "version": "1.0.1"
+    },
+    "Newtonsoft.Json": "9.0.1",
+    "System.Threading.Timer": "4.0.1"
+  },
+
+  "frameworks": {
+    "netcoreapp1.0": {
+      "imports": "dnxcore50"
+    }
+  }
+}
