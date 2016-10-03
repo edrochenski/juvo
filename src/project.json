@@ -3,7 +3,10 @@
   "description": "Juvo is a helpful multi-protocol bot",
   "version": "1.0.0-*",
   "buildOptions": {
-    "emitEntryPoint": true
+    "emitEntryPoint": true,
+    "embed": {
+      "includeFiles": "resources/config.json"
+    }
   },
 
   "dependencies": {

@@ -1,0 +1,23 @@
+﻿{
+  "irc": {
+    "nickname": "juvo",
+    "realName": "juvo",
+    "username": "juvo",
+
+    "connections": [
+      {
+        "name": "undernet",
+        "servers": [
+          {
+            "host": "us.undernet.org",
+            "port": 6667
+          },
+          {
+            "host": "eu.undernet.org",
+            "port": 6667
+          }
+        ]
+      }
+    ]
+  }
+}

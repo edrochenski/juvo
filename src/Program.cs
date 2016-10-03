@@ -1,7 +1,9 @@
 ﻿using juvo.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 /*
@@ -20,6 +22,8 @@ namespace juvo
 {
     public class Program
     {
+        const string ConfigFileName = "config.json";
+        const string ResourcePrefix = "src.resources.";
         const int SchedulerDelay    = 0;
         const int SchedulerInterval = 1000;
 
@@ -41,6 +45,10 @@ namespace juvo
             GetpAppDataPath();
             //TODO: handle empty path
             Console.WriteLine($"App Data: {AppDataPath}");
+
+            CreateAppDataPath();
+
+            CreateConfigFile();
 
             //System.IO.File.CreateText("juvo.config.json");
             //System.IO.Directory.CreateDirectory();
@@ -65,6 +73,27 @@ namespace juvo
             //Logger.Info($"Scheduler run on tid #{Thread.CurrentThread.ManagedThreadId}...");
         }
 
+        static void CreateAppDataPath()
+        {
+            if (!Directory.Exists(AppDataPath))
+            {
+                Console.WriteLine("Creating application directory...");
+                Directory.CreateDirectory(AppDataPath);
+            }
+        }
+        static void CreateConfigFile()
+        {
+            if (!File.Exists(Path.Combine(AppDataPath, ConfigFileName)))
+            {
+                Console.WriteLine("Creating configuration file...");
+                using (var f = File.Create(Path.Combine(AppDataPath, ConfigFileName)))
+                using (var s = typeof(Program).GetTypeInfo().Assembly.GetManifestResourceStream(string.Concat(ResourcePrefix, "config.json")))
+                {
+                    s.CopyTo(f);
+                    f.Flush();
+                }
+            }
+        }
         static void GetpAppDataPath()
         {
             if (CurrentPlatform == OS.Windows)
