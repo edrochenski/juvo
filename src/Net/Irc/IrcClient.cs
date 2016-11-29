@@ -6,20 +6,25 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using juvo.Logging;
+using System.Diagnostics;
+using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Logging;
 
-namespace juvo.Irc
+namespace Juvo.Net.Irc
 {
-    public class IrcClient : IIrcClient, IDisposable
+    public class IrcClient : IDisposable
     {
     /*/ Constants /*/
         public const int    BufferSize      = 4096;
         public const string ChannelIdents   = "&#+!";
+        public const string CrLf            = "\r\n";
         public const int    DefaultPort     = 6667;
 
     /*/ Fields /*/
-        protected readonly ILogger logger;
-        TcpClient       client;
+        readonly ILogger        logger;
+        readonly ILoggerFactory loggerFactory;
+
+        SocketClient    client;
         Thread          clientReceiveThread;
         Thread          clientSendThread;
         ClientState     clientState;
@@ -46,22 +51,22 @@ namespace juvo.Irc
         public string NickName
         {
             get { return nickname; }
-            protected set { nickname = value; }
+            set { nickname = value; }
         }
         public string NickNameAlt
         {
             get { return nicknameAlt; }
-            protected set { nicknameAlt = value; }
+            set { nicknameAlt = value; }
         }
         public string RealName
         {
             get { return realName; }
-            protected set { realName = value; }
+            set { realName = value; }
         }
         public string Username
         {
             get { return username; }
-            protected set { username = value; }
+            set { username = value; }
         }
 
     /*/ Events /*/
@@ -69,39 +74,48 @@ namespace juvo.Irc
         public event EventHandler<ChannelUserEventArgs> ChannelMessage;
         public event EventHandler<ChannelUserEventArgs> ChannelParted;
         public event EventHandler Connected;
+        public event EventHandler Disconnected;
         public event EventHandler DataReceived;
-        public event EventHandler MessageReceived;
+        public event EventHandler<MessageReceivedArgs> MessageReceived;
         public event EventHandler<UserEventArgs> PrivateMessage;
         public event EventHandler<IrcReply> ReplyReceived;
         public event EventHandler<UserEventArgs> UserQuit;
 
     /*/ Con/Destructors /*/
-        protected IrcClient(ILogger logger = null)
+        public IrcClient(ILoggerFactory loggerFactory = null)
         {
+            this.client = new SocketClient();
+            this.client.ConnectCompleted += Client_ConnectCompleted;
+            this.client.ConnectFailed += Client_ConnectFailed;
+            this.client.Disconnected += Client_Disconnected;
+            this.client.ReceiveCompleted += Client_ReceiveCompleted;
+            this.client.ReceiveFailed += Client_ReceiveFailed;
+            this.client.SendCompleted += Client_SendCompleted;
+            this.client.SendFailed += Client_SendFailed;
+
             this.dataBuffer = new StringBuilder();
-            this.client = new TcpClient();
             this.clientState = ClientState.None;
             this.currentChannels = new List<string>(0);
-            this.logger = logger;
+            this.loggerFactory = loggerFactory;
+
+            if (this.loggerFactory != null)
+            { this.logger = this.loggerFactory.CreateLogger<IrcClient>(); }
         }
 
     /*/ Public Methods /*/
-        public async Task ConnectAsync(string serverHost, int serverPort = DefaultPort)
+        public void Connect(string serverHost, int serverPort = DefaultPort)
         {
-            if (String.IsNullOrEmpty(serverHost)) { throw new ArgumentNullException("serverHost"); }
-            if (serverPort < 0) { throw new ArgumentOutOfRangeException("serverPort"); }
+            Debug.Assert(!String.IsNullOrEmpty(serverHost), "serverHost == null||empty");
+            Debug.Assert(serverPort > 1024, "serverPort <= 1024");
 
             this.serverHost = serverHost;
             this.serverPort = serverPort;
-            serverEntry = await Dns.GetHostEntryAsync(serverHost);
+            //serverEntry = await Dns.GetHostEntryAsync(serverHost);
 
-            //logger.Info("Attempting to connect to {0} on port {1}", this.serverHost, this.serverPort);
+            logger?.LogInformation($"Attempting to connect to {serverHost} on port {serverPort}");
 
             clientState = ClientState.Connecting;
-            await client.ConnectAsync(serverEntry.AddressList, serverPort);
-            await SendAsync(String.Concat("NICK ", nickname, "\r\n"));
-            await SendAsync(String.Concat("USER ", username, " 0 * :", username, "\r\n"));
-            await ReceiveDataAsync();
+            client.Connect(this.serverHost, this.serverPort);
         }
         public void Dispose()
         {
@@ -115,33 +129,42 @@ namespace juvo.Irc
                 if (client != null) client.Dispose();
             }
         }
-        public async Task Join(string channel)
+        public void Join(string channel, string key = "")
         {
-            if (String.IsNullOrEmpty(channel)) { throw new ArgumentNullException("channel"); }
+            Debug.Assert(!string.IsNullOrEmpty(channel), "channel == null||empty");
+            Send($"JOIN {channel}{CrLf}");
+        }
+        public void Join(string[] channels, string[] channelKeys = null)
+        {
+            Debug.Assert(channels != null && channels.Length > 0);
+            Debug.Assert(channelKeys == null || channelKeys.Length == channels.Length);
 
-            await SendAsync("JOIN {0}\r\n", channel);
-        }
-        public async Task PartAsync(string channel, string message = "")
-        {
-            if (String.IsNullOrEmpty(channel)) { throw new ArgumentNullException("channel"); }
+            var chans = string.Join(",", channels);
+            var keys  = (channelKeys != null) ? " " + string.Join(",", channelKeys) : "";
 
-            await SendAsync("PART {0}{1}\r\n", channel,
-                            (String.IsNullOrEmpty(message)) ? "" : String.Concat(" ", message));
+            Send($"JOIN {chans}{keys}{CrLf}");
         }
-        public async Task QuitAsync(string message = "")
+        public void Part(string channel, string message = "")
         {
-            await SendAsync("QUIT :{0}\r\n", message);
+            Debug.Assert(!string.IsNullOrEmpty(channel), "channel == null||empty");
+
+            Send("PART {0}{1}\r\n", channel,
+                    (String.IsNullOrEmpty(message)) ? "" : String.Concat(" ", message));
         }
-        public async Task SendAsync(string data)
-        { await SendAsync(UTF8Encoding.UTF8.GetBytes(data)); }
-        public async Task SendAsync(string format, params object[] args)
-        { await SendAsync(String.Format(format, args)); }
-        public async Task SendAsync(byte[] data)
+        public void Quit(string message = "")
         {
-            await client.GetStream().WriteAsync(data, 0, data.Length);
+            Send("QUIT :{0}\r\n", message);
         }
-        public async Task SendMessageAsync(string to, string format, params object[] args)
-        { await SendAsync("PRIVMSG {0} :{1}\r\n", to, String.Format(format, args)); }
+        public void Send(string data)
+        { client.Send(UTF8Encoding.UTF8.GetBytes(data)); }
+        public void Send(string format, params object[] args)
+        { client.Send(string.Format(format, args)); }
+        public void Send(byte[] data)
+        {
+            client.Send(data);
+        }
+        public void SendMessage(string to, string format, params object[] args)
+        { Send("PRIVMSG {0} :{1}\r\n", to, String.Format(format, args)); }
 
     /*/ Protected Methods /*/
         protected virtual void OnChannelJoined(ChannelUserEventArgs e)
@@ -171,16 +194,17 @@ namespace juvo.Irc
         }
         protected virtual void OnDataReceived(DataReceivedArgs e)
         {
-            DataReceived?.Invoke(this, e);
 
-            HandleData(e.Data);
-            ReceiveDataAsync();
+        }
+        protected virtual void OnDisconnected(EventArgs e)
+        {
+            Disconnected?.Invoke(this, e);
         }
         protected virtual void OnMessageReceived(MessageReceivedArgs e)
         {
             MessageReceived?.Invoke(this, e);
 
-            HandleMessageAsync(e.Message);
+            HandleMessage(e.Message);
         }
         protected virtual void OnPrivateMessage(UserEventArgs e)
         {
@@ -198,10 +222,50 @@ namespace juvo.Irc
         }
 
     /*/ Private Methods /*/
+        private void Client_ConnectCompleted(object sender, EventArgs e)
+        {
+            logger?.LogInformation("Connected");
+            Send($"NICK {nickname}\r\nUSER {username} 0 * :{username}\r\n");
+
+            //Send(String.Concat("NICK ", nickname, "\r\n"));
+            //Send(String.Concat("USER ", username, " 0 * :", username, "\r\n"));
+        }
+        private void Client_ConnectFailed(object sender, EventArgs e)
+        {
+            logger?.LogInformation("Connection failed");
+        }
+        private void Client_Disconnected(object sender, EventArgs e)
+        {
+            logger?.LogInformation($"Disconnected");
+        }
+        private void Client_ReceiveCompleted(object sender, ReceiveCompletedEventArgs e)
+        {
+            logger?.LogDebug("Receive completed");
+
+            if (client == null) { return; }
+
+            OnDataReceived(new DataReceivedArgs(e.Data));
+            HandleData(e.Data);
+        }
+        private void Client_ReceiveFailed(object sender, SocketEventArgs e)
+        {
+            logger?.LogError($"Receive failed ({e.Error})");
+        }
+        private void Client_SendCompleted(object sender, EventArgs e)
+        {
+            logger?.LogDebug("Send completed");
+        }
+        private void Client_SendFailed(object sender, SocketEventArgs e)
+        {
+            logger?.LogError($"Send failed ({e.Error})");
+        }
         void HandleData(byte[] data)
         {
             string incoming = UTF8Encoding.UTF8.GetString(data);
+            logger.LogTrace($"HandleData(): incoming\r\n{incoming}");
+
             dataBuffer.Append(incoming);
+            logger.LogTrace($"HandleData(): dataBuffer\r\n{dataBuffer}");
 
             while (dataBuffer.ToString().Contains("\r\n"))
             {
@@ -210,13 +274,15 @@ namespace juvo.Irc
                 int length = temp.Length - (temp.Length - rnIndex);
 
                 string message = temp.Substring(0, length);
+                logger.LogTrace($"HandleData(): message\r\n{message}");
                 OnMessageReceived(new MessageReceivedArgs(message));
 
                 dataBuffer.Remove(0, length + 2);
             }
         }
-        async Task HandleMessageAsync(string message)
+        void HandleMessage(string message)
         {
+            logger?.LogDebug($"HandleMessage(): {message}");
             if (String.IsNullOrEmpty(message)) { return; }
 
             if (message.StartsWith(":"))
@@ -232,12 +298,13 @@ namespace juvo.Irc
                     break;
                 case "PING":
                     string pingSource = msgParts[1].Replace(":", "");
-                    await SendAsync("PONG {0}\r\n", pingSource);
+                    Send("PONG {0}\r\n", pingSource);
                     break;
             }
         }
         void HandleReply(string message)
         {
+            logger?.LogDebug($"HandleReply(): {message}");
             if (String.IsNullOrEmpty(message)) { return; }
 
             var reply = new IrcReply(message);
@@ -307,22 +374,6 @@ namespace juvo.Irc
                     }
                     break;
             }
-        }
-        void SocketConnectCallback(IAsyncResult result)
-        {
-            ReceiveDataAsync();
-        }
-        async Task ReceiveDataAsync()
-        {
-            if (client == null) { return; }
-
-            int bytesRead = 0;
-            byte[] data = new byte[IrcClient.BufferSize];
-            while ((bytesRead = await client.GetStream().ReadAsync(data, 0, data.Length)) == 0) { }
-
-            byte[] eventData = new byte[bytesRead];
-            Array.Copy(data, 0, eventData, 0, bytesRead);
-            OnDataReceived(new DataReceivedArgs(eventData));
         }
     }
 }
