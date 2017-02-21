@@ -6,13 +6,14 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Juvo.Net;
 using Microsoft.Extensions.Logging;
+using AngleSharp;
 
 namespace Juvo.Net.Irc
 {
     public class IrcBot
     {
     /*/ Constants /*/
-        public const string DefaultCommandToken = "!";
+        public const string DefaultCommandToken = ".";
 
     /*/ Fields /*/
         readonly ILoggerFactory loggerFactory;
@@ -83,6 +84,16 @@ namespace Juvo.Net.Irc
             var msg = (cmdArgs.Length > 1) ? string.Join(" ", cmdArgs, 1, cmdArgs.Length - 1) : "";
             ircClient.Quit(msg);
         }
+        protected virtual void CommandTwitter(string[] cmdArgs)
+        {
+            if (cmdArgs.Length < 2) { return; }
+
+            var handle = cmdArgs[1];
+            var config = Configuration.Default.WithDefaultLoader();
+            var address = $"https://twitter.com/{handle}";
+            var document = BrowsingContext.New(config).OpenAsync(address);
+
+        }
 
     /*/ Private Methods /*/
         void IrcClient_ChannelJoined(object sender, ChannelUserEventArgs e)
@@ -98,8 +109,9 @@ namespace Juvo.Net.Irc
                 var cmdParts = e.Message.Split(' ');
                 switch (cmdParts[0].ToLowerInvariant())
                 {
-                    case ".join": CommandJoin(cmdParts); break;
-                    case ".quit": CommandQuit(cmdParts); break;
+                    case ".join":    CommandJoin(cmdParts); break;
+                    case ".quit":    CommandQuit(cmdParts); break;
+                    case ".twitter": CommandTwitter(cmdParts); break;
                 }
             }
         }

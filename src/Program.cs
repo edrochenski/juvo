@@ -65,11 +65,6 @@ namespace Juvo
             }
         }
 
-        public static void SchedulerRun(object state)
-        {
-            //Logger.Info($"Scheduler run on tid #{Thread.CurrentThread.ManagedThreadId}...");
-        }
-
         static void CreateAppDataFolders()
         {
             if (!Directory.Exists(AppDataPath))
@@ -119,6 +114,10 @@ namespace Juvo
                 var json = File.ReadAllText(Path.Combine(AppDataPath, ConfigFileName));
                 AppConfig = JsonConvert.DeserializeObject<Config>(json);
             }
+        }
+        static void SchedulerRun(object state)
+        {
+            //Logger.Info($"Scheduler run on tid #{Thread.CurrentThread.ManagedThreadId}...");
         }
         static void StartupIrc()
         {
