@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.25914.0
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "juvo", "juvo.csproj", "{E9F18D54-AB48-4110-89B3-C6303A9F3969}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "juvo", "juvo/juvo.csproj", "{E9F18D54-AB48-4110-89B3-C6303A9F3969}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,16 +17,16 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|x64.ActiveCfg = Debug|x64
-		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|x64.Build.0 = Debug|x64
-		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|x86.ActiveCfg = Debug|x86
-		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|x86.Build.0 = Debug|x86
+		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|x64.Build.0 = Debug|Any CPU
+		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Debug|x86.Build.0 = Debug|Any CPU
 		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|x64.ActiveCfg = Release|x64
-		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|x64.Build.0 = Release|x64
-		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|x86.ActiveCfg = Release|x86
-		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|x86.Build.0 = Release|x86
+		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|x64.ActiveCfg = Release|Any CPU
+		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|x64.Build.0 = Release|Any CPU
+		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|x86.ActiveCfg = Release|Any CPU
+		{E9F18D54-AB48-4110-89B3-C6303A9F3969}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
