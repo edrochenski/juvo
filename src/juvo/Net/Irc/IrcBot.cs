@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Juvo.Net;
+﻿using AngleSharp;
 using Microsoft.Extensions.Logging;
-using AngleSharp;
+using JuvoConsole;
+using System;
+using System.Linq;
 
 namespace Juvo.Net.Irc
 {
@@ -103,8 +99,8 @@ namespace Juvo.Net.Irc
         void IrcClient_ChannelMessage(object sender, ChannelUserEventArgs e)
         {
             logger.LogDebug($"[{configFile.Name}] <{e.Channel}\\{e.User.Nickname}> {e.Message}");
-
-            if (e.Channel.ToLowerInvariant().Equals("#juvo") && e.Message.StartsWith("."))
+            
+            if (e.Channel.ToLowerInvariant().Equals("#bytedown") && e.Message.StartsWith("."))
             {
                 var cmdParts = e.Message.Split(' ');
                 switch (cmdParts[0].ToLowerInvariant())

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Juvo
+namespace JuvoConsole
 {
     public class Config
     {
