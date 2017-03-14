@@ -1,6 +1,24 @@
 using System;
 using System.Collections.Generic;
 
+/* Hierarchy of config file
+ * ========================
+ * 
+ *  Configuration File (root)
+ *      |
+ *      |-- IrcConfig ("irc")
+ *      |       |
+ *      |       |-- Fields...
+ *      |       |
+ *      |       |-- IrcConfigServer[] ("servers")
+ *      |       |     `-- Fields...
+ *      |       |
+ *      |       `-- IrcConfigChannel[] ("channels")
+ *      |             `-- Fields...
+ *      |       
+ * 
+ */
+
 namespace JuvoConsole
 {
     public class Config
@@ -23,7 +41,11 @@ namespace JuvoConsole
 
     public class IrcConfigConnection
     {
+        public string Network { get; set; }
         public string Name { get; set; }
+        public string Pass { get; set; }
+        public string User { get; set; }
+        public string UserMode { get; set; }
 
         public IEnumerable<IrcConfigChannel> Channels;
         public IEnumerable<IrcConfigServer> Servers;

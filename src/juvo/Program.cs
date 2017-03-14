@@ -14,12 +14,6 @@ namespace JuvoConsole
 
     public class Program
     {
-        //const string ConfigFileName = "config.json";
-        //const string ResourcePrefix = "src.resources.";
-        //const int SchedulerDelay = 0;
-        //const int SchedulerInterval = 1000;
-
-
         public readonly static Juvo             Juvo;
         public readonly static ILoggerFactory   LoggerFactory;
         public readonly static ILogger<Program> Logger;
@@ -28,7 +22,7 @@ namespace JuvoConsole
         static Program()
         {
             LoggerFactory = new LoggerFactory()
-                .AddConsole(LogLevel.Trace)
+                .AddConsole(LogLevel.Information)
                 .AddDebug(LogLevel.Trace);
             Logger = LoggerFactory.CreateLogger<Program>();
             ResetEvent = new ManualResetEvent(false);
@@ -42,17 +36,6 @@ namespace JuvoConsole
             Juvo.Run().Wait();
 
             WaitHandle.WaitAll(new[] { ResetEvent });
-
-            //var s = new SocketClient();
-            //s.Connect("localhost", 8000);
-            //s.ConnectCompleted += (o, e) => s.Send("Hello\r\n");
-
-
-            //ConsoleKeyInfo key;
-            //while (Juvo.State == JuvoState.Running 
-            //     /*&& (key = Console.ReadKey(true)).Key != ConsoleKey.Q*/)
-            //{ Thread.Sleep(100); }
         }
-
     }
 }

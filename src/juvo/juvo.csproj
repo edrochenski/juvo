@@ -40,4 +40,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\bds\bds\bds-lib\src\bds-lib\bds-lib.csproj" />
+  </ItemGroup>
+
 </Project>

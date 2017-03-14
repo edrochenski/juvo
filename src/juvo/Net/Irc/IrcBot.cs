@@ -1,4 +1,5 @@
 ﻿using AngleSharp;
+using BytedownSoftware.Lib;
 using Microsoft.Extensions.Logging;
 using JuvoConsole;
 using System;
@@ -15,56 +16,80 @@ namespace Juvo.Net.Irc
         readonly ILoggerFactory loggerFactory;
 
         string              commandToken;
-        IrcConfigConnection configFile;
-        IrcClient           ircClient;
+        IrcConfigConnection config;
+        IrcClient           client;
         ILogger             logger;
 
+    /*/ Properties /*/
+        public bool IsAuthenticated { get; protected set; }
+
     /*/ Constructors /*/
-        public IrcBot(IrcConfigConnection configFile, ILoggerFactory loggerFactory = null)
+        public IrcBot(IrcConfigConnection config, ILoggerFactory loggerFactory = null)
         {
-            this.ircClient     = new IrcClient(loggerFactory);
-            this.configFile    = configFile;
+            this.config    = config;
             this.loggerFactory = loggerFactory;
 
             if (loggerFactory != null)
             { logger = loggerFactory.CreateLogger<IrcBot>(); }
 
-            ircClient.NickName = "juvo";
-            ircClient.NickNameAlt = "juvo-";
-            ircClient.RealName = "juvo";
-            ircClient.Username = "juvo";
+            commandToken = "!";
 
-            this.commandToken = "!";
-
-            ircClient.ChannelJoined += IrcClient_ChannelJoined;
-            ircClient.ChannelMessage += IrcClient_ChannelMessage;
-            ircClient.ChannelParted += IrcClient_ChannelParted;
-            ircClient.Connected += IrcClient_Connected;
-            ircClient.DataReceived += IrcClient_DataReceived;
-            ircClient.Disconnected += IrcClient_Disconnected;
-            ircClient.MessageReceived += IrcClient_MessageReceived;
-            ircClient.PrivateMessage += IrcClient_PrivateMessage;
-            ircClient.UserQuit += IrcClient_UserQuit;
+            client = new IrcClient(IrcClient.LookupNetwork(this.config.Network), loggerFactory);
+            client.NickName = "juvo";
+            client.NickNameAlt = "juvo-";
+            client.RealName = "juvo";
+            client.Username = "juvo";
+            client.ChannelJoined += Client_ChannelJoined;
+            client.ChannelMessage += Client_ChannelMessage;
+            client.ChannelParted += Client_ChannelParted;
+            client.Connected += Client_Connected;
+            client.DataReceived += Client_DataReceived;
+            client.Disconnected += Client_Disconnected;
+            client.HostHidden += Client_HostHidden;
+            client.MessageReceived += Client_MessageReceived;
+            client.PrivateMessage += Client_PrivateMessage;
+            client.UserQuit += Client_UserQuit;
         }
 
     /*/ Public Methods /*/
         public void Connect()
         {
-            ircClient.Connect(configFile.Servers.First().Host, configFile.Servers.First().Port);
+            client.Connect(config.Servers.First().Host, config.Servers.First().Port);
         }
 
     /*/ Protected Methods /*/
+        protected void Authenticate()
+        {
+            if (IsAuthenticated)
+            {
+                logger.LogWarning("Authenticate(): Bot has already authenticated");
+            }
+            else if (StringUtil.AreAnyMissing(config.User, config.Pass, config.Network))
+            {
+                logger.LogWarning("Authenticate(): config missing user, pass, or network");
+                return;
+            }
+
+            switch (config.Network.ToLowerInvariant())
+            {
+                case "undernet":
+                {
+                    client.SendMessage($"x@channels.undernet.org", $"login {config.User} {config.Pass}");
+                } break;
+
+            }
+        }
         protected virtual void CommandJoin(string[] cmdArgs)
         {
             if (cmdArgs.Length < 2) { return; }
-            if (ircClient.CurrentChannels.Contains(cmdArgs[1])) { return; }
+            if (client.CurrentChannels.Contains(cmdArgs[1])) { return; }
 
             if (!cmdArgs[1].Contains(","))
             {
                 if (cmdArgs.Length > 2)
-                { ircClient.Join(cmdArgs[1], cmdArgs[2]); }
+                { client.Join(cmdArgs[1], cmdArgs[2]); }
                 else
-                { ircClient.Join(cmdArgs[1]); }
+                { client.Join(cmdArgs[1]); }
             }
             else
             {
@@ -72,13 +97,13 @@ namespace Juvo.Net.Irc
                 string[] keys  = (cmdArgs.Length > 2) ? cmdArgs[2].Split(',') : null;
 
                 if (keys == null || chans.Length == keys.Length)
-                { ircClient.Join(chans, keys); }
+                { client.Join(chans, keys); }
             }
         }
         protected virtual void CommandQuit(string[] cmdArgs)
         {
             var msg = (cmdArgs.Length > 1) ? string.Join(" ", cmdArgs, 1, cmdArgs.Length - 1) : "";
-            ircClient.Quit(msg);
+            client.Quit(msg);
         }
         protected virtual void CommandTwitter(string[] cmdArgs)
         {
@@ -92,13 +117,13 @@ namespace Juvo.Net.Irc
         }
 
     /*/ Private Methods /*/
-        void IrcClient_ChannelJoined(object sender, ChannelUserEventArgs e)
+        void Client_ChannelJoined(object sender, ChannelUserEventArgs e)
         {
-            logger.LogInformation($"[{configFile.Name}] {e.User.Nickname} joined {e.Channel}");
+            logger.LogInformation($"[{config.Name}] {e.User.Nickname} joined {e.Channel}");
         }
-        void IrcClient_ChannelMessage(object sender, ChannelUserEventArgs e)
+        void Client_ChannelMessage(object sender, ChannelUserEventArgs e)
         {
-            logger.LogDebug($"[{configFile.Name}] <{e.Channel}\\{e.User.Nickname}> {e.Message}");
+            logger.LogDebug($"[{config.Name}] <{e.Channel}\\{e.User.Nickname}> {e.Message}");
             
             if (e.Channel.ToLowerInvariant().Equals("#bytedown") && e.Message.StartsWith("."))
             {
@@ -111,40 +136,63 @@ namespace Juvo.Net.Irc
                 }
             }
         }
-        void IrcClient_ChannelParted(object sender, ChannelUserEventArgs e)
+        void Client_ChannelParted(object sender, ChannelUserEventArgs e)
         {
-            logger.LogInformation($"[{configFile.Name}] {e.User.Nickname} parted {e.Channel}");
+            logger.LogInformation($"[{config.Name}] {e.User.Nickname} parted {e.Channel}");
         }
-        void IrcClient_Connected(object sender, EventArgs e)
+        void Client_Connected(object sender, EventArgs e)
         {
-            logger.LogInformation($"[{configFile.Name}] Connected to server");
-            JoinAllChannels();
+            logger.LogInformation($"[{config.Name}] Connected to server");
+            
+            if (!StringUtil.IsMissing(config.UserMode))
+            {
+                logger.LogInformation($"[{config.Name}] Requeting mode: +{config.UserMode}");
+                client.Send($"MODE {client.NickName} +{config.UserMode}{IrcClient.CrLf}");
+            }
+
+            if (!StringUtil.AreAnyMissing(config.User, config.Pass, config.Network))
+            {
+                Authenticate();
+            }
+            else
+            {
+                JoinAllChannels();
+            }
         }
-        void IrcClient_DataReceived(object sender, EventArgs e)
+        void Client_DataReceived(object sender, EventArgs e)
         {
         }
-        void IrcClient_Disconnected(object sender, EventArgs e)
+        void Client_Disconnected(object sender, EventArgs e)
         {
-            logger.LogInformation($"[{configFile.Name}] Disconnected to server");
+            logger.LogInformation($"[{config.Name}] Disconnected to server");
         }
-        void IrcClient_MessageReceived(object sender, MessageReceivedArgs e)
+        void Client_HostHidden(object sender, HostHiddenEventArgs e)
         {
-            logger.LogTrace($"[{configFile.Name}] MSG: {e.Message}");
+            logger.LogInformation($"Real host hidden using '{e.Host}'");
+            if (config.Network.ToLowerInvariant() == "undernet")
+            {
+                IsAuthenticated = true;
+                JoinAllChannels();
+            }
         }
-        void IrcClient_PrivateMessage(object sender, UserEventArgs e)
+        void Client_MessageReceived(object sender, MessageReceivedArgs e)
         {
-            logger.LogDebug($"[{configFile.Name}] <PRIVMSG\\{e.User.Nickname}> {e.Message}");
+            logger.LogTrace($"[{config.Name}] MSG: {e.Message}");
         }
-        void IrcClient_UserQuit(object sender, UserEventArgs e)
+        void Client_PrivateMessage(object sender, UserEventArgs e)
         {
-            logger.LogDebug($"[{configFile.Name}] {e.User.Nickname} quit");
+            logger.LogDebug($"[{config.Name}] <PRIVMSG\\{e.User.Nickname}> {e.Message}");
+        }
+        void Client_UserQuit(object sender, UserEventArgs e)
+        {
+            logger.LogDebug($"[{config.Name}] {e.User.Nickname} quit");
         }
         void JoinAllChannels()
         {
-            if (configFile != null && configFile.Channels != null)
+            if (config != null && config.Channels != null)
             {
-                foreach (var chan in configFile.Channels)
-                { ircClient.Join(chan.Name); }
+                foreach (var chan in config.Channels)
+                { client.Join(chan.Name); }
             }
         }
     }
