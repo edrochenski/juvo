@@ -26,9 +26,6 @@ namespace Juvo.Net.Irc
         readonly Dictionary<char, UserMode> userModeDict;
 
         SocketClient client;
-        Thread clientReceiveThread;
-        Thread clientSendThread;
-        ClientState clientState;
         List<string> currentChannels;
         string currentNickname;
         StringBuilder dataBuffer;
@@ -37,7 +34,6 @@ namespace Juvo.Net.Irc
         string realName;
         string serverHost;
         int serverPort;
-        IPHostEntry serverEntry;
         string username;
 
     /*/ Properties /*/
@@ -78,7 +74,6 @@ namespace Juvo.Net.Irc
         public event EventHandler<ChannelUserEventArgs> ChannelParted;
         public event EventHandler Connected;
         public event EventHandler Disconnected;
-        public event EventHandler DataReceived;
         public event EventHandler<HostHiddenEventArgs> HostHidden;
         public event EventHandler<MessageReceivedArgs> MessageReceived;
         public event EventHandler<UserEventArgs> PrivateMessage;
@@ -100,7 +95,6 @@ namespace Juvo.Net.Irc
             client.SendFailed += Client_SendFailed;
 
             dataBuffer = new StringBuilder();
-            clientState = ClientState.None;
             currentChannels = new List<string>(0);
 
             Network = network;
@@ -123,7 +117,6 @@ namespace Juvo.Net.Irc
 
             logger?.LogInformation($"Attempting to connect to {serverHost} on port {serverPort}");
 
-            clientState = ClientState.Connecting;
             client.Connect(this.serverHost, this.serverPort);
         }
         public void Dispose()
@@ -209,7 +202,6 @@ namespace Juvo.Net.Irc
         }
         protected virtual void OnConnected(EventArgs e)
         {
-            clientState = ClientState.Connected;
             currentNickname = nickname; //TODO: don't assume the first nick worked
 
             Connected?.Invoke(this, e);
@@ -356,7 +348,7 @@ namespace Juvo.Net.Irc
                 case "396":
                 {
                     //:<server> 396 enloco enloco.users.undernet.org :is now your hidden host
-                    OnHostHidden(new HostHiddenEventArgs(reply.Target));
+                    OnHostHidden(new HostHiddenEventArgs(reply.Params[0]));
                 } break;
                 case "JOIN":
                 {
@@ -374,21 +366,27 @@ namespace Juvo.Net.Irc
                 } break;
                 case "MODE":
                 {
-                    //:n!u@h MODE <target> :[+]modes[-]modes
+                    //USER MODE -> :n!u@h MODE <target> :[+]modes[-]modes
 
-                    var add = "";
-                    var rem = "";
-                    var plus = true;
-                    for (var x = 0; x < reply.Trailing.Length; ++x)
+                    if (reply.TargetIsUser)
                     {
-                        var ch = reply.Trailing[x];
-                        if      (ch == '+') { plus = true; }
-                        else if (ch == '-') { plus = false; }
-                        else if (plus)      { add += ch; }
-                        else if (!plus)     { rem += ch; }
+                        var add = "";
+                        var rem = "";
+                        var plus = true;
+                        for (var x = 0; x < reply.Trailing.Length; ++x)
+                        {
+                            var ch = reply.Trailing[x];
+                            if (ch == '+') { plus = true; }
+                            else if (ch == '-') { plus = false; }
+                            else if (plus) { add += ch; }
+                            else if (!plus) { rem += ch; }
+                        }
+                        OnUserModeChanged(new UserModeChangedEventArgs(LookupUserModes(add), LookupUserModes(rem)));
                     }
+                    else if (reply.TargetIsChannel)
+                    {
 
-                    OnUserModeChanged(new UserModeChangedEventArgs(LookupUserModes(add), LookupUserModes(rem)));
+                    }
                 } break;
                 case "PART":
                 {
