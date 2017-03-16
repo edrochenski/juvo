@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using JuvoConsole;
 using System;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Juvo.Net.Irc
 {
@@ -32,18 +33,19 @@ namespace Juvo.Net.Irc
             if (loggerFactory != null)
             { logger = loggerFactory.CreateLogger<IrcBot>(); }
 
-            commandToken = "!";
+            commandToken = config.CommandToken ?? DefaultCommandToken;
 
-            client = new IrcClient(IrcClient.LookupNetwork(this.config.Network), loggerFactory);
-            client.NickName = "juvo";
-            client.NickNameAlt = "juvo-";
-            client.RealName = "juvo";
-            client.Username = "juvo";
+            client = new IrcClient(IrcClient.LookupNetwork(this.config.Network), loggerFactory)
+            {
+                NickName = config.Nickname ?? throw new Exception("Nickname is missing from configuration"),
+                NickNameAlt = config.NicknameAlt ?? throw new Exception("NicknameAlt is missing from configuration"),
+                RealName = config.RealName ?? "",
+                Username = config.Ident ?? config.Nickname
+            };
             client.ChannelJoined += Client_ChannelJoined;
             client.ChannelMessage += Client_ChannelMessage;
             client.ChannelParted += Client_ChannelParted;
             client.Connected += Client_Connected;
-            client.DataReceived += Client_DataReceived;
             client.Disconnected += Client_Disconnected;
             client.HostHidden += Client_HostHidden;
             client.MessageReceived += Client_MessageReceived;
@@ -100,6 +102,86 @@ namespace Juvo.Net.Irc
                 { client.Join(chans, keys); }
             }
         }
+        protected virtual void CommandPowershell(string[] cmdArgs)
+        {
+            if (cmdArgs.Length < 2) { return; }
+
+            var args = string.Join(" ", cmdArgs, 1, cmdArgs.Length - 1);
+            var info = new ProcessStartInfo()
+            {
+                Arguments = $"-NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -Command {args}",
+                CreateNoWindow = true,
+                FileName = "powershell",
+                LoadUserProfile = false,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+            using (var proc = new Process())
+            {
+                try
+                {
+                    proc.StartInfo = info;
+                    //proc.EnableRaisingEvents = true;
+                    //proc.Exited += (sender, e) =>
+                    //{
+                    //    logger?.LogTrace($"CommandPowershell(): Process exited");
+                    //    client.SendMessage("#bytedown", $"proc exited");
+                    //};
+                    //proc.ErrorDataReceived += (sender, e) => 
+                    //{
+                    //    logger?.LogWarning($"CommandPowershell(): Error: {e.Data}");
+                    //    client.SendMessage("#bytedown", $"error: {e.Data}");
+                    //};
+                    //proc.OutputDataReceived += (sender, e) =>
+                    //{
+                    //    logger?.LogTrace($"CommandPowershell(): Output: {e.Data}");
+                    //    client.SendMessage("#bytedown", $"output: {e.Data}");
+                    //};
+
+                    logger?.LogDebug($"CommandPowershell(): Starting with args [{args}]");
+                    if (!proc.Start())
+                    {
+                        logger?.LogWarning($"CommandPowershell(): Trying to start a process that may be already started?");
+                        client.SendMessage("#bytedown", $"not started: is something already running?");
+                    }
+                    else
+                    {
+                        logger?.LogDebug($"CommandPowershell(): Process running, id: {proc.Id}");
+
+                        var error = proc.StandardError.ReadToEnd();
+                        var output = proc.StandardOutput.ReadToEnd();
+                        if (proc.WaitForExit(10000))
+                        {
+                            if (proc.ExitCode != 0)
+                            {
+                                logger?.LogTrace($"CommandPowershell(): Error: {error}");
+                                client.SendMessage("#bytedown", $"Error: {error}");
+                            }
+                            else
+                            {
+                                if (!StringUtil.IsMissing(output))
+                                {
+                                    logger?.LogTrace($"CommandPowershell(): Output: {output.Trim()}");
+                                    client.SendMessage("#bytedown", $"Output: {output.Trim()}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            logger?.LogWarning("CommandPowershell(): Timed out");
+                            client.SendMessage("#bytedown", "Output: Timed out");
+                        }
+                    }
+                }
+                catch (Exception exc)
+                {
+                    logger?.LogError($"CommandPowershell(): {exc.Message}");
+                    client.SendMessage("#bytedown", $"exception: {exc.Message}");
+                }
+            }
+        }
         protected virtual void CommandQuit(string[] cmdArgs)
         {
             var msg = (cmdArgs.Length > 1) ? string.Join(" ", cmdArgs, 1, cmdArgs.Length - 1) : "";
@@ -113,7 +195,6 @@ namespace Juvo.Net.Irc
             var config = Configuration.Default.WithDefaultLoader();
             var address = $"https://twitter.com/{handle}";
             var document = BrowsingContext.New(config).OpenAsync(address);
-
         }
 
     /*/ Private Methods /*/
@@ -131,6 +212,7 @@ namespace Juvo.Net.Irc
                 switch (cmdParts[0].ToLowerInvariant())
                 {
                     case ".join":    CommandJoin(cmdParts); break;
+                    case ".psh":     CommandPowershell(cmdParts); break;
                     case ".quit":    CommandQuit(cmdParts); break;
                     case ".twitter": CommandTwitter(cmdParts); break;
                 }
@@ -159,12 +241,9 @@ namespace Juvo.Net.Irc
                 JoinAllChannels();
             }
         }
-        void Client_DataReceived(object sender, EventArgs e)
-        {
-        }
         void Client_Disconnected(object sender, EventArgs e)
         {
-            logger.LogInformation($"[{config.Name}] Disconnected to server");
+            logger.LogInformation($"[{config.Name}] Disconnected from server");
         }
         void Client_HostHidden(object sender, HostHiddenEventArgs e)
         {
