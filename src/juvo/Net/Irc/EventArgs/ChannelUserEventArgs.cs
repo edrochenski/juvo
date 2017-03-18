@@ -10,20 +10,20 @@ namespace Juvo.Net.Irc
         string channel;
         bool isOwned;
         string message;
-        MessageType messageType;
+        IrcMessageType messageType;
         IrcUser user;
 
         public string Channel { get { return channel; } }
         public bool IsOwned { get { return isOwned; } }
         public string Message { get { return message; } }
-        public MessageType MessageType { get { return messageType; } }
+        public IrcMessageType MessageType { get { return messageType; } }
         public IrcUser User { get { return user; } }
 
         public ChannelUserEventArgs(string channel, IrcUser user, bool isOwned)
-            : this(channel, user, isOwned, null, MessageType.None)
+            : this(channel, user, isOwned, null, IrcMessageType.None)
         { }
         public ChannelUserEventArgs(string channel, IrcUser user, bool isOwned,
-            string message, MessageType messageType)
+            string message, IrcMessageType messageType)
         {
             this.channel = channel;
             this.isOwned = isOwned;

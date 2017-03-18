@@ -5,10 +5,10 @@ namespace Juvo.Net.Irc
 {
     public class UserModeChangedEventArgs : EventArgs
     {
-        public IEnumerable<UserMode> Added { get; private set; }
-        public IEnumerable<UserMode> Removed { get; private set; }
+        public IEnumerable<IrcUserMode> Added { get; protected set; }
+        public IEnumerable<IrcUserMode> Removed { get; protected set; }
 
-        public UserModeChangedEventArgs(IEnumerable<UserMode> added, IEnumerable<UserMode> removed)
+        public UserModeChangedEventArgs(IEnumerable<IrcUserMode> added, IEnumerable<IrcUserMode> removed)
         {
             Added = added;
             Removed = removed;

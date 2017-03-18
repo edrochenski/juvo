@@ -21,9 +21,10 @@ namespace Juvo.Net.Irc
         public const int DefaultPort = 6667;
 
     /*/ Fields /*/
+        readonly Dictionary<char, Tuple<IrcChannelMode, bool, bool>> chanModeDict;
         readonly ILogger logger;
         readonly ILoggerFactory loggerFactory;
-        readonly Dictionary<char, UserMode> userModeDict;
+        readonly Dictionary<char, IrcUserMode> userModeDict;
 
         SocketClient client;
         List<string> currentChannels;
@@ -61,7 +62,7 @@ namespace Juvo.Net.Irc
             get { return realName; }
             set { realName = value; }
         }
-        public IEnumerable<UserMode> UserModes { get; protected set; }
+        public IEnumerable<IrcUserMode> UserModes { get; protected set; }
         public string Username
         {
             get { return username; }
@@ -71,6 +72,7 @@ namespace Juvo.Net.Irc
     /*/ Events /*/
         public event EventHandler<ChannelUserEventArgs> ChannelJoined;
         public event EventHandler<ChannelUserEventArgs> ChannelMessage;
+        public event EventHandler<ChannelModeChangedEventArgs> ChannelModeChanged;
         public event EventHandler<ChannelUserEventArgs> ChannelParted;
         public event EventHandler Connected;
         public event EventHandler Disconnected;
@@ -103,6 +105,7 @@ namespace Juvo.Net.Irc
             if (this.loggerFactory != null)
             { logger = this.loggerFactory.CreateLogger<IrcClient>(); }
 
+            chanModeDict = CompileChannelModeDictionary();
             userModeDict = CompileUserModeDictionary();
         }
 
@@ -146,19 +149,23 @@ namespace Juvo.Net.Irc
 
             Send($"JOIN {chans}{keys}{CrLf}");
         }
-        public UserMode LookupUserMode(char mode)
+        public (IrcChannelMode Mode, bool HasAddParam, bool HasRemParam) LookupChannelMode(char mode)
+        {
+            return (chanModeDict[mode].Item1, chanModeDict[mode].Item2, chanModeDict[mode].Item3);
+        }
+        public IrcUserMode LookupUserMode(char mode)
         {
             return userModeDict[mode];
         }
-        public IEnumerable<UserMode> LookupUserModes(char[] mode)
+        public IEnumerable<IrcUserMode> LookupUserModes(char[] mode)
         {
-            var result = new UserMode[mode.Length];
+            var result = new IrcUserMode[mode.Length];
             for (var x = 0; x < mode.Length; ++x)
             { result[x] = userModeDict[mode[x]]; }
 
             return result;
         }
-        public IEnumerable<UserMode> LookupUserModes(string mode)
+        public IEnumerable<IrcUserMode> LookupUserModes(string mode)
         {
             return LookupUserModes(mode.ToCharArray());
         }
@@ -195,6 +202,10 @@ namespace Juvo.Net.Irc
         protected virtual void OnChannelMessage(ChannelUserEventArgs e)
         {
             ChannelMessage?.Invoke(this, e);
+        }
+        protected virtual void OnChannelModeChanged(ChannelModeChangedEventArgs e)
+        {
+            ChannelModeChanged?.Invoke(this, e);
         }
         protected virtual void OnChannelParted(ChannelUserEventArgs e)
         {
@@ -272,23 +283,50 @@ namespace Juvo.Net.Irc
         {
             logger?.LogError($"Send failed ({e.Error})");
         }
-        Dictionary<char, UserMode> CompileUserModeDictionary()
+        Dictionary<char, Tuple<IrcChannelMode, bool, bool>> CompileChannelModeDictionary()
         {
-            var result = new Dictionary<char, UserMode>()
+            var result = new Dictionary<char, Tuple<IrcChannelMode, bool, bool>>
             {
-                { 'a', UserMode.Away },
-                { 'd', UserMode.Deaf },
-                { 'i', UserMode.Invisible },
-                { 'o', UserMode.Operator },
-                { 'r', UserMode.Restricted },
-                { 's', UserMode.ServerNotices },
-                { 'w', UserMode.Wallops },
-                { '0', UserMode.OperatorLocal }
+                { 'b', Tuple.Create(IrcChannelMode.Ban, true, true) },
+                { 'e', Tuple.Create(IrcChannelMode.Exception, true, true) },
+                { 'i', Tuple.Create(IrcChannelMode.InviteOnly, false, false) },
+                { 'k', Tuple.Create(IrcChannelMode.Key, true, true) },
+                { 'l', Tuple.Create(IrcChannelMode.Limit, true, false) },
+                { 'm', Tuple.Create(IrcChannelMode.Moderated, false, false) },
+                { 'n', Tuple.Create(IrcChannelMode.NoExternal, false, false) },
+                { 'o', Tuple.Create(IrcChannelMode.Operator, true, true) },
+                { 'p', Tuple.Create(IrcChannelMode.Private, false, false) },
+                { 's', Tuple.Create(IrcChannelMode.Secret, false, false) },
+                { 't', Tuple.Create(IrcChannelMode.TopicLock, false, false) },
+                { 'v', Tuple.Create(IrcChannelMode.Voiced, true, true) }
             };
 
             if (Network == IrcNetwork.Undernet)
             {
-                result.Add('x', UserMode.HiddenHost);
+                result.Add('D', Tuple.Create(IrcChannelMode.DelayJoin, false, false));
+                result.Add('R', Tuple.Create(IrcChannelMode.Registered, false, false));
+                result.Add('r', Tuple.Create(IrcChannelMode.RegisterForJoin, false, false));
+            }
+
+            return result;
+        }
+        Dictionary<char, IrcUserMode> CompileUserModeDictionary()
+        {
+            var result = new Dictionary<char, IrcUserMode>
+            {
+                { 'a', IrcUserMode.Away },
+                { 'd', IrcUserMode.Deaf },
+                { 'i', IrcUserMode.Invisible },
+                { 'o', IrcUserMode.Operator },
+                { 'r', IrcUserMode.Restricted },
+                { 's', IrcUserMode.ServerNotices },
+                { 'w', IrcUserMode.Wallops },
+                { '0', IrcUserMode.OperatorLocal }
+            };
+
+            if (Network == IrcNetwork.Undernet)
+            {
+                result.Add('x', IrcUserMode.HiddenHost);
             }
 
             return result;
@@ -385,7 +423,34 @@ namespace Juvo.Net.Irc
                     }
                     else if (reply.TargetIsChannel)
                     {
+                        var add = new List<IrcChannelModeValue>(0);
+                        var rem = new List<IrcChannelModeValue>(0);
+                        var ops = reply.Params[0];
+                        var ctr = '\0';
 
+                        for (int x = 0, c = 0; x < ops.Length; ++x)
+                        {
+                            if ("-+".Contains(ops[x]))
+                            {
+                                ctr = ops[x];
+                                continue;
+                            }
+
+                            var mode = LookupChannelMode(ops[x]);
+                            //var cmv  = ;
+
+                            if (ctr == '+')
+                            {
+                                var val = mode.HasAddParam ? reply.Params[++c] : null;
+                                add.Add(new IrcChannelModeValue(mode.Mode, val));
+                            }
+                            else if (ctr == '-')
+                            {
+                                var val = mode.HasRemParam ? reply.Params[++c] : null;
+                                rem.Add(new IrcChannelModeValue(mode.Mode, val));
+                            }
+                        }
+                        OnChannelModeChanged(new ChannelModeChangedEventArgs(add, rem));
                     }
                 } break;
                 case "PART":
@@ -400,14 +465,14 @@ namespace Juvo.Net.Irc
                         isOwned = true;
                     }
 
-                    OnChannelParted(new ChannelUserEventArgs(reply.Target, user, isOwned, reply.Trailing, MessageType.None));
+                    OnChannelParted(new ChannelUserEventArgs(reply.Target, user, isOwned, reply.Trailing, IrcMessageType.None));
                 } break;
                 case "PRIVMSG":
                 case "NOTICE":
                 {
                     var user = new IrcUser(reply.Prefix);
                     var isOwned = user.Nickname == currentNickname;
-                    var msgType = (cmd == "PRIVMSG") ? MessageType.PrivateMessage : MessageType.Notice;
+                    var msgType = (cmd == "PRIVMSG") ? IrcMessageType.PrivateMessage : IrcMessageType.Notice;
 
                     if (reply.TargetIsChannel)
                     {
