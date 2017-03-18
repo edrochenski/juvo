@@ -187,6 +187,13 @@ namespace Juvo.Net.Irc
             var msg = (cmdArgs.Length > 1) ? string.Join(" ", cmdArgs, 1, cmdArgs.Length - 1) : "";
             client.Quit(msg);
         }
+        protected virtual void CommandRaw(string[] cmdArgs)
+        {
+            if (cmdArgs.Length == 1) { return; }
+
+            var rawMessage = string.Join(" ", cmdArgs, 1, cmdArgs.Length - 1);
+            client.Send($"{rawMessage}{IrcClient.CrLf}");
+        }
         protected virtual void CommandTwitter(string[] cmdArgs)
         {
             if (cmdArgs.Length < 2) { return; }
@@ -206,15 +213,16 @@ namespace Juvo.Net.Irc
         {
             logger.LogDebug($"[{config.Name}] <{e.Channel}\\{e.User.Nickname}> {e.Message}");
             
-            if (e.Channel.ToLowerInvariant().Equals("#bytedown") && e.Message.StartsWith("."))
+            if (e.Channel.ToLowerInvariant().Equals("#bytedown") && e.Message.StartsWith(config.CommandToken))
             {
                 var cmdParts = e.Message.Split(' ');
-                switch (cmdParts[0].ToLowerInvariant())
+                switch (cmdParts[0].Replace(config.CommandToken, "").ToLowerInvariant())
                 {
-                    case ".join":    CommandJoin(cmdParts); break;
-                    case ".psh":     CommandPowershell(cmdParts); break;
-                    case ".quit":    CommandQuit(cmdParts); break;
-                    case ".twitter": CommandTwitter(cmdParts); break;
+                    case "join":    CommandJoin(cmdParts); break;
+                    case "psh":     CommandPowershell(cmdParts); break;
+                    case "quit":    CommandQuit(cmdParts); break;
+                    case "raw":     CommandRaw(cmdParts); break;
+                    case "twitter": CommandTwitter(cmdParts); break;
                 }
             }
         }
