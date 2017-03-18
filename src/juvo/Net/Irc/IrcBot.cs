@@ -56,6 +56,7 @@ namespace Juvo.Net.Irc
     /*/ Public Methods /*/
         public void Connect()
         {
+            LogTrace("Connecting");
             client.Connect(config.Servers.First().Host, config.Servers.First().Port);
         }
 
@@ -64,18 +65,20 @@ namespace Juvo.Net.Irc
         {
             if (IsAuthenticated)
             {
-                logger.LogWarning("Authenticate(): Bot has already authenticated");
+                LogWarning("Authenticate(): Bot has already authenticated");
+                return;
             }
             else if (StringUtil.AreAnyMissing(config.User, config.Pass, config.Network))
             {
-                logger.LogWarning("Authenticate(): config missing user, pass, or network");
+                LogWarning("Authenticate(): config missing user, pass, or network");
                 return;
             }
 
-            switch (config.Network.ToLowerInvariant())
+            switch (client.Network)
             {
-                case "undernet":
+                case IrcNetwork.Undernet:
                 {
+                    LogInfo("Authenticating with X@ on undernet...");
                     client.SendMessage($"x@channels.undernet.org", $"login {config.User} {config.Pass}");
                 } break;
 
@@ -99,7 +102,10 @@ namespace Juvo.Net.Irc
                 string[] keys  = (cmdArgs.Length > 2) ? cmdArgs[2].Split(',') : null;
 
                 if (keys == null || chans.Length == keys.Length)
-                { client.Join(chans, keys); }
+                {
+                    LogTrace($"Joining {string.Join(", ", chans)}");
+                    client.Join(chans, keys);
+                }
             }
         }
         protected virtual void CommandPowershell(string[] cmdArgs)
@@ -140,7 +146,7 @@ namespace Juvo.Net.Irc
                     //    client.SendMessage("#bytedown", $"output: {e.Data}");
                     //};
 
-                    logger?.LogDebug($"CommandPowershell(): Starting with args [{args}]");
+                    LogDebug($"CommandPowershell(): Starting with args [{args}]");
                     if (!proc.Start())
                     {
                         logger?.LogWarning($"CommandPowershell(): Trying to start a process that may be already started?");
@@ -148,7 +154,7 @@ namespace Juvo.Net.Irc
                     }
                     else
                     {
-                        logger?.LogDebug($"CommandPowershell(): Process running, id: {proc.Id}");
+                        LogDebug($"CommandPowershell(): Process running, id: {proc.Id}");
 
                         var error = proc.StandardError.ReadToEnd();
                         var output = proc.StandardOutput.ReadToEnd();
@@ -156,28 +162,28 @@ namespace Juvo.Net.Irc
                         {
                             if (proc.ExitCode != 0)
                             {
-                                logger?.LogTrace($"CommandPowershell(): Error: {error}");
+                                LogTrace($"CommandPowershell(): Error: {error}");
                                 client.SendMessage("#bytedown", $"Error: {error}");
                             }
                             else
                             {
                                 if (!StringUtil.IsMissing(output))
                                 {
-                                    logger?.LogTrace($"CommandPowershell(): Output: {output.Trim()}");
+                                    LogTrace($"CommandPowershell(): Output: {output.Trim()}");
                                     client.SendMessage("#bytedown", $"Output: {output.Trim()}");
                                 }
                             }
                         }
                         else
                         {
-                            logger?.LogWarning("CommandPowershell(): Timed out");
+                            LogWarning("CommandPowershell(): Timed out");
                             client.SendMessage("#bytedown", "Output: Timed out");
                         }
                     }
                 }
                 catch (Exception exc)
                 {
-                    logger?.LogError($"CommandPowershell(): {exc.Message}");
+                    LogError($"CommandPowershell(): {exc.Message}");
                     client.SendMessage("#bytedown", $"exception: {exc.Message}");
                 }
             }
@@ -207,11 +213,11 @@ namespace Juvo.Net.Irc
     /*/ Private Methods /*/
         void Client_ChannelJoined(object sender, ChannelUserEventArgs e)
         {
-            logger.LogInformation($"[{config.Name}] {e.User.Nickname} joined {e.Channel}");
+            LogInfo($"{e.User.Nickname} joined {e.Channel}");
         }
         void Client_ChannelMessage(object sender, ChannelUserEventArgs e)
         {
-            logger.LogDebug($"[{config.Name}] <{e.Channel}\\{e.User.Nickname}> {e.Message}");
+            LogDebug($"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
             
             if (e.Channel.ToLowerInvariant().Equals("#bytedown") && e.Message.StartsWith(config.CommandToken))
             {
@@ -228,15 +234,15 @@ namespace Juvo.Net.Irc
         }
         void Client_ChannelParted(object sender, ChannelUserEventArgs e)
         {
-            logger.LogInformation($"[{config.Name}] {e.User.Nickname} parted {e.Channel}");
+            LogInfo($"{e.User.Nickname} parted {e.Channel}");
         }
         void Client_Connected(object sender, EventArgs e)
         {
-            logger.LogInformation($"[{config.Name}] Connected to server");
+            LogInfo($"Connected to server");
             
             if (!StringUtil.IsMissing(config.UserMode))
             {
-                logger.LogInformation($"[{config.Name}] Requeting mode: +{config.UserMode}");
+                LogInfo($"Requeting mode: +{config.UserMode}");
                 client.Send($"MODE {client.NickName} +{config.UserMode}{IrcClient.CrLf}");
             }
 
@@ -251,11 +257,11 @@ namespace Juvo.Net.Irc
         }
         void Client_Disconnected(object sender, EventArgs e)
         {
-            logger.LogInformation($"[{config.Name}] Disconnected from server");
+            LogInfo($"Disconnected from server");
         }
         void Client_HostHidden(object sender, HostHiddenEventArgs e)
         {
-            logger.LogInformation($"Real host hidden using '{e.Host}'");
+            LogInfo($"Real host hidden using '{e.Host}'");
             if (config.Network.ToLowerInvariant() == "undernet")
             {
                 IsAuthenticated = true;
@@ -264,15 +270,15 @@ namespace Juvo.Net.Irc
         }
         void Client_MessageReceived(object sender, MessageReceivedArgs e)
         {
-            logger.LogTrace($"[{config.Name}] MSG: {e.Message}");
+            LogTrace($"MSG: {e.Message}");
         }
         void Client_PrivateMessage(object sender, UserEventArgs e)
         {
-            logger.LogDebug($"[{config.Name}] <PRIVMSG\\{e.User.Nickname}> {e.Message}");
+            LogDebug($"<PRIVMSG\\{e.User.Nickname}> {e.Message}");
         }
         void Client_UserQuit(object sender, UserEventArgs e)
         {
-            logger.LogDebug($"[{config.Name}] {e.User.Nickname} quit");
+            LogDebug($"{e.User.Nickname} quit");
         }
         void JoinAllChannels()
         {
@@ -282,5 +288,11 @@ namespace Juvo.Net.Irc
                 { client.Join(chan.Name); }
             }
         }
+        void LogCritical(string message) { logger?.LogCritical($"[{config.Name}] {message}"); }
+        void LogDebug(string message) { logger?.LogDebug($"[{config.Name}] {message}"); }
+        void LogError(string message) { logger?.LogError($"[{config.Name}] {message}"); }
+        void LogInfo(string message) { logger?.LogInformation($"[{config.Name}] {message}"); }
+        void LogTrace(string message) { logger?.LogTrace($"[{config.Name}] {message}"); }
+        void LogWarning(string message) { logger?.LogWarning($"[{config.Name}] {message}"); }
     }
 }
