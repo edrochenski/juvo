@@ -5,6 +5,7 @@ using JuvoConsole;
 using System;
 using System.Linq;
 using System.Diagnostics;
+using System.Text;
 
 namespace Juvo.Net.Irc
 {
@@ -44,12 +45,14 @@ namespace Juvo.Net.Irc
             };
             client.ChannelJoined += Client_ChannelJoined;
             client.ChannelMessage += Client_ChannelMessage;
+            client.ChannelModeChanged += Client_ChannelModeChanged;
             client.ChannelParted += Client_ChannelParted;
             client.Connected += Client_Connected;
             client.Disconnected += Client_Disconnected;
             client.HostHidden += Client_HostHidden;
             client.MessageReceived += Client_MessageReceived;
             client.PrivateMessage += Client_PrivateMessage;
+            client.UserModeChanged += Client_UserModeChanged;
             client.UserQuit += Client_UserQuit;
         }
 
@@ -232,6 +235,44 @@ namespace Juvo.Net.Irc
                 }
             }
         }
+        void Client_ChannelModeChanged(object sender, ChannelModeChangedEventArgs e)
+        {
+            var message = new StringBuilder($"{e.Channel} mode changed: ");
+
+            if (e.Added.Count() > 0)
+            {
+                message.Append("+[");
+
+                var count = 0;
+                foreach (var mode in e.Added)
+                {
+                    if (++count > 1) { message.Append(", "); }
+                    message.Append(mode.Mode);
+
+                    if (!string.IsNullOrEmpty(mode.Value))
+                    { message.Append($"({mode.Value})"); }
+                }
+                message.Append("] ");
+            }
+
+            if (e.Removed.Count() > 0)
+            {
+                message.Append("-[");
+
+                var count = 0;
+                foreach (var mode in e.Removed)
+                {
+                    if (++count > 1) { message.Append(", "); }
+                    message.Append(mode.Mode);
+
+                    if (!string.IsNullOrEmpty(mode.Value))
+                    { message.Append($"({mode.Value})"); }
+                }
+                message.Append("]");
+            }
+
+            LogInfo(message.ToString());
+        }
         void Client_ChannelParted(object sender, ChannelUserEventArgs e)
         {
             LogInfo($"{e.User.Nickname} parted {e.Channel}");
@@ -275,6 +316,10 @@ namespace Juvo.Net.Irc
         void Client_PrivateMessage(object sender, UserEventArgs e)
         {
             LogDebug($"<PRIVMSG\\{e.User.Nickname}> {e.Message}");
+        }
+        void Client_UserModeChanged(object sender, UserModeChangedEventArgs e)
+        {
+            LogInfo($"User mode changed: +[{string.Join(" ", e.Added)}] -[{string.Join(" ", e.Removed)}]");
         }
         void Client_UserQuit(object sender, UserEventArgs e)
         {

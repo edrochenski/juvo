@@ -450,7 +450,7 @@ namespace Juvo.Net.Irc
                                 rem.Add(new IrcChannelModeValue(mode.Mode, val));
                             }
                         }
-                        OnChannelModeChanged(new ChannelModeChangedEventArgs(add, rem));
+                        OnChannelModeChanged(new ChannelModeChangedEventArgs(reply.Target, add, rem));
                     }
                 } break;
                 case "PART":
