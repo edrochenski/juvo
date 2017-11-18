@@ -1,30 +1,64 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿// <copyright file="UserEventArgs.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
 
-namespace Juvo.Net.Irc
+namespace JuvoProcess.Net.Irc
 {
+    using System;
+
+    /// <summary>
+    /// Represents the data from User event.
+    /// </summary>
     public class UserEventArgs : EventArgs
     {
-        bool isOwned;
-        string message;
-        IrcMessageType messageType;
-        IrcUser user;
+/*/ Constructors /*/
 
-        public bool IsOwned { get { return isOwned; } }
-        public string Message { get { return message; } }
-        public IrcMessageType MessageType { get { return messageType; } }
-        public IrcUser User { get { return user; } }
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UserEventArgs"/> class.
+        /// </summary>
+        /// <param name="user">User.</param>
+        /// <param name="message">Message.</param>
+        /// <param name="isOwned">Is owned.</param>
         public UserEventArgs(IrcUser user, string message, bool isOwned)
-            : this(user, message, isOwned, IrcMessageType.None) { }
+            : this(user, message, isOwned, IrcMessageType.None)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UserEventArgs"/> class.
+        /// </summary>
+        /// <param name="user">User.</param>
+        /// <param name="message">Message.</param>
+        /// <param name="isOwned">Is owned.</param>
+        /// <param name="messageType">Message type.</param>
         public UserEventArgs(IrcUser user, string message, bool isOwned, IrcMessageType messageType)
         {
-            this.isOwned = isOwned;
-            this.message = message;
-            this.messageType = messageType;
-            this.user = user;
+            this.IsOwned = isOwned;
+            this.Message = message;
+            this.MessageType = messageType;
+            this.User = user;
         }
+
+/*/ Properties /*/
+
+        /// <summary>
+        /// Gets or sets a value indicating whether is owned.
+        /// </summary>
+        public bool IsOwned { get; set; }
+
+        /// <summary>
+        /// Gets or sets the message.
+        /// </summary>
+        public string Message { get; set; }
+
+        /// <summary>
+        /// Gets or sets the message type.
+        /// </summary>
+        public IrcMessageType MessageType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user.
+        /// </summary>
+        public IrcUser User { get; set; }
     }
 }

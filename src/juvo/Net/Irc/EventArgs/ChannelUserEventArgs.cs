@@ -1,35 +1,79 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿// <copyright file="ChannelUserEventArgs.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
 
-namespace Juvo.Net.Irc
+namespace JuvoProcess.Net.Irc
 {
+    using System;
+
+    /// <summary>
+    /// Represents the data from ChannelUser event.
+    /// </summary>
     public class ChannelUserEventArgs : EventArgs
     {
-        string channel;
-        bool isOwned;
-        string message;
-        IrcMessageType messageType;
-        IrcUser user;
+/*/ Constructors /*/
 
-        public string Channel { get { return channel; } }
-        public bool IsOwned { get { return isOwned; } }
-        public string Message { get { return message; } }
-        public IrcMessageType MessageType { get { return messageType; } }
-        public IrcUser User { get { return user; } }
-
-        public ChannelUserEventArgs(string channel, IrcUser user, bool isOwned)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ChannelUserEventArgs"/> class.
+        /// </summary>
+        /// <param name="channel">Channel.</param>
+        /// <param name="user">User.</param>
+        /// <param name="isOwned">Is owned.</param>
+        public ChannelUserEventArgs(
+            string channel,
+            IrcUser user,
+            bool isOwned)
             : this(channel, user, isOwned, null, IrcMessageType.None)
-        { }
-        public ChannelUserEventArgs(string channel, IrcUser user, bool isOwned,
-            string message, IrcMessageType messageType)
         {
-            this.channel = channel;
-            this.isOwned = isOwned;
-            this.message = message;
-            this.messageType = messageType;
-            this.user = user;
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ChannelUserEventArgs"/> class.
+        /// </summary>
+        /// <param name="channel">Channel.</param>
+        /// <param name="user">User.</param>
+        /// <param name="isOwned">Is owned.</param>
+        /// <param name="message">Message.</param>
+        /// <param name="messageType">Message type.</param>
+        public ChannelUserEventArgs(
+            string channel,
+            IrcUser user,
+            bool isOwned,
+            string message,
+            IrcMessageType messageType)
+        {
+            this.Channel = channel;
+            this.IsOwned = isOwned;
+            this.Message = message;
+            this.MessageType = messageType;
+            this.User = user;
+        }
+
+/*/ Properties /*/
+
+        /// <summary>
+        /// Gets or sets the channel.
+        /// </summary>
+        public string Channel { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the even is owned.
+        /// </summary>
+        public bool IsOwned { get; set; }
+
+        /// <summary>
+        /// Gets or sets the message.
+        /// </summary>
+        public string Message { get; set; }
+
+        /// <summary>
+        /// Gets or sets the message type.
+        /// </summary>
+        public IrcMessageType MessageType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user.
+        /// </summary>
+        public IrcUser User { get; set; }
     }
 }

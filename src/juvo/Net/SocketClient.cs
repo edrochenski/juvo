@@ -1,138 +1,232 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
+﻿// <copyright file="SocketClient.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
 
-namespace Juvo.Net
+namespace JuvoProcess.Net
 {
+    using System;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Net;
+    using System.Net.Sockets;
+    using System.Text;
+
+    /// <summary>
+    /// Socket client.
+    /// </summary>
     public class SocketClient : IDisposable
     {
-    /*/ Constants /*/
-        public const int DefaultBufferSize = 4096;
+/*/ Constants /*/
+        private const int DefaultBufferSize = 4096;
 
-    /*/ Events /*/
-        public event EventHandler<EventArgs> ConnectCompleted;
-        public event EventHandler<EventArgs> ConnectFailed;
-        public event EventHandler<EventArgs> Disconnected;
-        public event EventHandler<ReceiveCompletedEventArgs> ReceiveCompleted;
-        public event EventHandler<SocketEventArgs> ReceiveFailed;
-        public event EventHandler<EventArgs> SendCompleted;
-        public event EventHandler<SocketEventArgs> SendFailed;
+/*/ Fields /*/
+        private SocketAsyncEventArgs argsConnect;
+        private SocketAsyncEventArgs argsReceive;
+        private SocketAsyncEventArgs[] argsSend;
+        private byte[] dataBuffer;
+        private bool disposed;
+        private string host;
+        private int port;
+        private DnsEndPoint remoteEndPoint;
+        private Socket socket;
 
-    /*/ Fields /*/
-        SocketAsyncEventArgs argsConnect;
-        SocketAsyncEventArgs argsReceive;
-        SocketAsyncEventArgs[] argsSend;
-        byte[]               dataBuffer;
-        string               host;
-        int                  port;
-        DnsEndPoint          remoteEndPoint;
-        Socket               socket;
+/*/ Constructors /*/
 
-    /*/ Constructors /*/
-        public SocketClient() : this(DefaultBufferSize) { }
-        public SocketClient(int bufferSize)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SocketClient"/> class.
+        /// </summary>
+        public SocketClient()
+            : this(DefaultBufferSize)
         {
-            dataBuffer = new byte[bufferSize];
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-            argsConnect = new SocketAsyncEventArgs();
-            argsConnect.Completed += SocketConnect_Completed;
-            argsReceive = new SocketAsyncEventArgs();
-            argsReceive.Completed += SocketReceive_Completed;
-            argsReceive.SetBuffer(dataBuffer, 0, dataBuffer.Length);
-
-            argsSend = new SocketAsyncEventArgs[5];
-            for (int i = 0; i < argsSend.Length; ++i)
-            {
-                argsSend[i] = new SocketAsyncEventArgs();
-                argsSend[i].Completed += SocketSend_Completed;
-            }
-
         }
 
-    /*/ Public Methods /*/
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SocketClient"/> class.
+        /// </summary>
+        /// <param name="bufferSize">Size of buffer.</param>
+        public SocketClient(int bufferSize)
+        {
+            this.disposed = false;
+            this.dataBuffer = new byte[bufferSize];
+            this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            this.argsConnect = new SocketAsyncEventArgs();
+            this.argsConnect.Completed += this.SocketConnect_Completed;
+            this.argsReceive = new SocketAsyncEventArgs();
+            this.argsReceive.Completed += this.SocketReceive_Completed;
+            this.argsReceive.SetBuffer(this.dataBuffer, 0, this.dataBuffer.Length);
+
+            this.argsSend = new SocketAsyncEventArgs[5];
+            for (int i = 0; i < this.argsSend.Length; ++i)
+            {
+                this.argsSend[i] = new SocketAsyncEventArgs();
+                this.argsSend[i].Completed += this.SocketSend_Completed;
+            }
+        }
+
+/*/ Events /*/
+
+        /// <summary>
+        /// Fires when a connection has completed successfully.
+        /// </summary>
+        public event EventHandler<EventArgs> ConnectCompleted;
+
+        /// <summary>
+        /// Fires when a connection attempt has failed.
+        /// </summary>
+        public event EventHandler<EventArgs> ConnectFailed;
+
+        /// <summary>
+        /// Fires when the client is disconnected.
+        /// </summary>
+        public event EventHandler<EventArgs> Disconnected;
+
+        /// <summary>
+        /// Fires when the current receive process is completed.
+        /// </summary>
+        public event EventHandler<ReceiveCompletedEventArgs> ReceiveCompleted;
+
+        /// <summary>
+        /// Fires when the current receive process fails.
+        /// </summary>
+        public event EventHandler<SocketEventArgs> ReceiveFailed;
+
+        /// <summary>
+        /// Fires when a send is completed successfully.
+        /// </summary>
+        public event EventHandler<EventArgs> SendCompleted;
+
+        /// <summary>
+        /// Fires when a send fails to start or complete.
+        /// </summary>
+        public event EventHandler<SocketEventArgs> SendFailed;
+
+/*/ Methods /*/
+
+    // Public
+
+        /// <summary>
+        /// Initiates the connection process to the remote endpoint.
+        /// </summary>
+        /// <param name="host">Host to connect to.</param>
+        /// <param name="port">Port to connect to.</param>
         public void Connect(string host, int port)
         {
             this.host = host;
             this.port = port;
 
-            remoteEndPoint = new DnsEndPoint(host, port);
-            argsConnect.RemoteEndPoint = remoteEndPoint;
-            argsReceive.RemoteEndPoint = remoteEndPoint;
+            this.remoteEndPoint = new DnsEndPoint(host, port);
+            this.argsConnect.RemoteEndPoint = this.remoteEndPoint;
+            this.argsReceive.RemoteEndPoint = this.remoteEndPoint;
 
-            foreach (var sae in argsSend)
-            { sae.RemoteEndPoint = remoteEndPoint; }
+            foreach (var sae in this.argsSend)
+            {
+                sae.RemoteEndPoint = this.remoteEndPoint;
+            }
 
-            Connect();
+            this.Connect();
         }
+
+        /// <summary>
+        /// Disposes of any resources being used by this instance.
+        /// </summary>
         public void Dispose()
         {
-            Dispose(true);
+            this.Dispose(true);
             GC.SuppressFinalize(true);
         }
-        public virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (socket != null) socket.Dispose();
-            }
-        }
+
+        /// <summary>
+        /// Send text to the remote endpoint.
+        /// </summary>
+        /// <param name="text">Text to send.</param>
         public void Send(string text)
         {
-            Send(Encoding.UTF8.GetBytes(text));
+            this.Send(Encoding.UTF8.GetBytes(text));
         }
+
+        /// <summary>
+        /// Send bytes to the remote endpoint.
+        /// </summary>
+        /// <param name="bytes">Bytes to send.</param>
         public void Send(byte[] bytes)
         {
-            var sendArgs = GetSendArgFromPool();
+            var sendArgs = this.GetSendArgFromPool();
 
             sendArgs.SetBuffer(bytes, 0, bytes.Length);
 
-            if (!socket.SendAsync(sendArgs))
-            { SocketSend_Completed(this, sendArgs); }
+            if (!this.socket.SendAsync(sendArgs))
+            {
+                this.SocketSend_Completed(this, sendArgs);
+            }
         }
 
-        /*/ Private Methods /*/
-        void Connect()
+    // Protected
+
+        /// <summary>
+        /// Disposes of any resources being used by this instance.
+        /// </summary>
+        /// <param name="disposing">Was dispose explicitly called.</param>
+        protected virtual void Dispose(bool disposing)
         {
-            if (!socket.ConnectAsync(argsConnect))
-            { SocketConnect_Completed(this, argsConnect); }
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.socket?.Dispose();
+            }
+
+            this.disposed = true;
         }
-        SocketAsyncEventArgs GetSendArgFromPool()
+
+    // Private
+        private void Connect()
         {
-            var result = argsSend.First(x => x.UserToken == null);
+            if (!this.socket.ConnectAsync(this.argsConnect))
+            {
+                this.SocketConnect_Completed(this, this.argsConnect);
+            }
+        }
+
+        private SocketAsyncEventArgs GetSendArgFromPool()
+        {
+            var result = this.argsSend.First(x => x.UserToken == null);
             result.UserToken = DateTime.UtcNow;
             return result;
         }
-        void Receive()
+
+        private void Receive()
         {
-            Debug.WriteLine($"[SocketClient] In Receive()");
-            argsReceive.SetBuffer(0, DefaultBufferSize);
-            if (!socket.ReceiveAsync(argsReceive))
-            { SocketReceive_Completed(this, argsReceive); }
+            this.argsReceive.SetBuffer(0, DefaultBufferSize);
+
+            if (!this.socket.ReceiveAsync(this.argsReceive))
+            {
+                this.SocketReceive_Completed(this, this.argsReceive);
+            }
         }
-        void ReturnSendArgToPool(SocketAsyncEventArgs args)
+
+        private void ReturnSendArgToPool(SocketAsyncEventArgs args)
         {
             args.UserToken = null;
         }
-        void SocketConnect_Completed(object sender, SocketAsyncEventArgs e)
+
+        private void SocketConnect_Completed(object sender, SocketAsyncEventArgs e)
         {
             if (e.SocketError == SocketError.Success)
             {
-                ConnectCompleted?.Invoke(this, EventArgs.Empty);
-                Receive();
+                this.ConnectCompleted?.Invoke(this, EventArgs.Empty);
+                this.Receive();
             }
             else
             {
-                ConnectFailed?.Invoke(this, EventArgs.Empty);
+                this.ConnectFailed?.Invoke(this, EventArgs.Empty);
             }
         }
-        void SocketReceive_Completed(object sender, SocketAsyncEventArgs e)
+
+        private void SocketReceive_Completed(object sender, SocketAsyncEventArgs e)
         {
             if (e.SocketError == SocketError.Success)
             {
@@ -141,56 +235,35 @@ namespace Juvo.Net
                     Debug.WriteLine($"[SocketClient] Received {e.BytesTransferred} bytes...");
                     var data = new byte[e.BytesTransferred];
                     Array.Copy(e.Buffer, data, e.BytesTransferred);
-                    ReceiveCompleted?.Invoke(this, new ReceiveCompletedEventArgs(e.BytesTransferred, data));
+                    this.ReceiveCompleted?.Invoke(this, new ReceiveCompletedEventArgs(e.BytesTransferred, data));
 
-                    Receive();
+                    this.Receive();
                 }
                 else
                 {
-                    Disconnected?.Invoke(this, EventArgs.Empty);
-                    socket.Shutdown(SocketShutdown.Both);
+                    this.Disconnected?.Invoke(this, EventArgs.Empty);
+                    this.socket.Shutdown(SocketShutdown.Both);
                 }
             }
             else
             {
-                ReceiveFailed?.Invoke(this, new SocketEventArgs(e.SocketError, e.SocketError.ToString()));
+                this.ReceiveFailed?.Invoke(this, new SocketEventArgs(e.SocketError, e.SocketError.ToString()));
             }
         }
-        void SocketSend_Completed(object sender, SocketAsyncEventArgs e)
+
+        private void SocketSend_Completed(object sender, SocketAsyncEventArgs e)
         {
             if (e.SocketError == SocketError.Success)
             {
                 Debug.WriteLine($"[SocketClient] Send completed: {Encoding.UTF8.GetString(e.Buffer, 0, e.BytesTransferred)}");
-                SendCompleted?.Invoke(this, EventArgs.Empty);
+                this.SendCompleted?.Invoke(this, EventArgs.Empty);
             }
             else
             {
-                SendFailed?.Invoke(this, new SocketEventArgs(e.SocketError, e.SocketError.ToString()));
+                this.SendFailed?.Invoke(this, new SocketEventArgs(e.SocketError, e.SocketError.ToString()));
             }
-            ReturnSendArgToPool(e);
-        }
-    }
 
-    public class ReceiveCompletedEventArgs : EventArgs
-    {
-        public byte[] Data;
-        public int Length;
-
-        public ReceiveCompletedEventArgs(int length, byte[] data)
-        {
-            this.Data = data;
-            this.Length = length;
-        }
-    }
-    public class SocketEventArgs : EventArgs
-    {
-        public SocketError Error;
-        public string ErrorText;
-
-        public SocketEventArgs(SocketError error, string errorText)
-        {
-            this.Error = error;
-            this.ErrorText = errorText;
+            this.ReturnSendArgToPool(e);
         }
     }
 }

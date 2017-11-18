@@ -1,16 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿// <copyright file="DataReceivedArgs.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
 
-namespace Juvo.Net.Irc
+namespace JuvoProcess.Net.Irc
 {
+    using System;
+
+    /// <summary>
+    /// Represents the data from DataReceived event.
+    /// </summary>
     public class DataReceivedArgs : EventArgs
     {
-        byte[] data;
-        public byte[] Data { get { return data; } }
+        /*/ Constructors /*/
 
-        public DataReceivedArgs(byte[] data)
-        { this.data = data; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DataReceivedArgs"/> class.
+        /// </summary>
+        /// <param name="data">Data received.</param>
+        public DataReceivedArgs(byte[] data) => this.Data = data;
+
+/*/ Properties /*/
+
+        /// <summary>
+        /// Gets or sets the data.
+        /// </summary>
+        public byte[] Data { get; set; }
     }
 }

@@ -1,24 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// <copyright file="ChannelModeChangedEventArgs.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
 
-namespace Juvo.Net.Irc
+namespace JuvoProcess.Net.Irc
 {
+    using System;
+    using System.Collections.Generic;
+
+    /// <summary>
+    /// Represents the data from a <see cref="IrcClient.ChannelModeChanged"/> event.
+    /// </summary>
     public class ChannelModeChangedEventArgs : EventArgs
     {
-        public IEnumerable<IrcChannelModeValue> Added { get; protected set; }
-        public IEnumerable<IrcChannelModeValue> Removed { get; protected set; }
+        /*/ Constructors /*/
 
-        public string Channel { get; set; }
-
-        public ChannelModeChangedEventArgs(string channel,
-                                           IEnumerable<IrcChannelModeValue> added, 
-                                           IEnumerable<IrcChannelModeValue> removed)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ChannelModeChangedEventArgs"/> class.
+        /// </summary>
+        /// <param name="channel">Channel where mode changed.</param>
+        /// <param name="added">Modes added.</param>
+        /// <param name="removed">Modes removed.</param>
+        public ChannelModeChangedEventArgs(
+            string channel,
+            IEnumerable<IrcChannelModeValue> added,
+            IEnumerable<IrcChannelModeValue> removed)
         {
-            Added = added;
-            Removed = removed;
-
-            Channel = channel;
+            this.Added = added;
+            this.Removed = removed;
+            this.Channel = channel;
         }
+
+/*/ Properties /*/
+
+        /// <summary>
+        /// Gets or sets added modes.
+        /// </summary>
+        public IEnumerable<IrcChannelModeValue> Added { get; set; }
+
+        /// <summary>
+        /// Gets or sets removed modes.
+        /// </summary>
+        public IEnumerable<IrcChannelModeValue> Removed { get; set; }
+
+        /// <summary>
+        /// Gets or sets the channel.
+        /// </summary>
+        public string Channel { get; set; }
     }
 }

@@ -1,289 +1,476 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Diagnostics.Tracing;
-using Microsoft.Extensions.Logging;
+﻿// <copyright file="IrcClient.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
 
-namespace Juvo.Net.Irc
+namespace JuvoProcess.Net.Irc
 {
-    public class IrcClient : IDisposable
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Text;
+    using Microsoft.Extensions.Logging;
+
+    /// <summary>
+    /// IRC client.
+    /// </summary>
+    public class IrcClient : IDisposable, IIrcClient
     {
-    /*/ Constants /*/
-        public const int BufferSize = 4096;
+/*/ Constants /*/
+
+    // Public
+
+        /// <summary>
+        /// Characters that channels can begin with.
+        /// </summary>
         public const string ChannelIdents = "&#+!";
+
+        /// <summary>
+        /// Line ending for IRC commands (\r\n)
+        /// </summary>
         public const string CrLf = "\r\n";
-        public const int DefaultPort = 6667;
 
-    /*/ Fields /*/
-        readonly Dictionary<char, Tuple<IrcChannelMode, bool, bool>> chanModeDict;
-        readonly ILogger logger;
-        readonly ILoggerFactory loggerFactory;
-        readonly Dictionary<char, IrcUserMode> userModeDict;
+    // Private
+        private const int BufferSize = 4096;
+        private const int DefaultPort = 6667;
 
-        SocketClient client;
-        List<string> currentChannels;
-        string currentNickname;
-        StringBuilder dataBuffer;
-        string nickname;
-        string nicknameAlt;
-        string realName;
-        string serverHost;
-        int serverPort;
-        string username;
+/*/ Fields /*/
+        private static readonly Dictionary<string, IrcNetwork> IrcNetworkLookup;
+        private readonly Dictionary<char, Tuple<IrcChannelMode, bool, bool>> chanModeDict;
+        private readonly ILogger logger;
+        private readonly ILoggerFactory loggerFactory;
+        private readonly Dictionary<char, IrcUserMode> userModeDict;
 
-    /*/ Properties /*/
-        public List<string> CurrentChannels
+        private SocketClient client;
+        private List<string> currentChannels;
+        private string currentNickname;
+        private StringBuilder dataBuffer;
+        private string serverHost;
+        private int serverPort;
+
+/*/ Constructors /*/
+        static IrcClient()
         {
-            get { return currentChannels; }
-        }
-        public string CurrentNickname
-        {
-            get { return currentNickname; }
-        }
-        public string NickName
-        {
-            get { return nickname; }
-            set { nickname = value; }
-        }
-        public string NickNameAlt
-        {
-            get { return nicknameAlt; }
-            set { nicknameAlt = value; }
-        }
-        public IrcNetwork Network { get; protected set; }
-        public string RealName
-        {
-            get { return realName; }
-            set { realName = value; }
-        }
-        public IEnumerable<IrcUserMode> UserModes { get; protected set; }
-        public string Username
-        {
-            get { return username; }
-            set { username = value; }
+            IrcNetworkLookup = new Dictionary<string, IrcNetwork>
+            {
+                { "undernet", IrcNetwork.Undernet }
+            };
         }
 
-    /*/ Events /*/
-        public event EventHandler<ChannelUserEventArgs> ChannelJoined;
-        public event EventHandler<ChannelUserEventArgs> ChannelMessage;
-        public event EventHandler<ChannelModeChangedEventArgs> ChannelModeChanged;
-        public event EventHandler<ChannelUserEventArgs> ChannelParted;
-        public event EventHandler Connected;
-        public event EventHandler Disconnected;
-        public event EventHandler<HostHiddenEventArgs> HostHidden;
-        public event EventHandler<MessageReceivedArgs> MessageReceived;
-        public event EventHandler<UserEventArgs> PrivateMessage;
-        public event EventHandler<IrcReply> ReplyReceived;
-        public event EventHandler<UserModeChangedEventArgs> UserModeChanged;
-        public event EventHandler<UserEventArgs> UserQuit;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IrcClient"/> class.
+        /// </summary>
+        /// <param name="loggerFactory">LoggerFactory to create log.</param>
+        public IrcClient(ILoggerFactory loggerFactory = null)
+            : this(IrcNetwork.Unknown, loggerFactory)
+        {
+        }
 
-    /*/ Con/Destructors /*/
-        public IrcClient(ILoggerFactory loggerFactory = null) : this(IrcNetwork.Unknown, loggerFactory) { }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IrcClient"/> class.
+        /// </summary>
+        /// <param name="network">Network to connect to.</param>
+        /// <param name="loggerFactory">LoggerFactory to create log.</param>
         public IrcClient(IrcNetwork network, ILoggerFactory loggerFactory = null)
         {
-            client = new SocketClient();
-            client.ConnectCompleted += Client_ConnectCompleted;
-            client.ConnectFailed += Client_ConnectFailed;
-            client.Disconnected += Client_Disconnected;
-            client.ReceiveCompleted += Client_ReceiveCompleted;
-            client.ReceiveFailed += Client_ReceiveFailed;
-            client.SendCompleted += Client_SendCompleted;
-            client.SendFailed += Client_SendFailed;
+            this.client = new SocketClient();
+            this.client.ConnectCompleted += this.Client_ConnectCompleted;
+            this.client.ConnectFailed += this.Client_ConnectFailed;
+            this.client.Disconnected += this.Client_Disconnected;
+            this.client.ReceiveCompleted += this.Client_ReceiveCompleted;
+            this.client.ReceiveFailed += this.Client_ReceiveFailed;
+            this.client.SendCompleted += this.Client_SendCompleted;
+            this.client.SendFailed += this.Client_SendFailed;
 
-            dataBuffer = new StringBuilder();
-            currentChannels = new List<string>(0);
+            this.dataBuffer = new StringBuilder();
+            this.currentChannels = new List<string>(0);
 
-            Network = network;
+            this.Network = network;
 
             this.loggerFactory = loggerFactory;
             if (this.loggerFactory != null)
-            { logger = this.loggerFactory.CreateLogger<IrcClient>(); }
+            {
+                this.logger = this.loggerFactory.CreateLogger<IrcClient>();
+            }
 
-            chanModeDict = CompileChannelModeDictionary();
-            userModeDict = CompileUserModeDictionary();
+            this.chanModeDict = this.CompileChannelModeDictionary();
+            this.userModeDict = this.CompileUserModeDictionary();
         }
 
-    /*/ Public Methods /*/
+    /*/ Events /*/
+
+        /// <inheritdoc/>
+        public event EventHandler<ChannelUserEventArgs> ChannelJoined;
+
+        /// <inheritdoc/>
+        public event EventHandler<ChannelUserEventArgs> ChannelMessage;
+
+        /// <inheritdoc/>
+        public event EventHandler<ChannelModeChangedEventArgs> ChannelModeChanged;
+
+        /// <inheritdoc/>
+        public event EventHandler<ChannelUserEventArgs> ChannelParted;
+
+        /// <inheritdoc/>
+        public event EventHandler Connected;
+
+        /// <inheritdoc/>
+        public event EventHandler Disconnected;
+
+        /// <inheritdoc/>
+        public event EventHandler<HostHiddenEventArgs> HostHidden;
+
+        /// <inheritdoc/>
+        public event EventHandler<MessageReceivedArgs> MessageReceived;
+
+        /// <inheritdoc/>
+        public event EventHandler<UserEventArgs> PrivateMessage;
+
+        /// <inheritdoc/>
+        public event EventHandler<IrcReply> ReplyReceived;
+
+        /// <inheritdoc/>
+        public event EventHandler<UserModeChangedEventArgs> UserModeChanged;
+
+        /// <inheritdoc/>
+        public event EventHandler<UserEventArgs> UserQuit;
+
+/*/ Properties /*/
+
+        /// <inheritdoc/>
+        public List<string> CurrentChannels { get; protected set; }
+
+        /// <inheritdoc/>
+        public string CurrentNickname { get; protected set; }
+
+        /// <inheritdoc/>
+        public string NickName { get; set; }
+
+        /// <inheritdoc/>
+        public string NickNameAlt { get; set; }
+
+        /// <inheritdoc/>
+        public IrcNetwork Network { get; protected set; }
+
+        /// <inheritdoc/>
+        public string RealName { get; set; }
+
+        /// <inheritdoc/>
+        public IEnumerable<IrcUserMode> UserModes { get; protected set; }
+
+        /// <inheritdoc/>
+        public string Username { get; set; }
+
+/*/ Methods /*/
+
+    // Public
+
+        /// <summary>
+        /// Looks up IRC network.
+        /// </summary>
+        /// <param name="network">Name of network.</param>
+        /// <returns>Resolved IRC network.</returns>
+        public static IrcNetwork LookupNetwork(string network)
+        {
+            network = string.IsNullOrEmpty(network) ? string.Empty : network.ToLowerInvariant();
+            return
+                IrcNetworkLookup.ContainsKey(network)
+                ? IrcNetworkLookup[network]
+                : IrcNetwork.Unknown;
+        }
+
+        /// <inheritdoc/>
         public void Connect(string serverHost, int serverPort = DefaultPort)
         {
-            Debug.Assert(!String.IsNullOrEmpty(serverHost), "serverHost == null||empty");
+            Debug.Assert(!string.IsNullOrEmpty(serverHost), "serverHost == null||empty");
             Debug.Assert(serverPort > 1024, "serverPort <= 1024");
 
             this.serverHost = serverHost;
             this.serverPort = serverPort;
 
-            logger?.LogInformation($"Attempting to connect to {serverHost} on port {serverPort}");
+            this.logger?.LogInformation($"Attempting to connect to {serverHost} on port {serverPort}");
 
-            client.Connect(this.serverHost, this.serverPort);
+            this.client.Connect(this.serverHost, this.serverPort);
         }
+
+        /// <inheritdoc/>
         public void Dispose()
         {
-            Dispose(true);
+            this.Dispose(true);
             GC.SuppressFinalize(true);
         }
-        public virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (client != null) client.Dispose();
-            }
-        }
+
+        /// <inheritdoc/>
+        public void Join(string channel) => this.Join(channel, string.Empty);
+
+        /// <inheritdoc/>
         public void Join(string channel, string key = "")
         {
             Debug.Assert(!string.IsNullOrEmpty(channel), "channel == null||empty");
-            Send($"JOIN {channel}{CrLf}");
+            this.Send($"JOIN {channel}{CrLf}");
         }
+
+        /// <inheritdoc/>
         public void Join(string[] channels, string[] channelKeys = null)
         {
-            Debug.Assert(channels != null && channels.Length > 0);
-            Debug.Assert(channelKeys == null || channelKeys.Length == channels.Length);
+            Debug.Assert(channels != null && channels.Length > 0, "channels == null || empty");
 
             var chans = string.Join(",", channels);
-            var keys = (channelKeys != null) ? " " + string.Join(",", channelKeys) : "";
+            var keys = (channelKeys != null) ? " " + string.Join(",", channelKeys) : string.Empty;
 
-            Send($"JOIN {chans}{keys}{CrLf}");
+            this.Send($"JOIN {chans}{keys}{CrLf}");
         }
-        public (IrcChannelMode Mode, bool HasAddParam, bool HasRemParam) LookupChannelMode(char mode)
+
+        /// <summary>
+        /// Looks up a channel mode.
+        /// </summary>
+        /// <param name="mode">Resolved mode.</param>
+        /// <returns>A tuple with the channel mode, has add parameter, and has remove parameter.</returns>
+        public(IrcChannelMode Mode, bool HasAddParam, bool HasRemParam) LookupChannelMode(char mode)
         {
-            return (chanModeDict[mode].Item1, chanModeDict[mode].Item2, chanModeDict[mode].Item3);
+            return (
+                this.chanModeDict[mode].Item1,
+                this.chanModeDict[mode].Item2,
+                this.chanModeDict[mode].Item3);
         }
+
+        /// <inheritdoc/>
         public IrcUserMode LookupUserMode(char mode)
         {
-            return userModeDict[mode];
+            return this.userModeDict[mode];
         }
+
+        /// <inheritdoc/>
         public IEnumerable<IrcUserMode> LookupUserModes(char[] mode)
         {
             var result = new IrcUserMode[mode.Length];
             for (var x = 0; x < mode.Length; ++x)
-            { result[x] = userModeDict[mode[x]]; }
+            {
+                result[x] = this.userModeDict[mode[x]];
+            }
 
             return result;
         }
+
+        /// <inheritdoc/>
         public IEnumerable<IrcUserMode> LookupUserModes(string mode)
         {
-            return LookupUserModes(mode.ToCharArray());
+            return this.LookupUserModes(mode.ToCharArray());
         }
+
+        /// <inheritdoc/>
         public void Part(string channel, string message = "")
         {
             Debug.Assert(!string.IsNullOrEmpty(channel), "channel == null||empty");
 
-            var msg = (String.IsNullOrEmpty(message)) ? "" : String.Concat(" ", message);
-            Send($"PART {channel}{msg}{CrLf}");
+            var msg = string.IsNullOrEmpty(message) ? string.Empty : string.Concat(" ", message);
+            this.Send($"PART {channel}{msg}{CrLf}");
         }
+
+        /// <inheritdoc/>
         public void Quit(string message = "")
         {
-            Send($"QUIT :{message}{CrLf}");
+            this.Send($"QUIT :{message}{CrLf}");
         }
+
+        /// <inheritdoc/>
         public void Send(string data)
-        { client.Send(UTF8Encoding.UTF8.GetBytes(data)); }
+        {
+            this.client.Send(UTF8Encoding.UTF8.GetBytes(data));
+        }
+
+        /// <inheritdoc/>
         public void Send(string format, params object[] args)
-        { client.Send(string.Format(format, args)); }
+        {
+            this.client.Send(string.Format(format, args));
+        }
+
+        /// <inheritdoc/>
         public void Send(byte[] data)
         {
-            client.Send(data);
+            this.client.Send(data);
         }
+
+        /// <inheritdoc/>
         public void SendMessage(string to, string format, params object[] args)
         {
-            var msg = String.Format(format, args);
-            Send($"PRIVMSG {to} :{msg}{CrLf}");
+            var msg = string.Format(format, args);
+            this.Send($"PRIVMSG {to} :{msg}{CrLf}");
         }
 
-    /*/ Protected Methods /*/
+    // Protected
+
+        /// <summary>
+        /// Dispose of the instance's resources.
+        /// </summary>
+        /// <param name="disposing">Should managed resources be disposed.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.client?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Called when the <see cref="ChannelJoined"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnChannelJoined(ChannelUserEventArgs e)
         {
-            ChannelJoined?.Invoke(this, e);
+            this.ChannelJoined?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="ChannelMessage"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnChannelMessage(ChannelUserEventArgs e)
         {
-            ChannelMessage?.Invoke(this, e);
+            this.ChannelMessage?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="ChannelModeChanged"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnChannelModeChanged(ChannelModeChangedEventArgs e)
         {
-            ChannelModeChanged?.Invoke(this, e);
+            this.ChannelModeChanged?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="ChannelParted"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnChannelParted(ChannelUserEventArgs e)
         {
-            ChannelParted?.Invoke(this, e);
+            this.ChannelParted?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="Connected"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnConnected(EventArgs e)
         {
-            currentNickname = nickname; //TODO: don't assume the first nick worked
-
-            Connected?.Invoke(this, e);
+            this.currentNickname = this.NickName; // TODO: don't assume the first nick worked
+            this.Connected?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the DataReceived event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnDataReceived(DataReceivedArgs e)
         {
-
         }
+
+        /// <summary>
+        /// Called when the <see cref="Disconnected"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnDisconnected(EventArgs e)
         {
-            Disconnected?.Invoke(this, e);
+            this.Disconnected?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="HostHidden"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnHostHidden(HostHiddenEventArgs e)
         {
-            HostHidden?.Invoke(this, e);
+            this.HostHidden?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="MessageReceived"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnMessageReceived(MessageReceivedArgs e)
         {
-            MessageReceived?.Invoke(this, e);
-            HandleMessage(e.Message);
+            this.MessageReceived?.Invoke(this, e);
+            this.HandleMessage(e.Message);
         }
+
+        /// <summary>
+        /// Called when the <see cref="PrivateMessage"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnPrivateMessage(UserEventArgs e)
         {
-            PrivateMessage?.Invoke(this, e);
+            this.PrivateMessage?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="ReplyReceived"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnReplyReceived(IrcReply e)
         {
-            ReplyReceived?.Invoke(this, e);
+            this.ReplyReceived?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="UserModeChanged"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnUserModeChanged(UserModeChangedEventArgs e)
         {
-            UserModeChanged?.Invoke(this, e);
+            this.UserModeChanged?.Invoke(this, e);
         }
+
+        /// <summary>
+        /// Called when the <see cref="UserQuit"/> event is raise.
+        /// </summary>
+        /// <param name="e">Data associated with the event.</param>
         protected virtual void OnUserQuit(UserEventArgs e)
         {
-            UserQuit?.Invoke(this, e);
+            this.UserQuit?.Invoke(this, e);
         }
 
-    /*/ Private Methods /*/
-        void Client_ConnectCompleted(object sender, EventArgs e)
+    // Private
+        private void Client_ConnectCompleted(object sender, EventArgs e)
         {
-            Send($"NICK {nickname}\r\nUSER {username} 0 * :{username}\r\n");
+            this.Send($"NICK {this.NickName}\r\nUSER {this.Username} 0 * :{this.Username}\r\n");
         }
-        void Client_ConnectFailed(object sender, EventArgs e)
-        {
-            logger?.LogError("Connection failed");
-        }
-        void Client_Disconnected(object sender, EventArgs e)
-        {
 
-        }
-        void Client_ReceiveCompleted(object sender, ReceiveCompletedEventArgs e)
+        private void Client_ConnectFailed(object sender, EventArgs e)
         {
-            if (client == null) { return; }
+            this.logger?.LogError("Connection failed");
+        }
 
-            OnDataReceived(new DataReceivedArgs(e.Data));
-            HandleData(e.Data);
-        }
-        void Client_ReceiveFailed(object sender, SocketEventArgs e)
+        private void Client_Disconnected(object sender, EventArgs e)
         {
-            logger?.LogError($"Receive failed ({e.Error})");
         }
-        void Client_SendCompleted(object sender, EventArgs e)
-        {
 
-        }
-        void Client_SendFailed(object sender, SocketEventArgs e)
+        private void Client_ReceiveCompleted(object sender, ReceiveCompletedEventArgs e)
         {
-            logger?.LogError($"Send failed ({e.Error})");
+            if (this.client == null)
+            {
+                return;
+            }
+
+            this.OnDataReceived(new DataReceivedArgs(e.Data));
+            this.HandleData(e.Data);
         }
-        Dictionary<char, Tuple<IrcChannelMode, bool, bool>> CompileChannelModeDictionary()
+
+        private void Client_ReceiveFailed(object sender, SocketEventArgs e)
+        {
+            this.logger?.LogError($"Receive failed ({e.Error})");
+        }
+
+        private void Client_SendCompleted(object sender, EventArgs e)
+        {
+        }
+
+        private void Client_SendFailed(object sender, SocketEventArgs e)
+        {
+            this.logger?.LogError($"Send failed ({e.Error})");
+        }
+
+        private Dictionary<char, Tuple<IrcChannelMode, bool, bool>> CompileChannelModeDictionary()
         {
             var result = new Dictionary<char, Tuple<IrcChannelMode, bool, bool>>
             {
@@ -301,7 +488,7 @@ namespace Juvo.Net.Irc
                 { 'v', Tuple.Create(IrcChannelMode.Voiced, true, true) }
             };
 
-            if (Network == IrcNetwork.Undernet)
+            if (this.Network == IrcNetwork.Undernet)
             {
                 result.Add('D', Tuple.Create(IrcChannelMode.DelayJoin, false, false));
                 result.Add('R', Tuple.Create(IrcChannelMode.Registered, false, false));
@@ -310,7 +497,8 @@ namespace Juvo.Net.Irc
 
             return result;
         }
-        Dictionary<char, IrcUserMode> CompileUserModeDictionary()
+
+        private Dictionary<char, IrcUserMode> CompileUserModeDictionary()
         {
             var result = new Dictionary<char, IrcUserMode>
             {
@@ -324,37 +512,42 @@ namespace Juvo.Net.Irc
                 { '0', IrcUserMode.OperatorLocal }
             };
 
-            if (Network == IrcNetwork.Undernet)
+            if (this.Network == IrcNetwork.Undernet)
             {
                 result.Add('x', IrcUserMode.HiddenHost);
             }
 
             return result;
         }
-        void HandleData(byte[] data)
+
+        private void HandleData(byte[] data)
         {
             string incoming = UTF8Encoding.UTF8.GetString(data);
-            dataBuffer.Append(incoming);
+            this.dataBuffer.Append(incoming);
 
-            while (dataBuffer.ToString().Contains("\r\n"))
+            while (this.dataBuffer.ToString().Contains("\r\n"))
             {
-                string temp = dataBuffer.ToString();
+                string temp = this.dataBuffer.ToString();
                 int rnIndex = temp.IndexOf("\r\n");
                 int length = temp.Length - (temp.Length - rnIndex);
 
                 string message = temp.Substring(0, length);
-                OnMessageReceived(new MessageReceivedArgs(message));
+                this.OnMessageReceived(new MessageReceivedArgs(message));
 
-                dataBuffer.Remove(0, length + 2);
+                this.dataBuffer.Remove(0, length + 2);
             }
         }
-        void HandleMessage(string message)
+
+        private void HandleMessage(string message)
         {
-            if (String.IsNullOrEmpty(message)) { return; }
+            if (string.IsNullOrEmpty(message))
+            {
+                return;
+            }
 
             if (message.StartsWith(":"))
             {
-                HandleReply(message);
+                this.HandleReply(message);
                 return;
             }
 
@@ -364,62 +557,87 @@ namespace Juvo.Net.Irc
                 case "NOTICE":
                     break;
                 case "PING":
-                    string pingSource = msgParts[1].Replace(":", "");
-                    Send("PONG {0}\r\n", pingSource);
+                    string pingSource = msgParts[1].Replace(":", string.Empty);
+                    this.Send("PONG {0}\r\n", pingSource);
                     break;
             }
         }
-        void HandleReply(string message)
+
+        private void HandleReply(string message)
         {
-            if (String.IsNullOrEmpty(message)) { return; }
+            if (string.IsNullOrEmpty(message))
+            {
+                return;
+            }
 
             var reply = new IrcReply(message);
             var cmd = reply.Command.ToUpperInvariant();
-            OnReplyReceived(reply);
+            this.OnReplyReceived(reply);
 
             switch (cmd)
             {
                 case "001":
                 {
-                    OnConnected(EventArgs.Empty);
-                } break;
+                    this.OnConnected(EventArgs.Empty);
+                    break;
+                }
+
                 case "396":
                 {
-                    //:<server> 396 enloco enloco.users.undernet.org :is now your hidden host
-                    OnHostHidden(new HostHiddenEventArgs(reply.Params[0]));
-                } break;
+                    // :<server> 396 enloco enloco.users.undernet.org :is now your hidden host
+                    this.OnHostHidden(new HostHiddenEventArgs(reply.Params[0]));
+                    break;
+                }
+
                 case "JOIN":
                 {
-                    //:<nick>!<user>@<host> JOIN <channel>
+                    // :<nick>!<user>@<host> JOIN <channel>
                     var user = new IrcUser(reply.Prefix);
                     var isOwned = false;
 
-                    if (user.Nickname == currentNickname)
+                    if (user.Nickname == this.currentNickname)
                     {
-                        currentChannels.Add(reply.Target);
+                        this.currentChannels.Add(reply.Target);
                         isOwned = true;
                     }
 
-                    OnChannelJoined(new ChannelUserEventArgs(reply.Target, user, isOwned));
-                } break;
+                    this.OnChannelJoined(new ChannelUserEventArgs(reply.Target, user, isOwned));
+                    break;
+                }
+
                 case "MODE":
                 {
-                    //USER MODE -> :n!u@h MODE <target> :[+]modes[-]modes
-
+                    // USER MODE -> :n!u@h MODE <target> :[+]modes[-]modes
                     if (reply.TargetIsUser)
                     {
-                        var add = "";
-                        var rem = "";
+                        var add = string.Empty;
+                        var rem = string.Empty;
                         var plus = true;
                         for (var x = 0; x < reply.Trailing.Length; ++x)
                         {
                             var ch = reply.Trailing[x];
-                            if (ch == '+') { plus = true; }
-                            else if (ch == '-') { plus = false; }
-                            else if (plus) { add += ch; }
-                            else if (!plus) { rem += ch; }
+                            if (ch == '+')
+                            {
+                                plus = true;
+                            }
+                            else if (ch == '-')
+                            {
+                                plus = false;
+                            }
+                            else if (plus)
+                            {
+                                add += ch;
+                            }
+                            else if (!plus)
+                            {
+                                rem += ch;
+                            }
                         }
-                        OnUserModeChanged(new UserModeChangedEventArgs(LookupUserModes(add), LookupUserModes(rem)));
+
+                        this.OnUserModeChanged(
+                            new UserModeChangedEventArgs(
+                                this.LookupUserModes(add),
+                                this.LookupUserModes(rem)));
                     }
                     else if (reply.TargetIsChannel)
                     {
@@ -436,8 +654,7 @@ namespace Juvo.Net.Irc
                                 continue;
                             }
 
-                            var mode = LookupChannelMode(ops[x]);
-                            //var cmv  = ;
+                            var mode = this.LookupChannelMode(ops[x]);
 
                             if (ctr == '+')
                             {
@@ -450,69 +667,60 @@ namespace Juvo.Net.Irc
                                 rem.Add(new IrcChannelModeValue(mode.Mode, val));
                             }
                         }
-                        OnChannelModeChanged(new ChannelModeChangedEventArgs(reply.Target, add, rem));
+
+                        this.OnChannelModeChanged(new ChannelModeChangedEventArgs(reply.Target, add, rem));
                     }
-                } break;
+
+                    break;
+                }
+
                 case "PART":
                 {
-                    //:<nick>!<user>@<host> PART <channel> :<message>
+                    // :<nick>!<user>@<host> PART <channel> :<message>
                     var user = new IrcUser(reply.Prefix);
                     var isOwned = false;
 
-                    if (user.Nickname == currentNickname)
+                    if (user.Nickname == this.currentNickname)
                     {
-                        currentChannels.Remove(reply.Target);
+                        this.currentChannels.Remove(reply.Target);
                         isOwned = true;
                     }
 
-                    OnChannelParted(new ChannelUserEventArgs(reply.Target, user, isOwned, reply.Trailing, IrcMessageType.None));
-                } break;
+                    this.OnChannelParted(new ChannelUserEventArgs(reply.Target, user, isOwned, reply.Trailing, IrcMessageType.None));
+                    break;
+                }
+
                 case "PRIVMSG":
                 case "NOTICE":
                 {
                     var user = new IrcUser(reply.Prefix);
-                    var isOwned = user.Nickname == currentNickname;
+                    var isOwned = user.Nickname == this.currentNickname;
                     var msgType = (cmd == "PRIVMSG") ? IrcMessageType.PrivateMessage : IrcMessageType.Notice;
 
                     if (reply.TargetIsChannel)
                     {
-                        OnChannelMessage(new ChannelUserEventArgs(
+                        this.OnChannelMessage(new ChannelUserEventArgs(
                             reply.Target, user, isOwned, reply.Trailing, msgType));
                     }
                     else
                     {
-                        OnPrivateMessage(new UserEventArgs(
+                        this.OnPrivateMessage(new UserEventArgs(
                             user, reply.Trailing, isOwned, msgType));
                     }
-                } break;
+
+                    break;
+                }
+
                 case "QUIT":
                 {
-                    //:<nick>!<user>@<host> QUIT :<message>
+                    // :<nick>!<user>@<host> QUIT :<message>
                     var user = new IrcUser(reply.Prefix);
-                    var isOwned = user.Nickname == currentNickname;
+                    var isOwned = user.Nickname == this.currentNickname;
 
-                    OnUserQuit(new UserEventArgs(user, reply.Trailing, isOwned));
-                } break;
+                    this.OnUserQuit(new UserEventArgs(user, reply.Trailing, isOwned));
+                    break;
+                }
             }
-        }
-
-    /*/ Static Properties /*/
-        static public readonly Dictionary<string, IrcNetwork> IrcNetworkLookup;
-
-    /*/ Static Methods /*/
-        static IrcClient()
-        {
-            IrcNetworkLookup = new Dictionary<string, IrcNetwork>
-            {
-                { "undernet", IrcNetwork.Undernet }
-            };
-        }
-        static public IrcNetwork LookupNetwork(string network)
-        {
-            network = (string.IsNullOrEmpty(network)) ? "" : network.ToLowerInvariant();
-            return (IrcNetworkLookup.ContainsKey(network))
-                    ? IrcNetworkLookup[network]
-                    : IrcNetwork.Unknown;
         }
     }
 }

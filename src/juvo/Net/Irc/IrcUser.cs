@@ -1,43 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿// <copyright file="IrcUser.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
 
-namespace Juvo.Net.Irc
+namespace JuvoProcess.Net.Irc
 {
+    /// <summary>
+    /// IRC user.
+    /// </summary>
     public class IrcUser
     {
-        string _host;
-        string _nickname;
-        string _username;
+/*/ Constructors /*/
 
-        public string Host
-        {
-            get { return _host; }
-        }
-        public string Nickname
-        {
-            get { return _nickname; }
-        }
-        public string Username
-        {
-            get { return _username; }
-        }
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IrcUser"/> class.
+        /// </summary>
+        /// <param name="identifier">User identifier.</param>
         public IrcUser(string identifier)
         {
             if (identifier.Contains("!") && identifier.Contains("@"))
             {
                 string[] parts = identifier.Split('@');
                 string[] userParts = parts[0].Split('!');
-                _host = parts[1];
-                _nickname = userParts[0];
-                _username = userParts[1];
+                this.Host = parts[1];
+                this.Nickname = userParts[0];
+                this.Username = userParts[1];
             }
             else
             {
-                _nickname = identifier;
+                this.Nickname = identifier;
             }
         }
+
+/*/ Properties /*/
+
+        /// <summary>
+        /// Gets or sets the host.
+        /// </summary>
+        public string Host { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the nickname.
+        /// </summary>
+        public string Nickname { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the username.
+        /// </summary>
+        public string Username { get; protected set; }
     }
 }

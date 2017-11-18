@@ -1,48 +1,99 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿// <copyright file="IrcReply.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
 
-namespace Juvo.Net.Irc
+namespace JuvoProcess.Net.Irc
 {
+    using System;
+    using System.Linq;
+
+    /// <summary>
+    /// IRC reply.
+    /// </summary>
     public class IrcReply
     {
-        string _command;
-        string[] _params;
-        string _prefix;
-        string _target;
-        string _trailing;
+/*/ Constructors /*/
 
-        public string Command { get { return _command; } }
-        public string[] Params { get { return _params; } }
-        public string Prefix { get { return _prefix; } }
-        public string Target { get { return _target; } }
-        public bool TargetIsChannel { get { return !String.IsNullOrEmpty(_target) && IrcClient.ChannelIdents.Contains(_target[0]); } }
-        public bool TargetIsUser { get { return !TargetIsChannel; } }
-        public string Trailing { get { return _trailing; } }
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IrcReply"/> class.
+        /// </summary>
+        /// <param name="rawMessage">Raw message.</param>
         public IrcReply(string rawMessage)
         {
-            string[] sects = rawMessage.Split(new char[] { ':' }, 3);
             // ignore sects[0] since it should just be empty
+            string[] sects = rawMessage.Split(new char[] { ':' }, 3);
 
             if (sects.Length > 1)
             {
                 string[] parts = sects[1].Split(' ');
 
-                if (parts.Length > 0) { _prefix = parts[0]; }
-                if (parts.Length > 1) { _command = parts[1]; }
-                if (parts.Length > 2) { _target = parts[2]; }
+                if (parts.Length > 0)
+                {
+                    this.Prefix = parts[0];
+                }
+
+                if (parts.Length > 1)
+                {
+                    this.Command = parts[1];
+                }
+
+                if (parts.Length > 2)
+                {
+                    this.Target = parts[2];
+                }
+
                 if (parts.Length > 3)
                 {
-                    _params = new string[parts.Length - 3];
+                    this.Params = new string[parts.Length - 3];
                     for (int x = 3; x < parts.Length; ++x)
-                    { _params[x - 3] = parts[x]; }
+                    {
+                        this.Params[x - 3] = parts[x];
+                    }
                 }
             }
 
             if (sects.Length > 2)
-            { _trailing = sects[2]; }
+            {
+                this.Trailing = sects[2];
+            }
         }
+
+/*/ Properties /*/
+
+        /// <summary>
+        /// Gets or sets the command.
+        /// </summary>
+        public string Command { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the params.
+        /// </summary>
+        public string[] Params { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the prefix.
+        /// </summary>
+        public string Prefix { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the target.
+        /// </summary>
+        public string Target { get; protected set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the target is a channel.
+        /// </summary>
+        public bool TargetIsChannel
+            => !string.IsNullOrEmpty(this.Target) && IrcClient.ChannelIdents.Contains(this.Target[0]);
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the target is a channel.
+        /// </summary>
+        public bool TargetIsUser { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets trailing text.
+        /// </summary>
+        public string Trailing { get; protected set; }
     }
 }
