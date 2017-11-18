@@ -52,14 +52,11 @@ namespace JuvoProcess
             this.commandToken = config.CommandToken ?? DefaultCommandToken;
 
             this.client = new IrcClient(IrcClient.LookupNetwork(this.config.Network), loggerFactory);
+            this.client.NickName = config.Nickname ?? throw new Exception("Nickname is missing from configuration");
+            this.client.NickNameAlt = config.NicknameAlt ?? $"{config.Nickname}-";
+            this.client.RealName = config.RealName ?? string.Empty;
+            this.client.Username = config.Ident ?? config.Nickname.ToLowerInvariant();
 
-            // TODO: FIX!
-            // {
-            //    NickName = config.Nickname ?? throw new Exception("Nickname is missing from configuration"),
-            //    NickNameAlt = config.NicknameAlt ?? throw new Exception("NicknameAlt is missing from configuration"),
-            //    RealName = config.RealName ?? "",
-            //    Username = config.Ident ?? config.Nickname
-            // };
             this.client.ChannelJoined += this.Client_ChannelJoined;
             this.client.ChannelMessage += this.Client_ChannelMessage;
             this.client.ChannelModeChanged += this.Client_ChannelModeChanged;
