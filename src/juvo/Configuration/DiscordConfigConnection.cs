@@ -13,5 +13,10 @@ namespace JuvoProcess.Configuration
         /// Gets or sets the authentication token.
         /// </summary>
         public string AuthToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the connection is enabled.
+        /// </summary>
+        public bool Enabled { get; set; }
     }
 }

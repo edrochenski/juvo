@@ -15,6 +15,11 @@ namespace JuvoProcess.Configuration
         public string CommandToken { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the connection is enabled.
+        /// </summary>
+        public bool Enabled { get; set; }
+
+        /// <summary>
         /// Gets or sets the name.
         /// </summary>
         public string Name { get; set; }

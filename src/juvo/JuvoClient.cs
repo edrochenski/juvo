@@ -8,13 +8,11 @@ namespace JuvoProcess
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
-    using System.Net.Http;
+    using System.Linq;
     using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
-    using AngleSharp.Parser.Html;
     using JuvoProcess.Configuration;
-    using JuvoProcess.Net.Discord;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
 
@@ -321,7 +319,7 @@ namespace JuvoProcess
         {
             this.discordBots = new List<DiscordBot>();
 
-            foreach (var disc in this.config?.Discord.Connections)
+            foreach (var disc in this.config?.Discord.Connections.Where(x => x.Enabled))
             {
                 this.discordBots.Add(new DiscordBot(this, disc, this.loggerFactory));
             }
@@ -336,7 +334,7 @@ namespace JuvoProcess
         {
             this.ircBots = new List<IrcBot>(0);
 
-            foreach (var irc in this.config?.Irc?.Connections)
+            foreach (var irc in this.config?.Irc?.Connections.Where(x => x.Enabled))
             {
                 this.ircBots.Add(new IrcBot(this, irc, this.loggerFactory));
             }
@@ -351,7 +349,7 @@ namespace JuvoProcess
         {
             this.slackBots = new List<SlackBot>();
 
-            foreach (var slack in this.config?.Slack.Connections)
+            foreach (var slack in this.config?.Slack.Connections.Where(x => x.Enabled))
             {
                 this.slackBots.Add(new SlackBot(this, slack, this.loggerFactory));
             }
