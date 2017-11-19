@@ -25,10 +25,7 @@ namespace JuvoProcess
         /// </summary>
         /// <param name="host">Host client.</param>
         /// <param name="config">Discord config file.</param>
-        /// <param name="loggerFactory">Logger factory.</param>
-        public DiscordBot(
-            JuvoClient host,
-            DiscordConfigConnection config)
+        public DiscordBot(JuvoClient host, DiscordConfigConnection config)
         {
             this.discordClient = new DiscordClient(
                 new ClientWebSocketProxy(),

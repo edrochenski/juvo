@@ -4,8 +4,11 @@
 
 namespace JuvoProcess
 {
+    using System.IO;
+    using System.Reflection;
     using System.Threading;
     using log4net;
+    using log4net.Config;
 
     /// <summary>
     /// Main class for the assembly, contains entry point.
@@ -20,6 +23,9 @@ namespace JuvoProcess
 /*/ Constructors /*/
         static Program()
         {
+            XmlConfigurator.ConfigureAndWatch(
+                LogManager.GetRepository(Assembly.GetEntryAssembly()),
+                new FileInfo("log4net.config"));
             Log = LogManager.GetLogger(typeof(Program));
             ResetEvent = new ManualResetEvent(false);
             Juvo = new JuvoClient(ResetEvent);
