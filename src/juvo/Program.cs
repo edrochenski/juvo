@@ -5,7 +5,7 @@
 namespace JuvoProcess
 {
     using System.Threading;
-    using Microsoft.Extensions.Logging;
+    using log4net;
 
     /// <summary>
     /// Main class for the assembly, contains entry point.
@@ -13,26 +13,22 @@ namespace JuvoProcess
     public class Program
     {
 /*/ Fields /*/
+        private static readonly ILog Log;
         private static readonly JuvoClient Juvo;
-        private static readonly ILoggerFactory LoggerFactory;
-        private static readonly ILogger<Program> Logger;
         private static readonly ManualResetEvent ResetEvent;
 
 /*/ Constructors /*/
         static Program()
         {
-            LoggerFactory = new LoggerFactory()
-                .AddConsole(LogLevel.Trace)
-                .AddDebug(LogLevel.Trace);
-            Logger = LoggerFactory.CreateLogger<Program>();
+            Log = LogManager.GetLogger(typeof(Program));
             ResetEvent = new ManualResetEvent(false);
-            Juvo = new JuvoClient(LoggerFactory, ResetEvent);
+            Juvo = new JuvoClient(ResetEvent);
         }
 
 /*/ Methods /*/
         private static void Main(string[] args)
         {
-            Logger.LogInformation("Attempting to launch Juvo...");
+            Log.Info("Attempting to launch Juvo...");
             Juvo.Run().Wait();
 
             WaitHandle.WaitAll(new[] { ResetEvent });

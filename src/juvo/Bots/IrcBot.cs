@@ -11,7 +11,7 @@ namespace JuvoProcess
     using System.Threading.Tasks;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net.Irc;
-    using Microsoft.Extensions.Logging;
+    using log4net;
 
     /// <summary>
     /// IRC bot.
@@ -22,13 +22,11 @@ namespace JuvoProcess
         private const string DefaultCommandToken = ".";
 
 /*/ Fields /*/
-        private readonly ILoggerFactory loggerFactory;
-
         private string commandToken;
         private IrcConfigConnection config;
         private IrcClient client;
         private JuvoClient host;
-        private ILogger logger;
+        private ILog log;
 
 /*/ Constructors /*/
 
@@ -37,21 +35,14 @@ namespace JuvoProcess
         /// </summary>
         /// <param name="host">Host of the juvo client.</param>
         /// <param name="config">IRC configuration.</param>
-        /// <param name="loggerFactory">Logger factory.</param>
-        public IrcBot(JuvoClient host, IrcConfigConnection config, ILoggerFactory loggerFactory = null)
+        public IrcBot(JuvoClient host, IrcConfigConnection config)
         {
+            this.commandToken = config.CommandToken ?? DefaultCommandToken;
             this.config = config;
             this.host = host;
-            this.loggerFactory = loggerFactory;
+            this.log = LogManager.GetLogger(typeof(IrcBot));
 
-            if (loggerFactory != null)
-            {
-                this.logger = loggerFactory.CreateLogger<IrcBot>();
-            }
-
-            this.commandToken = config.CommandToken ?? DefaultCommandToken;
-
-            this.client = new IrcClient(IrcClient.LookupNetwork(this.config.Network), loggerFactory)
+            this.client = new IrcClient(IrcClient.LookupNetwork(this.config.Network))
             {
                 NickName = config.Nickname ?? throw new Exception("Nickname is missing from configuration"),
                 NickNameAlt = config.NicknameAlt ?? $"{config.Nickname}-",
@@ -91,7 +82,7 @@ namespace JuvoProcess
         /// </summary>
         public void Connect()
         {
-            this.logger?.LogTrace("Connecting");
+            this.log.Debug("Connecting");
             this.client.Connect(this.config.Servers.First().Host, this.config.Servers.First().Port);
         }
 
@@ -115,14 +106,14 @@ namespace JuvoProcess
         {
             if (this.IsAuthenticated)
             {
-                this.logger?.LogError("Authenticate(): Bot has already authenticated");
+                this.log.Error("Authenticate(): Bot has already authenticated");
                 return;
             }
             else if (string.IsNullOrEmpty(this.config.User)
                 || string.IsNullOrEmpty(this.config.Pass)
                 || string.IsNullOrEmpty(this.config.Network))
             {
-                this.logger?.LogError("Authenticate(): config missing user, pass, or network");
+                this.log.Error("Authenticate(): config missing user, pass, or network");
                 return;
             }
 
@@ -130,7 +121,7 @@ namespace JuvoProcess
             {
                 case IrcNetwork.Undernet:
                 {
-                    this.logger?.LogInformation("Authenticating with X@ on undernet...");
+                    this.log.Info("Authenticating with X@ on undernet...");
                     this.client.SendMessage(
                         $"x@channels.undernet.org", $"login {this.config.User} {this.config.Pass}");
                     break;
@@ -167,7 +158,7 @@ namespace JuvoProcess
 
                 if (keys == null || chans.Length == keys.Length)
                 {
-                    this.logger?.LogTrace($"Joining {string.Join(", ", chans)}");
+                    this.log.Debug($"Joining {string.Join(", ", chans)}");
                     this.client.Join(chans, keys);
                 }
             }
@@ -219,15 +210,15 @@ namespace JuvoProcess
                     //     logger?.LogTrace($"CommandPowershell(): Output: {e.Data}");
                     //     client.SendMessage("#bytedown", $"output: {e.Data}");
                     // };
-                    this.logger?.LogDebug($"CommandPowershell(): Starting with args [{args}]");
+                    this.log.Debug($"CommandPowershell(): Starting with args [{args}]");
                     if (!proc.Start())
                     {
-                        this.logger?.LogWarning($"CommandPowershell(): Trying to start a process that may be already started?");
+                        this.log.Debug($"CommandPowershell(): Trying to start a process that may be already started?");
                         this.client.SendMessage("#bytedown", $"not started: is something already running?");
                     }
                     else
                     {
-                        this.logger?.LogDebug($"CommandPowershell(): Process running, id: {proc.Id}");
+                        this.log.Debug($"CommandPowershell(): Process running, id: {proc.Id}");
 
                         var error = proc.StandardError.ReadToEnd();
                         var output = proc.StandardOutput.ReadToEnd();
@@ -235,28 +226,28 @@ namespace JuvoProcess
                         {
                             if (proc.ExitCode != 0)
                             {
-                                this.logger?.LogTrace($"CommandPowershell(): Error: {error}");
+                                this.log.Debug($"CommandPowershell(): Error: {error}");
                                 this.client.SendMessage("#bytedown", $"Error: {error}");
                             }
                             else
                             {
                                 if (!string.IsNullOrEmpty(output))
                                 {
-                                    this.logger?.LogTrace($"CommandPowershell(): Output: {output.Trim()}");
+                                    this.log.Debug($"CommandPowershell(): Output: {output.Trim()}");
                                     this.client.SendMessage("#bytedown", $"Output: {output.Trim()}");
                                 }
                             }
                         }
                         else
                         {
-                            this.logger?.LogWarning("CommandPowershell(): Timed out");
+                            this.log.Debug("CommandPowershell(): Timed out");
                             this.client.SendMessage("#bytedown", "Output: Timed out");
                         }
                     }
                 }
                 catch (Exception exc)
                 {
-                    this.logger?.LogError($"CommandPowershell(): {exc.Message}");
+                    this.log.Error($"Exception running Powershell: {exc.Message}", exc);
                     this.client.SendMessage("#bytedown", $"exception: {exc.Message}");
                 }
             }
@@ -310,12 +301,12 @@ namespace JuvoProcess
     // Private
         private void Client_ChannelJoined(object sender, ChannelUserEventArgs e)
         {
-            this.logger?.LogInformation($"{e.User.Nickname} joined {e.Channel}");
+            this.log.Info($"{e.User.Nickname} joined {e.Channel}");
         }
 
         private void Client_ChannelMessage(object sender, ChannelUserEventArgs e)
         {
-            this.logger?.LogDebug($"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
+            this.log.Debug($"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
             if (e.Message.StartsWith(this.config.CommandToken))
             {
                 this.host.QueueCommand(new IrcBotCommand
@@ -387,21 +378,21 @@ namespace JuvoProcess
                 message.Append("]");
             }
 
-            this.logger?.LogInformation(message.ToString());
+            this.log.Info(message.ToString());
         }
 
         private void Client_ChannelParted(object sender, ChannelUserEventArgs e)
         {
-            this.logger?.LogInformation($"{e.User.Nickname} parted {e.Channel}");
+            this.log.Info($"{e.User.Nickname} parted {e.Channel}");
         }
 
         private void Client_Connected(object sender, EventArgs e)
         {
-            this.logger?.LogInformation($"Connected to server");
+            this.log.Info($"Connected to server");
 
             if (!string.IsNullOrEmpty(this.config.UserMode))
             {
-                this.logger?.LogInformation($"Requeting mode: +{this.config.UserMode}");
+                this.log.Info($"Requeting mode: +{this.config.UserMode}");
                 this.client.Send($"MODE {this.client.NickName} +{this.config.UserMode}{IrcClient.CrLf}");
             }
 
@@ -419,12 +410,12 @@ namespace JuvoProcess
 
         private void Client_Disconnected(object sender, EventArgs e)
         {
-            this.logger?.LogInformation($"Disconnected from server");
+            this.log.Info($"Disconnected from server");
         }
 
         private void Client_HostHidden(object sender, HostHiddenEventArgs e)
         {
-            this.logger?.LogInformation($"Real host hidden using '{e.Host}'");
+            this.log.Info($"Real host hidden using '{e.Host}'");
             if (this.config.Network.ToLowerInvariant() == "undernet")
             {
                 this.IsAuthenticated = true;
@@ -434,23 +425,23 @@ namespace JuvoProcess
 
         private void Client_MessageReceived(object sender, MessageReceivedArgs e)
         {
-            this.logger?.LogTrace($"MSG: {e.Message}");
+            this.log.Debug($"MSG: {e.Message}");
         }
 
         private void Client_PrivateMessage(object sender, UserEventArgs e)
         {
-            this.logger?.LogDebug($"<PRIVMSG\\{e.User.Nickname}> {e.Message}");
+            this.log.Debug($"<PRIVMSG\\{e.User.Nickname}> {e.Message}");
         }
 
         private void Client_UserModeChanged(object sender, UserModeChangedEventArgs e)
         {
-            this.logger?.LogInformation(
+            this.log.Info(
                 $"User mode changed: +[{string.Join(" ", e.Added)}] -[{string.Join(" ", e.Removed)}]");
         }
 
         private void Client_UserQuit(object sender, UserEventArgs e)
         {
-            this.logger?.LogDebug($"{e.User.Nickname} quit");
+            this.log.Debug($"{e.User.Nickname} quit");
         }
 
         private void JoinAllChannels()

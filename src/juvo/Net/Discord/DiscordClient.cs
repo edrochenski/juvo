@@ -10,7 +10,7 @@ namespace JuvoProcess.Net.Discord
     using System.Threading;
     using System.Threading.Tasks;
     using JuvoProcess.Net.Discord.Model;
-    using Microsoft.Extensions.Logging;
+    using log4net;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -31,7 +31,7 @@ namespace JuvoProcess.Net.Discord
 /*/ Fields /*/
         private readonly CancellationToken cancelToken;
         private readonly IHttpClient httpClient;
-        private readonly ILogger<DiscordClient> logger;
+        private readonly ILog log;
         private readonly IClientWebSocket socket;
         private int? lastSequence;
 
@@ -43,16 +43,14 @@ namespace JuvoProcess.Net.Discord
         /// <param name="clientWebSocket">Client web socket to use.</param>
         /// <param name="httpClient">Http client to use.</param>
         /// <param name="options">Options for the discord client.</param>
-        /// <param name="loggerFactory">Logger factory.</param>
         public DiscordClient(
             IClientWebSocket clientWebSocket,
             IHttpClient httpClient,
-            DiscordClientOptions options = null,
-            ILoggerFactory loggerFactory = null)
+            DiscordClientOptions options = null)
         {
             this.cancelToken = new CancellationToken(false);
             this.httpClient = httpClient;
-            this.logger = loggerFactory?.CreateLogger<DiscordClient>();
+            this.log = LogManager.GetLogger(typeof(DiscordClient));
             this.socket = clientWebSocket;
             this.Options = options ?? new DiscordClientOptions();
 
@@ -115,10 +113,10 @@ namespace JuvoProcess.Net.Discord
 
             var wssUrl = this.BuildWssUrl();
 
-            this.logger?.LogInformation($"Connecting to {wssUrl}");
+            this.log.Info($"Connecting to {wssUrl}");
             await this.socket.ConnectAsync(new Uri(wssUrl), this.cancelToken);
 
-            this.logger?.LogInformation("Connected to Discord, starting listener...");
+            this.log.Info("Connected to Discord, starting listener...");
             this.Listen();
         }
 
@@ -132,6 +130,7 @@ namespace JuvoProcess.Net.Discord
         }
 
     // Private
+    // |
         private string BuildWssUrl()
         {
             return $"{this.Options.GatewayUri}/?v={this.Options.ApiVersion}&" +
@@ -140,7 +139,7 @@ namespace JuvoProcess.Net.Discord
 
         private async Task GetGateway()
         {
-            this.logger?.LogTrace(
+            this.log.Debug(
                 $"Retrieving gateway from {this.httpClient.BaseAddress}{Discord.ApiPaths.Gateway}");
             var response = await this.httpClient.GetStringAsync(Discord.ApiPaths.Gateway);
             this.Options.GatewayUri = new Uri(JsonConvert.DeserializeObject<GatewayResponse>(response)?.Url);
@@ -148,7 +147,7 @@ namespace JuvoProcess.Net.Discord
 
         private async Task GetGatewayBot()
         {
-            this.logger?.LogTrace(
+            this.log.Debug(
                 $"Retrieving bot-gateway from {this.httpClient.BaseAddress}{Discord.ApiPaths.GatewayBot}");
             var json = await this.httpClient.GetStringAsync(Discord.ApiPaths.GatewayBot);
             var resp = JsonConvert.DeserializeObject<GatewayBotResponse>(json);
@@ -158,7 +157,6 @@ namespace JuvoProcess.Net.Discord
 
         private void HandleMessage(string message)
         {
-            this.logger.LogDebug("HandleMessage");
             var msg = JObject.Parse(message);
             switch ((int)msg["op"])
             {
@@ -166,7 +164,7 @@ namespace JuvoProcess.Net.Discord
                     this.OnHelloResponseReceived(msg.ToObject<HelloResponse>());
                     break;
                 default:
-                    this.logger?.LogTrace(
+                    this.log.Warn(
                         msg.ToString().Replace("\n", string.Empty).Replace("\r", string.Empty));
                     break;
             }
@@ -187,11 +185,11 @@ namespace JuvoProcess.Net.Discord
                     {
                         result = await this.socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                         message.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
-                        this.logger.LogDebug("Building message...");
+                        this.log.Debug("Building message...");
                     }
                     while (!result.EndOfMessage);
 
-                    this.logger.LogDebug($"Msg: {message.Length}: {message}");
+                    this.log.Debug($"Msg: {message.Length}: {message}");
 
                     if (message.Length > 0)
                     {
@@ -199,21 +197,19 @@ namespace JuvoProcess.Net.Discord
                     }
                     else
                     {
-                        this.logger.LogInformation("Connection closed!");
+                        this.log.Info("Connection closed!");
                     }
                 }
             }
             catch (Exception exc)
             {
-                this.logger?.LogError(exc.Message);
+                this.log.Error(exc.Message);
                 throw;
             }
         }
 
         private void OnHelloResponseReceived(HelloResponse response)
         {
-            this.logger.LogDebug("OnHelloResponseReceived");
-
             this.lastSequence = response.Sequence;
             this.HeartbeatInterval = response.Data.HeartbeatInterval;
 
@@ -264,8 +260,8 @@ namespace JuvoProcess.Net.Discord
             var encoded = Encoding.UTF8.GetBytes(json);
             var buffer = new ArraySegment<byte>(encoded, 0, encoded.Length);
 
-            this.logger.LogInformation("Identifying...");
-            this.logger.LogTrace($"Using: {json}");
+            this.log.Info("Identifying...");
+            this.log.Debug($"Using: {json}");
             this.socket.SendAsync(buffer, WebSocketMessageType.Text, true, this.cancelToken).Wait();
 
             this.HelloResponseReceived?.Invoke(this, response);

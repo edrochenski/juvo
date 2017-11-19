@@ -9,7 +9,6 @@ namespace JuvoProcess
     using JuvoProcess.Configuration;
     using JuvoProcess.Net;
     using JuvoProcess.Net.Discord;
-    using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// Discord bot.
@@ -29,14 +28,12 @@ namespace JuvoProcess
         /// <param name="loggerFactory">Logger factory.</param>
         public DiscordBot(
             JuvoClient host,
-            DiscordConfigConnection config,
-            ILoggerFactory loggerFactory = null)
+            DiscordConfigConnection config)
         {
             this.discordClient = new DiscordClient(
                 new ClientWebSocketProxy(),
                 new HttpClientProxy(),
-                new DiscordClientOptions { AuthToken = config.AuthToken, IsBot = true },
-                loggerFactory);
+                new DiscordClientOptions { AuthToken = config.AuthToken, IsBot = true });
         }
 
 /*/ Properties /*/

@@ -10,7 +10,7 @@ namespace JuvoProcess
     using BytedownSoftware.Lib.Net.Slack;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net.Slack;
-    using Microsoft.Extensions.Logging;
+    using log4net;
 
     /// <summary>
     /// Slack bot.
@@ -21,7 +21,7 @@ namespace JuvoProcess
         private readonly SlackConfigConnection config;
         private readonly string[] greetings = { "Hey there {0}!", "sup {0}! How's it goin?" };
         private readonly JuvoClient host;
-        private readonly ILogger<SlackBot> logger;
+        private readonly ILog log;
         private readonly Random random;
         private readonly SlackClient slackClient;
 
@@ -32,22 +32,17 @@ namespace JuvoProcess
         /// </summary>
         /// <param name="host">Host client.</param>
         /// <param name="config">Slack configuration.</param>
-        /// <param name="loggerFactory">Logger factory.</param>
-        public SlackBot(JuvoClient host, SlackConfigConnection config, ILoggerFactory loggerFactory = null)
+        public SlackBot(JuvoClient host, SlackConfigConnection config)
         {
             Debug.Assert(config != null, "config == null");
 
             this.config = config;
             this.host = host;
+            this.log = LogManager.GetLogger(typeof(SlackBot));
 
             this.random = new Random(DateTime.Now.Millisecond * DateTime.Now.Second);
-            this.slackClient = new SlackClient(config.Token, loggerFactory);
+            this.slackClient = new SlackClient(config.Token);
             this.slackClient.MessageReceived += this.SlackClient_MessageReceived;
-
-            if (loggerFactory != null)
-            {
-                this.logger = loggerFactory.CreateLogger<SlackBot>();
-            }
         }
 
 /*/ Properties /*/

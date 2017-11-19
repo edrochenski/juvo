@@ -13,7 +13,7 @@ namespace JuvoProcess
     using System.Threading;
     using System.Threading.Tasks;
     using JuvoProcess.Configuration;
-    using Microsoft.Extensions.Logging;
+    using log4net;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -28,8 +28,7 @@ namespace JuvoProcess
 /*/ Fields /*/
         private readonly Queue<IBotCommand> commandQueue;
         private readonly Timer commandTimer;
-        private readonly ILoggerFactory loggerFactory;
-        private readonly ILogger<JuvoClient> logger;
+        private readonly ILog log;
         private readonly ManualResetEvent resetEvent;
         private readonly SystemInfo sysInfo;
 
@@ -44,25 +43,14 @@ namespace JuvoProcess
         /// <summary>
         /// Initializes a new instance of the <see cref="JuvoClient"/> class.
         /// </summary>
-        /// <param name="loggerFactory">Logger factory object to create logger.</param>
-        public JuvoClient(ILoggerFactory loggerFactory)
-            : this(loggerFactory, null)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JuvoClient"/> class.
-        /// </summary>
-        /// <param name="loggerFactory">Logger factory object to create logger.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
-        public JuvoClient(ILoggerFactory loggerFactory, ManualResetEvent resetEvent)
+        public JuvoClient(ManualResetEvent resetEvent = null)
         {
-            this.loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
             this.resetEvent = resetEvent;
 
             this.commandQueue = new Queue<IBotCommand>();
             this.commandTimer = new Timer(this.CommandTimerTick, null, TimerTickRate, TimerTickRate);
-            this.logger = loggerFactory.CreateLogger<JuvoClient>();
+            this.log = LogManager.GetLogger(typeof(JuvoClient));
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
             this.sysInfo = GetSystemInfo();
@@ -141,7 +129,7 @@ namespace JuvoProcess
             Debug.Assert(!string.IsNullOrEmpty(cmd.RequestText), "cmd.RequestText != null/empty");
 
             this.commandQueue.Enqueue(cmd);
-            this.logger?.LogInformation("Queued command");
+            this.log.Info("Queued command");
         }
 
         /// <summary>
@@ -150,20 +138,20 @@ namespace JuvoProcess
         /// <returns>Result of the call.</returns>
         public async Task<int> Run()
         {
-            this.logger.LogInformation("Gathering system information");
+            this.log.Info("Gathering system information");
             GetSystemInfo();
 
-            this.logger.LogInformation("Creating any missing resources");
+            this.log.Info("Creating any missing resources");
             this.CreateResources();
 
-            this.logger.LogInformation("Loading configuration file");
+            this.log.Info("Loading configuration file");
             this.LoadConfig();
 
             await this.StartDiscordBots();
             await this.StartIrcBots();
             await this.StartSlackBots();
 
-            this.logger.LogInformation("Juvo is now running");
+            this.log.Info("Juvo is now running");
             this.State = JuvoState.Running;
 
             return await Task.FromResult(0);
@@ -281,7 +269,7 @@ namespace JuvoProcess
             var file = Path.Combine(this.sysInfo.AppDataPath.FullName, ConfigFileName);
             if (File.Exists(file))
             {
-                this.logger.LogInformation("Loading configuration");
+                this.log.Info("Loading configuration");
                 var json = File.ReadAllText(file);
                 this.config = JsonConvert.DeserializeObject<Config>(json);
             }
@@ -321,7 +309,7 @@ namespace JuvoProcess
 
             foreach (var disc in this.config?.Discord.Connections.Where(x => x.Enabled))
             {
-                this.discordBots.Add(new DiscordBot(this, disc, this.loggerFactory));
+                this.discordBots.Add(new DiscordBot(this, disc));
             }
 
             foreach (var bot in this.discordBots)
@@ -336,7 +324,7 @@ namespace JuvoProcess
 
             foreach (var irc in this.config?.Irc?.Connections.Where(x => x.Enabled))
             {
-                this.ircBots.Add(new IrcBot(this, irc, this.loggerFactory));
+                this.ircBots.Add(new IrcBot(this, irc));
             }
 
             // TODO: Connect async?
@@ -351,7 +339,7 @@ namespace JuvoProcess
 
             foreach (var slack in this.config?.Slack.Connections.Where(x => x.Enabled))
             {
-                this.slackBots.Add(new SlackBot(this, slack, this.loggerFactory));
+                this.slackBots.Add(new SlackBot(this, slack));
             }
 
             foreach (var bot in this.slackBots)

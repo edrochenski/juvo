@@ -9,7 +9,7 @@ namespace JuvoProcess.Net.Irc
     using System.Diagnostics;
     using System.Linq;
     using System.Text;
-    using Microsoft.Extensions.Logging;
+    using log4net;
 
     /// <summary>
     /// IRC client.
@@ -37,8 +37,7 @@ namespace JuvoProcess.Net.Irc
 /*/ Fields /*/
         private static readonly Dictionary<string, IrcNetwork> IrcNetworkLookup;
         private readonly Dictionary<char, Tuple<IrcChannelMode, bool, bool>> chanModeDict;
-        private readonly ILogger logger;
-        private readonly ILoggerFactory loggerFactory;
+        private readonly ILog log;
         private readonly Dictionary<char, IrcUserMode> userModeDict;
 
         private SocketClient client;
@@ -60,18 +59,8 @@ namespace JuvoProcess.Net.Irc
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcClient"/> class.
         /// </summary>
-        /// <param name="loggerFactory">LoggerFactory to create log.</param>
-        public IrcClient(ILoggerFactory loggerFactory = null)
-            : this(IrcNetwork.Unknown, loggerFactory)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IrcClient"/> class.
-        /// </summary>
         /// <param name="network">Network to connect to.</param>
-        /// <param name="loggerFactory">LoggerFactory to create log.</param>
-        public IrcClient(IrcNetwork network, ILoggerFactory loggerFactory = null)
+        public IrcClient(IrcNetwork network = IrcNetwork.Unknown)
         {
             this.client = new SocketClient();
             this.client.ConnectCompleted += this.Client_ConnectCompleted;
@@ -84,15 +73,8 @@ namespace JuvoProcess.Net.Irc
 
             this.dataBuffer = new StringBuilder();
             this.currentChannels = new List<string>(0);
-
+            this.log = LogManager.GetLogger(typeof(IrcClient));
             this.Network = network;
-
-            this.loggerFactory = loggerFactory;
-            if (this.loggerFactory != null)
-            {
-                this.logger = this.loggerFactory.CreateLogger<IrcClient>();
-            }
-
             this.chanModeDict = this.CompileChannelModeDictionary();
             this.userModeDict = this.CompileUserModeDictionary();
         }
@@ -188,7 +170,7 @@ namespace JuvoProcess.Net.Irc
             this.serverHost = serverHost;
             this.serverPort = serverPort;
 
-            this.logger?.LogInformation($"Attempting to connect to {serverHost} on port {serverPort}");
+            this.log.Info($"Attempting to connect to {serverHost} on port {serverPort}");
 
             this.client.Connect(this.serverHost, this.serverPort);
         }
@@ -438,7 +420,7 @@ namespace JuvoProcess.Net.Irc
 
         private void Client_ConnectFailed(object sender, EventArgs e)
         {
-            this.logger?.LogError("Connection failed");
+            this.log.Error("Connection failed");
         }
 
         private void Client_Disconnected(object sender, EventArgs e)
@@ -458,7 +440,7 @@ namespace JuvoProcess.Net.Irc
 
         private void Client_ReceiveFailed(object sender, SocketEventArgs e)
         {
-            this.logger?.LogError($"Receive failed ({e.Error})");
+            this.log.Error($"Receive failed ({e.Error})");
         }
 
         private void Client_SendCompleted(object sender, EventArgs e)
@@ -467,7 +449,7 @@ namespace JuvoProcess.Net.Irc
 
         private void Client_SendFailed(object sender, SocketEventArgs e)
         {
-            this.logger?.LogError($"Send failed ({e.Error})");
+            this.log.Error($"Send failed ({e.Error})");
         }
 
         private Dictionary<char, Tuple<IrcChannelMode, bool, bool>> CompileChannelModeDictionary()

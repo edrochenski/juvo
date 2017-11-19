@@ -13,7 +13,7 @@ namespace BytedownSoftware.Lib.Net.Slack
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
+    using log4net;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -53,7 +53,7 @@ namespace BytedownSoftware.Lib.Net.Slack
 /*/ Fields /*/
         private readonly string apiToken;
         private readonly StringContent emptyStringContent;
-        private readonly ILogger<SlackClient> logger;
+        private readonly ILog log;
 
         private List<SlackChannel> channels;
         private string myId;
@@ -69,18 +69,13 @@ namespace BytedownSoftware.Lib.Net.Slack
         /// Initializes a new instance of the <see cref="SlackClient"/> class.
         /// </summary>
         /// <param name="token">Token to use to auth the connection.</param>
-        /// <param name="loggerFactory">Logger factory to create loggers.</param>
-        public SlackClient(string token, ILoggerFactory loggerFactory = null)
+        public SlackClient(string token)
         {
             Debug.Assert(!string.IsNullOrEmpty(token), "token == null|empty");
 
             this.apiToken = token;
             this.emptyStringContent = new StringContent(string.Empty);
-
-            if (loggerFactory != null)
-            {
-                this.logger = loggerFactory.CreateLogger<SlackClient>();
-            }
+            this.log = LogManager.GetLogger(typeof(SlackClient));
         }
 
 /*/ Events /*/
@@ -135,7 +130,7 @@ namespace BytedownSoftware.Lib.Net.Slack
             this.webSocket = new ClientWebSocket();
             await this.webSocket.ConnectAsync(new Uri(this.wsUrl), this.webSocketCancelToken);
 
-            this.logger?.LogInformation($"Connected to slack as {this.myName}");
+            this.log.Info($"Connected to slack as {this.myName}");
 
             this.Listen();
         }
@@ -155,7 +150,7 @@ namespace BytedownSoftware.Lib.Net.Slack
                 var chan = this.channels.FirstOrDefault(x => x.Name == channel.Remove(0, 1));
                 if (chan.Equals(default(SlackChannel)))
                 {
-                    this.logger?.LogWarning($"Could not resolve channel '{channel}'");
+                    this.log.Warn($"Could not resolve channel '{channel}'");
                     throw new Exception($"Invalid channel specified: {channel}");
                 }
 
@@ -190,7 +185,7 @@ namespace BytedownSoftware.Lib.Net.Slack
         protected virtual void OnMessageReceived(SlackMessage arg)
         {
             this.MessageReceived?.Invoke(this, arg);
-            this.logger?.LogTrace($"MSG: {arg.Text}");
+            this.log.Debug($"MSG: {arg.Text}");
         }
 
         /// <summary>
@@ -267,7 +262,7 @@ namespace BytedownSoftware.Lib.Net.Slack
             }
             catch (Exception exc)
             {
-                this.logger?.LogError($"Error while receiving: {exc.Message}");
+                this.log.Error($"Error while receiving: {exc.Message}");
                 throw new Exception("Receiving data error", exc);
             }
         }
