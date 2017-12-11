@@ -28,14 +28,17 @@ namespace JuvoProcess
 /*/ Fields /*/
         private readonly Queue<IBotCommand> commandQueue;
         private readonly Timer commandTimer;
+        private readonly IDiscordBotFactory discordBotFactory;
+        private readonly List<IDiscordBot> discordBots;
+        private readonly IIrcBotFactory ircBotFactory;
+        private readonly List<IIrcBot> ircBots;
+        private readonly ISlackBotFactory slackBotFactory;
+        private readonly List<ISlackBot> slackBots;
         private readonly ILog log;
         private readonly ManualResetEvent resetEvent;
         private readonly SystemInfo sysInfo;
 
         private Config config;
-        private List<DiscordBot> discordBots;
-        private List<IrcBot> ircBots;
-        private List<SlackBot> slackBots;
         private DateTime started;
 
 /*/ Constructors /*/
@@ -43,13 +46,26 @@ namespace JuvoProcess
         /// <summary>
         /// Initializes a new instance of the <see cref="JuvoClient"/> class.
         /// </summary>
+        /// <param name="discordBotFactory">Factory object for Discord bots.</param>
+        /// <param name="ircBotFactory">Factory object for IRC bots.</param>
+        /// <param name="slackBotFactory">Factory object for Slack bots.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
-        public JuvoClient(ManualResetEvent resetEvent = null)
+        public JuvoClient(
+            IDiscordBotFactory discordBotFactory,
+            IIrcBotFactory ircBotFactory,
+            ISlackBotFactory slackBotFactory,
+            ManualResetEvent resetEvent = null)
         {
+            this.discordBotFactory = discordBotFactory;
+            this.ircBotFactory = ircBotFactory;
             this.resetEvent = resetEvent;
+            this.slackBotFactory = slackBotFactory;
 
             this.commandQueue = new Queue<IBotCommand>();
             this.commandTimer = new Timer(this.CommandTimerTick, null, TimerTickRate, TimerTickRate);
+            this.discordBots = new List<IDiscordBot>();
+            this.ircBots = new List<IIrcBot>();
+            this.slackBots = new List<ISlackBot>();
             this.log = LogManager.GetLogger(typeof(JuvoClient));
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
@@ -305,8 +321,6 @@ namespace JuvoProcess
 
         private async Task StartDiscordBots()
         {
-            this.discordBots = new List<DiscordBot>();
-
             foreach (var disc in this.config?.Discord.Connections.Where(x => x.Enabled))
             {
                 this.discordBots.Add(new DiscordBot(this, disc));
@@ -320,8 +334,6 @@ namespace JuvoProcess
 
         private async Task StartIrcBots()
         {
-            this.ircBots = new List<IrcBot>(0);
-
             foreach (var irc in this.config?.Irc?.Connections.Where(x => x.Enabled))
             {
                 this.ircBots.Add(new IrcBot(this, irc));
@@ -335,8 +347,6 @@ namespace JuvoProcess
 
         private async Task StartSlackBots()
         {
-            this.slackBots = new List<SlackBot>();
-
             foreach (var slack in this.config?.Slack.Connections.Where(x => x.Enabled))
             {
                 this.slackBots.Add(new SlackBot(this, slack));

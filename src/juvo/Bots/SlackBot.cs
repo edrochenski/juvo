@@ -2,20 +2,19 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-namespace JuvoProcess
+namespace JuvoProcess.Bots
 {
     using System;
     using System.Diagnostics;
     using System.Threading.Tasks;
     using BytedownSoftware.Lib.Net.Slack;
     using JuvoProcess.Configuration;
-    using JuvoProcess.Net.Slack;
     using log4net;
 
     /// <summary>
     /// Slack bot.
     /// </summary>
-    public class SlackBot : IBot
+    public class SlackBot : ISlackBot
     {
 /*/ Fields /*/
         private readonly SlackConfigConnection config;

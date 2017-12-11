@@ -18,6 +18,12 @@ namespace JuvoProcess
         BotType Type { get; }
 
         /// <summary>
+        /// Initiates a connection to the server.
+        /// </summary>
+        /// <returns>A Task object associated with the async operation.</returns>
+        Task Connect();
+
+        /// <summary>
         /// Queue response from outside source.
         /// </summary>
         /// <param name="cmd">Command to queue.</param>

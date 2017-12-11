@@ -16,7 +16,7 @@ namespace JuvoProcess
     /// <summary>
     /// IRC bot.
     /// </summary>
-    public class IrcBot : IBot
+    public class IrcBot : IIrcBot
     {
 /*/ Constants /*/
         private const string DefaultCommandToken = ".";

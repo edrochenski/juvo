@@ -13,7 +13,7 @@ namespace JuvoProcess
     /// <summary>
     /// Discord bot.
     /// </summary>
-    public class DiscordBot : IBot
+    public class DiscordBot : IDiscordBot
     {
 /*/ Fields /*/
         private readonly DiscordClient discordClient;

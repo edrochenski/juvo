@@ -28,7 +28,11 @@ namespace JuvoProcess
                 new FileInfo("log4net.config"));
             Log = LogManager.GetLogger(typeof(Program));
             ResetEvent = new ManualResetEvent(false);
-            Juvo = new JuvoClient(ResetEvent);
+            Juvo = new JuvoClient(
+                new DiscordBotFactory<DiscordBot>(),
+                new IrcBotFactory<IrcBot>(),
+                new SlackBotFactory<SlackBot>(),
+                ResetEvent);
         }
 
 /*/ Methods /*/
