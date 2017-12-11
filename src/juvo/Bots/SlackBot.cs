@@ -7,8 +7,8 @@ namespace JuvoProcess.Bots
     using System;
     using System.Diagnostics;
     using System.Threading.Tasks;
-    using BytedownSoftware.Lib.Net.Slack;
     using JuvoProcess.Configuration;
+    using JuvoProcess.Net.Slack;
     using log4net;
 
     /// <summary>

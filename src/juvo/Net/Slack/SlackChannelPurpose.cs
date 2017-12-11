@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-namespace BytedownSoftware.Lib.Net.Slack
+namespace JuvoProcess.Net.Slack
 {
     using System;
 
