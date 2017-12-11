@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-namespace JuvoProcess
+namespace JuvoProcess.Bots
 {
     using System;
     using System.Diagnostics;
@@ -80,10 +80,12 @@ namespace JuvoProcess
         /// <summary>
         /// Starts the connection process.
         /// </summary>
-        public void Connect()
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public async Task Connect()
         {
             this.log.Debug("Connecting");
             this.client.Connect(this.config.Servers.First().Host, this.config.Servers.First().Port);
+            await Task.CompletedTask;
         }
 
         /// <inheritdoc/>

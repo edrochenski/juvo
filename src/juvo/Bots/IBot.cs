@@ -3,7 +3,7 @@
 // </copyright>
 
 // TODO: add Connect()
-namespace JuvoProcess
+namespace JuvoProcess.Bots
 {
     using System.Threading.Tasks;
 

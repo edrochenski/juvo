@@ -12,6 +12,7 @@ namespace JuvoProcess
     using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
     using log4net;
     using Newtonsoft.Json;

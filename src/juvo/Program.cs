@@ -7,6 +7,7 @@ namespace JuvoProcess
     using System.IO;
     using System.Reflection;
     using System.Threading;
+    using JuvoProcess.Bots;
     using log4net;
     using log4net.Config;
 
