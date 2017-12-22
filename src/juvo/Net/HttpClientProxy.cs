@@ -11,5 +11,13 @@ namespace JuvoProcess.Net
     /// </summary>
     public class HttpClientProxy : HttpClient, IHttpClient
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HttpClientProxy"/> class.
+        /// </summary>
+        /// <param name="handler">Http message handler.</param>
+        public HttpClientProxy(HttpMessageHandler handler)
+            : base(handler)
+        {
+        }
     }
 }
