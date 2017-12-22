@@ -33,6 +33,7 @@ namespace JuvoProcess
         private readonly List<IDiscordBot> discordBots;
         private readonly IIrcBotFactory ircBotFactory;
         private readonly List<IIrcBot> ircBots;
+        private readonly Dictionary<string, IBotModule> modules;
         private readonly ISlackBotFactory slackBotFactory;
         private readonly List<ISlackBot> slackBots;
         private readonly ILog log;
@@ -71,6 +72,11 @@ namespace JuvoProcess
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
             this.sysInfo = GetSystemInfo();
+
+            this.modules = new Dictionary<string, IBotModule>
+            {
+                { "weather", new WeatherModule() }
+            };
         }
 
 /*/ Properties /*/
@@ -308,30 +314,40 @@ namespace JuvoProcess
 
         private void ProcessCommand(IBotCommand cmd)
         {
-            switch (cmd.RequestText.Split(' ')[0].ToLowerInvariant())
+            var cmdName = cmd.RequestText.Split(' ')[0].ToLowerInvariant();
+            var module = this.modules[cmdName];
+
+            if (module != null)
             {
-                case "ping":
-                {
-                    cmd.ResponseText = "Pong!";
-                    cmd.Bot.QueueResponse(cmd);
-                    break;
-                }
-
-                case "w":
-                case "weather":
-                {
-                    this.CommandWeather(cmd);
-                    break;
-                }
-
-                default:
-                {
-                    // TODO: setting to ignore invalid commands
-                    cmd.ResponseText = "Invalid command";
-                    cmd.Bot.QueueResponse(cmd);
-                    break;
-                }
+                module.Execute(cmd);
             }
+            else
+            {
+                cmd.ResponseText = "Invalid command";
+            }
+
+            cmd.Bot.QueueResponse(cmd);
+
+            // switch ()
+            // {
+            //     case "ping":
+            //     {
+            //         cmd.ResponseText = "Pong!";
+            //         cmd.Bot.QueueResponse(cmd);
+            //         break;
+            //     }
+            //     case "w":
+            //     case "weather":
+            //     {
+            //         this.CommandWeather(cmd);
+            //         break;
+            //     }
+            //     default:
+            //     {
+            //         // TODO: setting to ignore invalid commands
+            //         break;
+            //     }
+            // }
         }
 
         private async Task StartBots()
