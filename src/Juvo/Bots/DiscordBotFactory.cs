@@ -4,18 +4,24 @@
 
 namespace JuvoProcess.Bots
 {
+    using JuvoProcess.Configuration;
+
     /// <summary>
     /// Default Discord Bot factory.
     /// </summary>
-    /// <typeparam name="T">Discord bot type.</typeparam>
-    public class DiscordBotFactory<T> : IDiscordBotFactory
-        where T : IDiscordBot
+    public class DiscordBotFactory : IDiscordBotFactory
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DiscordBotFactory{T}"/> class.
+        /// Initializes a new instance of the <see cref="DiscordBotFactory"/> class.
         /// </summary>
         public DiscordBotFactory()
         {
+        }
+
+        /// <inheritdoc />
+        public IDiscordBot Create(DiscordConfigConnection config, IJuvoClient client)
+        {
+            return new DiscordBot(config, client);
         }
     }
 }

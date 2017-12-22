@@ -4,10 +4,19 @@
 
 namespace JuvoProcess.Bots
 {
+    using JuvoProcess.Configuration;
+
     /// <summary>
-    /// Represents an IRC Bot Factory.
+    /// Represents a Discord Bot Factory.
     /// </summary>
     public interface IIrcBotFactory
     {
+        /// <summary>
+        /// Creates a new irc bot instance.
+        /// </summary>
+        /// <param name="config">Bot's configuration.</param>
+        /// <param name="client">Juvo client hosting the bot.</param>
+        /// <returns>Instance of an <see cref="IIrcBot"/>.</returns>
+        IIrcBot Create(IrcConfigConnection config, IJuvoClient client);
     }
 }
