@@ -16,6 +16,7 @@ namespace JuvoProcess.Bots
     public class DiscordBot : IDiscordBot
     {
 /*/ Fields /*/
+        private readonly IClientWebSocket clientWebSocket;
         private readonly DiscordClient discordClient;
         private readonly IJuvoClient juvoClient;
         private bool isDisposed;
@@ -27,13 +28,20 @@ namespace JuvoProcess.Bots
         /// </summary>
         /// <param name="config">Discord config file.</param>
         /// <param name="host">Host client.</param>
-        public DiscordBot(DiscordConfigConnection config, IJuvoClient host)
+        /// <param name="httpClient">Http client.</param>
+        /// <param name="clientWebSocket">Client web socket.</param>
+        public DiscordBot(
+            DiscordConfigConnection config,
+            IJuvoClient host,
+            IHttpClient httpClient,
+            IClientWebSocket clientWebSocket)
         {
             this.discordClient = new DiscordClient(
-                new ClientWebSocketProxy(),
-                new HttpClientProxy(),
+                clientWebSocket,
+                httpClient,
                 new DiscordClientOptions { AuthToken = config.AuthToken, IsBot = true });
             this.juvoClient = host;
+            this.clientWebSocket = clientWebSocket;
         }
 
 /*/ Properties /*/

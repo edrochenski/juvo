@@ -6,10 +6,12 @@ namespace JuvoProcess
 {
     using System;
     using System.IO;
+    using System.Net.Http;
     using System.Reflection;
     using System.Threading;
     using Easy.Common;
     using JuvoProcess.Bots;
+    using JuvoProcess.Net;
     using log4net;
     using log4net.Config;
 
@@ -19,8 +21,16 @@ namespace JuvoProcess
     public class Program
     {
 /*/ Fields /*/
+
+    // PUBLIC
+
+        /// <summary>
+        /// Juvo client instance.
+        /// </summary>
+        public static readonly JuvoClient Juvo;
+
+    // PRIVATE
         private static readonly ILog Log;
-        private static readonly JuvoClient Juvo;
         private static readonly ManualResetEvent ResetEvent;
 
 /*/ Constructors /*/
@@ -40,6 +50,8 @@ namespace JuvoProcess
                 new DiscordBotFactory(),
                 new IrcBotFactory(),
                 new SlackBotFactory(),
+                new HttpClientProxy(new HttpClientHandler()),
+                new ClientWebSocketProxy(),
                 ResetEvent);
         }
 

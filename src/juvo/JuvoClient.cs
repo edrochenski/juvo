@@ -14,6 +14,9 @@ namespace JuvoProcess
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
+    using JuvoProcess.Modules;
+    using JuvoProcess.Modules.Weather;
+    using JuvoProcess.Net;
     using log4net;
     using Newtonsoft.Json;
 
@@ -31,6 +34,8 @@ namespace JuvoProcess
         private readonly Timer commandTimer;
         private readonly IDiscordBotFactory discordBotFactory;
         private readonly List<IDiscordBot> discordBots;
+        private readonly IHttpClient httpClient;
+        private readonly IClientWebSocket clientWebSocket;
         private readonly IIrcBotFactory ircBotFactory;
         private readonly List<IIrcBot> ircBots;
         private readonly Dictionary<string, IBotModule> modules;
@@ -43,7 +48,7 @@ namespace JuvoProcess
         private Config config;
         private DateTime started;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JuvoClient"/> class.
@@ -51,14 +56,20 @@ namespace JuvoProcess
         /// <param name="discordBotFactory">Factory object for Discord bots.</param>
         /// <param name="ircBotFactory">Factory object for IRC bots.</param>
         /// <param name="slackBotFactory">Factory object for Slack bots.</param>
+        /// <param name="httpClient">Http client for requests.</param>
+        /// <param name="clientWebSocket">Client web socket.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
         public JuvoClient(
             IDiscordBotFactory discordBotFactory,
             IIrcBotFactory ircBotFactory,
             ISlackBotFactory slackBotFactory,
+            IHttpClient httpClient,
+            IClientWebSocket clientWebSocket,
             ManualResetEvent resetEvent = null)
         {
+            this.clientWebSocket = clientWebSocket;
             this.discordBotFactory = discordBotFactory;
+            this.httpClient = httpClient;
             this.ircBotFactory = ircBotFactory;
             this.resetEvent = resetEvent;
             this.slackBotFactory = slackBotFactory;
@@ -298,7 +309,7 @@ namespace JuvoProcess
 
             foreach (var disc in this.config?.Discord?.Connections.Where(x => x.Enabled))
             {
-                this.discordBots.Add(this.discordBotFactory.Create(disc, this));
+                this.discordBots.Add(this.discordBotFactory.Create(disc, this, this.httpClient, this.clientWebSocket));
             }
 
             foreach (var irc in this.config?.Irc?.Connections.Where(x => x.Enabled))
