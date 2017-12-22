@@ -5,6 +5,7 @@
 namespace JuvoProcess.Bots
 {
     using JuvoProcess.Configuration;
+    using JuvoProcess.Net;
 
     /// <summary>
     /// Default Discord Bot factory.
@@ -19,9 +20,13 @@ namespace JuvoProcess.Bots
         }
 
         /// <inheritdoc />
-        public IDiscordBot Create(DiscordConfigConnection config, IJuvoClient client)
+        public IDiscordBot Create(
+            DiscordConfigConnection config,
+            IJuvoClient client,
+            IHttpClient httpClient,
+            IClientWebSocket clientWebSocket)
         {
-            return new DiscordBot(config, client);
+            return new DiscordBot(config, client, httpClient, clientWebSocket);
         }
     }
 }
