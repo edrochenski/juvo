@@ -12,7 +12,7 @@ namespace JuvoProcess
     public struct SystemInfo
     {
         /// <summary>
-        /// Gets or sets the application's full data path.
+        /// Gets or sets the application's full roaming data path.
         /// </summary>
         public DirectoryInfo AppDataPath { get; set; }
 
@@ -20,5 +20,10 @@ namespace JuvoProcess
         /// Gets or sets the OS the application is running on.
         /// </summary>
         public OperatingSystem Os { get; set; }
+
+        /// <summary>
+        /// Gets or sets the application's full local data path.
+        /// </summary>
+        public DirectoryInfo LocalAppDataPath { get; set; }
     }
 }
