@@ -19,19 +19,19 @@ namespace JuvoProcess.Bots
 /*/ Fields /*/
         private readonly SlackConfigConnection config;
         private readonly string[] greetings = { "Hey there {0}!", "sup {0}! How's it goin?" };
-        private readonly JuvoClient host;
+        private readonly IJuvoClient host;
         private readonly ILog log;
         private readonly Random random;
         private readonly SlackClient slackClient;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SlackBot"/> class.
         /// </summary>
-        /// <param name="host">Host client.</param>
         /// <param name="config">Slack configuration.</param>
-        public SlackBot(JuvoClient host, SlackConfigConnection config)
+        /// <param name="host">Host client.</param>
+        public SlackBot(SlackConfigConnection config, IJuvoClient host)
         {
             Debug.Assert(config != null, "config == null");
 

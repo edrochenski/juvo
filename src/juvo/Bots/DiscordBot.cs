@@ -17,20 +17,22 @@ namespace JuvoProcess.Bots
     {
 /*/ Fields /*/
         private readonly DiscordClient discordClient;
+        private readonly IJuvoClient juvoClient;
 
 /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscordBot"/> class.
         /// </summary>
-        /// <param name="host">Host client.</param>
         /// <param name="config">Discord config file.</param>
-        public DiscordBot(JuvoClient host, DiscordConfigConnection config)
+        /// <param name="host">Host client.</param>
+        public DiscordBot(DiscordConfigConnection config, IJuvoClient host)
         {
             this.discordClient = new DiscordClient(
                 new ClientWebSocketProxy(),
                 new HttpClientProxy(),
                 new DiscordClientOptions { AuthToken = config.AuthToken, IsBot = true });
+            this.juvoClient = host;
         }
 
 /*/ Properties /*/

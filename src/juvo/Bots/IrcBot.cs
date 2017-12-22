@@ -25,7 +25,7 @@ namespace JuvoProcess.Bots
         private string commandToken;
         private IrcConfigConnection config;
         private IrcClient client;
-        private JuvoClient host;
+        private IJuvoClient host;
         private ILog log;
 
 /*/ Constructors /*/
@@ -35,7 +35,7 @@ namespace JuvoProcess.Bots
         /// </summary>
         /// <param name="host">Host of the juvo client.</param>
         /// <param name="config">IRC configuration.</param>
-        public IrcBot(JuvoClient host, IrcConfigConnection config)
+        public IrcBot(IrcConfigConnection config, IJuvoClient host)
         {
             this.commandToken = config.CommandToken ?? DefaultCommandToken;
             this.config = config;
