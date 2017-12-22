@@ -5,12 +5,13 @@
 // TODO: add Connect()
 namespace JuvoProcess.Bots
 {
+    using System;
     using System.Threading.Tasks;
 
     /// <summary>
     /// Represents a Juvo compatible bot.
     /// </summary>
-    public interface IBot
+    public interface IBot : IDisposable
     {
         /// <summary>
         /// Gets the type of bot.

@@ -23,8 +23,9 @@ namespace JuvoProcess.Bots
         private readonly ILog log;
         private readonly Random random;
         private readonly SlackClient slackClient;
+        private bool isDisposed;
 
-        /*/ Constructors /*/
+/*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SlackBot"/> class.
@@ -63,6 +64,13 @@ namespace JuvoProcess.Bots
         }
 
         /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <inheritdoc/>
         public async Task QueueResponse(IBotCommand cmd)
         {
             if (cmd is SlackBotCommand sbCmd)
@@ -72,7 +80,27 @@ namespace JuvoProcess.Bots
             }
         }
 
-    // Private
+    // Protected
+
+        /// <summary>
+        /// Clean up object and release resources.
+        /// </summary>
+        /// <param name="isDisposing">Is is currently disposing.</param>
+        protected virtual void Dispose(bool isDisposing)
+        {
+            try
+            {
+                if (!this.isDisposed && isDisposing)
+                {
+                }
+            }
+            finally
+            {
+                this.isDisposed = true;
+            }
+        }
+
+        // Private
         private async Task SlackClient_MessageReceived(object sender, SlackMessage arg)
         {
             if (arg.Text.StartsWith(this.config.CommandToken))

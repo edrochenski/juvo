@@ -22,10 +22,11 @@ namespace JuvoProcess.Bots
         private const string DefaultCommandToken = ".";
 
 /*/ Fields /*/
+        private readonly IrcConfigConnection config;
+        private readonly IJuvoClient host;
         private string commandToken;
-        private IrcConfigConnection config;
         private IrcClient client;
-        private IJuvoClient host;
+        private bool isDisposed;
         private ILog log;
 
 /*/ Constructors /*/
@@ -86,6 +87,13 @@ namespace JuvoProcess.Bots
             this.log.Debug("Connecting");
             this.client.Connect(this.config.Servers.First().Host, this.config.Servers.First().Port);
             await Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <inheritdoc/>
@@ -298,6 +306,24 @@ namespace JuvoProcess.Bots
             // var config = Configuration.Default.WithDefaultLoader();
             // var address = $"https://twitter.com/{handle}";
             // var document = BrowsingContext.New(config).OpenAsync(address);
+        }
+
+        /// <summary>
+        /// Clean up object and release resources.
+        /// </summary>
+        /// <param name="isDisposing">Is is currently disposing.</param>
+        protected virtual void Dispose(bool isDisposing)
+        {
+            try
+            {
+                if (!this.isDisposed && isDisposing)
+                {
+                }
+            }
+            finally
+            {
+                this.isDisposed = true;
+            }
         }
 
     // Private

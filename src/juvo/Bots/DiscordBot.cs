@@ -18,6 +18,7 @@ namespace JuvoProcess.Bots
 /*/ Fields /*/
         private readonly DiscordClient discordClient;
         private readonly IJuvoClient juvoClient;
+        private bool isDisposed;
 
 /*/ Constructors /*/
 
@@ -52,9 +53,35 @@ namespace JuvoProcess.Bots
         }
 
         /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <inheritdoc/>
         public Task QueueResponse(IBotCommand cmd)
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Clean up object and release resources.
+        /// </summary>
+        /// <param name="isDisposing">Is is currently disposing.</param>
+        protected virtual void Dispose(bool isDisposing)
+        {
+            try
+            {
+                if (!this.isDisposed && isDisposing)
+                {
+                    this.clientWebSocket.Dispose();
+                }
+            }
+            finally
+            {
+                this.isDisposed = true;
+            }
         }
     }
 }
