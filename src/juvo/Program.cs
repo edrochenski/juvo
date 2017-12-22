@@ -4,9 +4,11 @@
 
 namespace JuvoProcess
 {
+    using System;
     using System.IO;
     using System.Reflection;
     using System.Threading;
+    using Easy.Common;
     using JuvoProcess.Bots;
     using log4net;
     using log4net.Config;
@@ -24,15 +26,20 @@ namespace JuvoProcess
 /*/ Constructors /*/
         static Program()
         {
+            // GlobalContext.Properties["juvo_appdata"] =
             XmlConfigurator.ConfigureAndWatch(
                 LogManager.GetRepository(Assembly.GetEntryAssembly()),
                 new FileInfo("log4net.config"));
             Log = LogManager.GetLogger(typeof(Program));
+
+            var report = DiagnosticReport.Generate();
+            Log.Debug($"Diagnostic report:{Environment.NewLine}{report}");
+
             ResetEvent = new ManualResetEvent(false);
             Juvo = new JuvoClient(
-                new DiscordBotFactory<DiscordBot>(),
-                new IrcBotFactory<IrcBot>(),
-                new SlackBotFactory<SlackBot>(),
+                new DiscordBotFactory(),
+                new IrcBotFactory(),
+                new SlackBotFactory(),
                 ResetEvent);
         }
 

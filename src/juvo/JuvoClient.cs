@@ -20,11 +20,11 @@ namespace JuvoProcess
     /// <summary>
     /// Juvo client.
     /// </summary>
-    public class JuvoClient
+    public class JuvoClient : IJuvoClient
     {
 /*/ Constants /*/
         private const string ConfigFileName = "config.json";
-        private const int TimerTickRate = 100;
+        private const int TimerTickRate = 10;
 
 /*/ Fields /*/
         private readonly Queue<IBotCommand> commandQueue;
@@ -164,9 +164,8 @@ namespace JuvoProcess
             this.log.Info("Loading configuration file");
             this.LoadConfig();
 
-            await this.StartDiscordBots();
-            await this.StartIrcBots();
-            await this.StartSlackBots();
+            this.log.Info("Starting bots");
+            await this.StartBots();
 
             this.log.Info("Juvo is now running");
             this.State = JuvoState.Running;
@@ -238,11 +237,13 @@ namespace JuvoProcess
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%APPDATA%/juvo"));
+                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%/juvo"));
                 result.Os = OperatingSystem.Windows;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.juvo"));
+                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/juvo"));
                 result.Os = OperatingSystem.Linux;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
@@ -256,10 +257,8 @@ namespace JuvoProcess
 
         private void CreateAppFolders()
         {
-            var appData = this.sysInfo.AppDataPath.FullName;
-
-            Directory.CreateDirectory(appData);
-            Directory.CreateDirectory(Path.Combine(appData, "logs"));
+            Directory.CreateDirectory(this.sysInfo.AppDataPath.FullName);
+            Directory.CreateDirectory(this.sysInfo.LocalAppDataPath.FullName);
         }
 
         private void CreateConfigFile()
@@ -289,6 +288,21 @@ namespace JuvoProcess
                 this.log.Info("Loading configuration");
                 var json = File.ReadAllText(file);
                 this.config = JsonConvert.DeserializeObject<Config>(json);
+            }
+
+            foreach (var disc in this.config?.Discord?.Connections.Where(x => x.Enabled))
+            {
+                this.discordBots.Add(this.discordBotFactory.Create(disc, this));
+            }
+
+            foreach (var irc in this.config?.Irc?.Connections.Where(x => x.Enabled))
+            {
+                this.ircBots.Add(this.ircBotFactory.Create(irc, this));
+            }
+
+            foreach (var slack in this.config?.Slack?.Connections.Where(x => x.Enabled))
+            {
+                this.slackBots.Add(this.slackBotFactory.Create(slack, this));
             }
         }
 
@@ -320,13 +334,15 @@ namespace JuvoProcess
             }
         }
 
+        private async Task StartBots()
+        {
+            await this.StartDiscordBots();
+            await this.StartIrcBots();
+            await this.StartSlackBots();
+        }
+
         private async Task StartDiscordBots()
         {
-            foreach (var disc in this.config?.Discord.Connections.Where(x => x.Enabled))
-            {
-                this.discordBots.Add(new DiscordBot(this, disc));
-            }
-
             foreach (var bot in this.discordBots)
             {
                 await bot.Connect();
@@ -335,24 +351,14 @@ namespace JuvoProcess
 
         private async Task StartIrcBots()
         {
-            foreach (var irc in this.config?.Irc?.Connections.Where(x => x.Enabled))
+            foreach (var bot in this.ircBots)
             {
-                this.ircBots.Add(new IrcBot(this, irc));
+                await bot.Connect();
             }
-
-            // TODO: Connect async?
-            this.ircBots.ForEach(bot => bot.Connect());
-
-            await Task.CompletedTask;
         }
 
         private async Task StartSlackBots()
         {
-            foreach (var slack in this.config?.Slack.Connections.Where(x => x.Enabled))
-            {
-                this.slackBots.Add(new SlackBot(this, slack));
-            }
-
             foreach (var bot in this.slackBots)
             {
                 await bot.Connect();
