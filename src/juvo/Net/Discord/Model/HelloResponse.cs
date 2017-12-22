@@ -16,7 +16,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the data.
         /// </summary>
         [JsonProperty(PropertyName = "d")]
-        public HelloData Data { get; set; }
+        public new HelloData Data { get; set; }
 
         /// <summary>
         /// Hello data.
