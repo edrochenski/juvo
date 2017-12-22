@@ -12,6 +12,12 @@ namespace JuvoProcess.Net.Discord.Model
     public class GatewayPayload
     {
         /// <summary>
+        /// Gets or sets the data.
+        /// </summary>
+        [JsonProperty(PropertyName = "d")]
+        public string Data { get; set; }
+
+        /// <summary>
         /// Gets or sets the event name.
         /// </summary>
         [JsonProperty(PropertyName = "t")]
