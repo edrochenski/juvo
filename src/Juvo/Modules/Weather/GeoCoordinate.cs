@@ -5,6 +5,7 @@
 namespace JuvoProcess.Modules.Weather
 {
     using System;
+    using System.Text.RegularExpressions;
 
     /// <summary>
     /// Geographic location of a point.
@@ -23,12 +24,12 @@ namespace JuvoProcess.Modules.Weather
             }
 
             var coordParts = stringCoords.Split(',');
-            var latString = coordParts[0].Replace("E", string.Empty).Replace("°", string.Empty).Trim();
-            var lonString = coordParts[0].Replace("N", string.Empty).Replace("°", string.Empty).Trim();
+            var latString = Regex.Replace(coordParts[0], "[^0-9-.]", string.Empty);
+            var lonString = Regex.Replace(coordParts[1], "[^0-9-.]", string.Empty);
 
             if (coordParts.Length != 2 ||
-                !double.TryParse(coordParts[0].Trim(), out double lat) ||
-                !double.TryParse(coordParts[1].Trim(), out double lon))
+                !double.TryParse(latString, out double lat) ||
+                !double.TryParse(lonString, out double lon))
             {
                 throw new ArgumentOutOfRangeException(nameof(stringCoords));
             }
