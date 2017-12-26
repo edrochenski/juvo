@@ -36,7 +36,7 @@ namespace JuvoProcess.Modules.Weather
             this.juvoClient = juvoClient ?? throw new System.ArgumentNullException(nameof(juvoClient));
         }
 
-        /*/ Methods /*/
+/*/ Methods /*/
 
         /// <summary>
         /// Attempts to find coordinates associated with a location.
@@ -84,6 +84,13 @@ namespace JuvoProcess.Modules.Weather
                     if (!geo.HasValue)
                     {
                         cmd.ResponseText = $"Could not determine coordinates for '{location}'";
+                        return;
+                    }
+
+                    if (cmdParts[0] == "gps")
+                    {
+                        cmd.ResponseText = $"Coordinates: {geo}";
+                        return;
                     }
 
                     var url = $"{DarkSkyForecastUrl}{geo}";
