@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-namespace JuvoProcess.Weather
+namespace JuvoProcess.Modules.Weather
 {
     /// <summary>
     /// Represents the misc. metadata associated with a request.

@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-namespace JuvoProcess.Weather
+namespace JuvoProcess.Modules.Weather
 {
     /// <summary>
     /// Represents a severe weather report for an area.
