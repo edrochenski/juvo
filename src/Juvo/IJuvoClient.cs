@@ -5,12 +5,24 @@
 namespace JuvoProcess
 {
     using JuvoProcess.Bots;
+    using JuvoProcess.Net;
+    using log4net;
 
     /// <summary>
     /// Representation of a Juvo Client object.
     /// </summary>
     public interface IJuvoClient
     {
+        /// <summary>
+        /// Gets the log.
+        /// </summary>
+        ILog Log { get; }
+
+        /// <summary>
+        /// Gets the Http Client.
+        /// </summary>
+        IHttpClient HttpClient { get; }
+
         /// <summary>
         /// Queues a command for the bot to execute.
         /// </summary>

@@ -48,7 +48,7 @@ namespace JuvoProcess
         private Config config;
         private DateTime started;
 
-        /*/ Constructors /*/
+/*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JuvoClient"/> class.
@@ -67,12 +67,12 @@ namespace JuvoProcess
             IClientWebSocket clientWebSocket,
             ManualResetEvent resetEvent = null)
         {
-            this.clientWebSocket = clientWebSocket;
-            this.discordBotFactory = discordBotFactory;
-            this.httpClient = httpClient;
-            this.ircBotFactory = ircBotFactory;
+            this.clientWebSocket = clientWebSocket ?? throw new ArgumentNullException(nameof(clientWebSocket));
+            this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
+            this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
             this.resetEvent = resetEvent;
-            this.slackBotFactory = slackBotFactory;
+            this.slackBotFactory = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
 
             this.commandQueue = new Queue<IBotCommand>();
             this.commandTimer = new Timer(this.CommandTimerTick, null, TimerTickRate, TimerTickRate);
@@ -86,11 +86,17 @@ namespace JuvoProcess
 
             this.modules = new Dictionary<string, IBotModule>
             {
-                { "weather", new WeatherModule() }
+                { "weather", new WeatherModule(this) }
             };
         }
 
 /*/ Properties /*/
+
+        /// <inheritdoc/>
+        public IHttpClient HttpClient => this.httpClient;
+
+        /// <inheritdoc/>
+        public ILog Log => this.log;
 
         /// <summary>
         /// Gets or sets the bot's current state.
@@ -100,58 +106,6 @@ namespace JuvoProcess
 /*/ Methods /*/
 
     // Public
-
-        /// <summary>
-        /// Processes the weather command.
-        /// </summary>
-        /// <param name="cmd">Command object.</param>
-        public void CommandWeather(IBotCommand cmd)
-        {
-            // try
-            // {
-            //     var cmdParts = cmd.RequestText.Split(' ');
-            //     var location = string.Join("+", cmdParts, 1, cmdParts.Length - 1);
-            //     using (var handler = new HttpClientHandler())
-            //     using (var client = new HttpClient(handler))
-            //     {
-            //         var parser = new HtmlParser();
-            //         var gpsUrl = $"https://www.bing.com/search?q={location}+longitude+latitude&qs=n&form=QBLH";
-            //         using (var gpsResponse = client.GetAsync(gpsUrl).Result)
-            //         using (var gpsDoc = parser.Parse(gpsResponse.Content.ReadAsStringAsync().Result))
-            //         {
-            //             var input = gpsDoc.GetElementById("mt_toTextBox_dvc_2");
-            //             if (input?.GetAttribute("value") != "")
-            //             {
-            //                 var latLon = input.GetAttribute("value");
-            //                 var dsUrl = $"https://api.darksky.net/forecast/a4b34f1591b0da62f90e1eb28d1eb627/{latLon}";
-            //                 using (var dsResponse = client.GetAsync(dsUrl).Result)
-            //                 {
-            //                     var json = dsResponse.Content.ReadAsStringAsync().Result;
-            //                     File.WriteAllText("darksky.json", json);
-            //                     var ds = JsonConvert.DeserializeObject<DarkSkyResponse>(json);
-            //                     if (ds != null)
-            //                     {
-            //                         var updated = new DateTime(1970, 1, 1, 0, 0, 0).AddSeconds(ds.Currently.Time);
-            //                         cmd.ResponseText = $"Currently: {ds.Currently.Summary} and " +
-            //                                            $"{ds.Currently.Temperature:.0}°F (Feels like {ds.Currently.ApparentTemperature:.0}°F) " +
-            //                                            $"| Dew Point: {ds.Currently.DewPoint:.00}°F, Humidity: {(ds.Currently.Humidity*100):.0}%, " +
-            //                                            $"Pressure: {ds.Currently.Pressure:.00}mb, UV Index: {ds.Currently.UvIndex:0} " +
-            //                                            $"| Wind from the {ds.Currently.WindBearing} " +
-            //                                            $"{ds.Currently.WindSpeed}mph (Gusting at {ds.Currently.WindGust}mph)" +
-            //                                            $"| Updated: {updated}";
-            //                         cmd.Bot.QueueResponse(cmd);
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-            // catch (Exception ex)
-            // {
-            //     cmd.ResponseText = $"error: {ex.Message}";
-            //     cmd.Bot.QueueResponse(cmd);
-            // }
-        }
 
         /// <summary>
         /// Queues command for the bot to execute or pass on.
@@ -326,9 +280,8 @@ namespace JuvoProcess
         private void ProcessCommand(IBotCommand cmd)
         {
             var cmdName = cmd.RequestText.Split(' ')[0].ToLowerInvariant();
-            var module = this.modules[cmdName];
 
-            if (module != null)
+            if (this.modules.TryGetValue(cmdName, out IBotModule module))
             {
                 module.Execute(cmd);
             }
