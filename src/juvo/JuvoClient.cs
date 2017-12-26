@@ -38,7 +38,7 @@ namespace JuvoProcess
         private readonly IClientWebSocket clientWebSocket;
         private readonly IIrcBotFactory ircBotFactory;
         private readonly List<IIrcBot> ircBots;
-        private readonly Dictionary<string, IBotModule> modules;
+        private readonly Dictionary<string[], IBotModule> modules;
         private readonly ISlackBotFactory slackBotFactory;
         private readonly List<ISlackBot> slackBots;
         private readonly ILog log;
@@ -84,9 +84,9 @@ namespace JuvoProcess
             this.State = JuvoState.Idle;
             this.sysInfo = GetSystemInfo();
 
-            this.modules = new Dictionary<string, IBotModule>
+            this.modules = new Dictionary<string[], IBotModule>
             {
-                { "weather", new WeatherModule(this) }
+                { new[] { "gps", "weather" }, new WeatherModule(this) }
             };
         }
 
@@ -280,10 +280,10 @@ namespace JuvoProcess
         private void ProcessCommand(IBotCommand cmd)
         {
             var cmdName = cmd.RequestText.Split(' ')[0].ToLowerInvariant();
-
-            if (this.modules.TryGetValue(cmdName, out IBotModule module))
+            var module = this.modules.SingleOrDefault(p => p.Key.Contains(cmdName));
+            if (module.Value != null)
             {
-                module.Execute(cmd);
+                module.Value.Execute(cmd);
             }
             else
             {
