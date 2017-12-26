@@ -15,7 +15,7 @@ namespace JuvoProcess.Net.Discord
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
-    /*/ Delegates /*/
+/*/ Delegates /*/
 
     /// <summary>
     /// Function to handle the <see cref="DiscordClient.HelloResponseReceived"/> event.
@@ -175,7 +175,7 @@ namespace JuvoProcess.Net.Discord
         {
             var d = this.lastSequence.HasValue ? this.lastSequence.Value.ToString() : "null";
 
-            this.log.Info("Sending heartbeat...");
+            this.log.Info($"{SndInd} Heartbeat");
             this.SendText($"{{ \"op\": 1, \"d\": {d} }}").Wait();
         }
 
@@ -186,6 +186,7 @@ namespace JuvoProcess.Net.Discord
         /// <returns>Task.</returns>
         protected virtual async Task OnHelloResponseReceived(HelloResponse response)
         {
+            this.log.Info($"{RecInd} Hello");
             this.lastSequence = response.Sequence;
             this.HeartbeatInterval = response.Data.HeartbeatInterval;
 
@@ -237,8 +238,7 @@ namespace JuvoProcess.Net.Discord
                     // + "\"s\": null,"
                     + "}";
 
-            this.log.Info("Identifying...");
-            this.log.Debug($"Using: {json}");
+            this.log.Info($"{SndInd} Identifying");
             await this.SendText(json);
 
             this.HelloResponseReceived?.Invoke(this, response);
@@ -311,7 +311,7 @@ namespace JuvoProcess.Net.Discord
                     break;
 
                 case 11: // Heartbeat ACK
-                    this.log.Info("Heartbeat ACK'd");
+                    this.log.Info($"{RecInd} Heartbeat ACK");
                     break;
 
                 default:
