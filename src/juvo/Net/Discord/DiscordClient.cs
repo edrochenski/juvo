@@ -215,53 +215,31 @@ namespace JuvoProcess.Net.Discord
 
             var ident = new IdentityRequest
             {
-                Compress = true,
-                LargeThreshold = 250,
+                Data = new IdentityRequest.IdentityData()
+                {
+                    Compress = false,
+                    LargeThreshold = 250,
+                    Presence = new IdentityRequest.StatusUpdate
+                    {
+                        Afk = false,
+                        Game = null,
+                        Since = null,
+                        Status = "online"
+                    },
+                    Properties = new IdentityRequest.ConnectionProperties
+                    {
+                        Browser = "disco",
+                        Device = "disco",
+                        Os = "windows" // Environment.OSVersion.Platform.ToString()
+                    },
+                    Token = this.Options.AuthToken
+                },
                 OpCode = GatewayOpCode.Identity,
-                Presence = new IdentityRequest.StatusUpdate
-                {
-                    Afk = false,
-                    Game = null,
-                    Since = null,
-                    Status = "online"
-                },
-                Properties = new IdentityRequest.ConnectionProperties
-                {
-                    Browser = "disco",
-                    Device = "disco",
-                    Os = "windows" // Environment.OSVersion.Platform.ToString()
-                },
-                Token = this.Options.AuthToken
+                Shard = new int[0]
             };
 
-            // TODO: use an object and not literal json
-            var json = "{" // JsonConvert.SerializeObject(ident);
-                        + "\"op\": 2,"
-                        + "\"d\":{"
-                            + "\"compress\": false,"
-                            + "\"large_threshold\": 250,"
-                            + "\"presence\": {"
-                                + "\"afk\": false,"
-                                + "\"game\": null,"
-                                + "\"since\": null,"
-                                + "\"status\": \"online\""
-                            + "},"
-                            + "\"properties\": {"
-                                + "\"$browser\": \"disco\","
-                                + "\"$device\": \"disco\","
-                                + "\"$os\": \"windows\""
-                            + "},"
-                            + "\"token\": "
-                            + "\"Mzc2NTM1NDQ0OTIzMzUxMDQx.DOaZWw.bYZO4nsYktA83HCeK1zneFNKtfY\""
-                        + "}"
-
-                    // + "\"shard\": [],"
-                    // + "\"t\": null,"
-                    // + "\"s\": null,"
-                    + "}";
-
             this.log.Info($"{SndInd} Identifying");
-            await this.SendText(json);
+            await this.SendText(JsonConvert.SerializeObject(ident));
 
             this.HelloResponseReceived?.Invoke(this, response);
         }

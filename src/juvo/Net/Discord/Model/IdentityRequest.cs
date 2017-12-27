@@ -28,52 +28,52 @@ namespace JuvoProcess.Net.Discord.Model
     public class IdentityRequest : GatewayPayload
     {
         /// <summary>
-        /// Gets or sets a value indicating whether compression is supported.
+        /// Gets or sets the Data.
         /// </summary>
-        [JsonProperty(PropertyName = "compress")]
-        public bool Compress { get; set; }
-
-        /// <summary>
-        /// Gets or sets the large threshold.
-        /// </summary>
-        [JsonProperty(PropertyName = "large_threshold")]
-        public int LargeThreshold { get; set; }
-
-        /// <summary>
-        /// Gets or sets the presence.
-        /// </summary>
-        [JsonProperty(PropertyName = "presence")]
-        public StatusUpdate Presence { get; set; }
-
-        /// <summary>
-        /// Gets or sets the properties.
-        /// </summary>
-        [JsonProperty(PropertyName = "properties")]
-        public ConnectionProperties Properties { get; set; }
+        [JsonProperty(PropertyName ="d")]
+        public new IdentityData Data { get; set; }
 
         /// <summary>
         /// Gets or sets the shards.
         /// </summary>
         [JsonProperty(PropertyName = "shard")]
-        public int[] Shard { get; set; } = new[] { 1, 1 };
+        public int[] Shard { get; set; }
 
         /// <summary>
-        /// Gets or sets the token.
+        /// Representation
         /// </summary>
-        [JsonProperty(PropertyName = "token")]
-        public string Token { get; set; }
+        public class IdentityData
+        {
+            /// <summary>
+            /// Gets or sets a value indicating whether compression is supported.
+            /// </summary>
+            [JsonProperty(PropertyName = "compress")]
+            public bool Compress { get; set; }
 
-        /// <summary>
-        /// Gets or sets the event name.
-        /// </summary>
-        [JsonIgnore]
-        public new string EventName { get; set; }
+            /// <summary>
+            /// Gets or sets the large threshold.
+            /// </summary>
+            [JsonProperty(PropertyName = "large_threshold")]
+            public int LargeThreshold { get; set; }
 
-        /// <summary>
-        /// Gets or sets the sequence.
-        /// </summary>
-        [JsonIgnore]
-        public new int? Sequence { get; set; }
+            /// <summary>
+            /// Gets or sets the presence.
+            /// </summary>
+            [JsonProperty(PropertyName = "presence")]
+            public StatusUpdate Presence { get; set; }
+
+            /// <summary>
+            /// Gets or sets the properties.
+            /// </summary>
+            [JsonProperty(PropertyName = "properties")]
+            public ConnectionProperties Properties { get; set; }
+
+            /// <summary>
+            /// Gets or sets the token.
+            /// </summary>
+            [JsonProperty(PropertyName = "token")]
+            public string Token { get; set; }
+        }
 
         /// <summary>
         /// Connection properties.
