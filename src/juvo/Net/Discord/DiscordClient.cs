@@ -25,6 +25,13 @@ namespace JuvoProcess.Net.Discord
     public delegate void HelloResponseReceivedEventHandler(object sender, HelloResponse response);
 
     /// <summary>
+    /// Function to handle the <see cref="DiscordClient.PresenceUpdated"/>  event.
+    /// </summary>
+    /// <param name="sender">Origin of event.</param>
+    /// <param name="response">Contents of event.</param>
+    public delegate void PresenceUpdatedEventHandler(object sender, PresenceUpdateResponse response);
+
+    /// <summary>
     /// Function to handle the <see cref="DiscordClient.ReadyReceived"/> event.
     /// </summary>
     /// <param name="sender">Origin of event.</param>
@@ -59,6 +66,7 @@ namespace JuvoProcess.Net.Discord
         private readonly IHttpClient httpClient;
         private readonly ILog log;
         private readonly IClientWebSocket socket;
+        private bool isConnected;
         private int? lastSequence;
 
 /*/ Constructors /*/
@@ -107,6 +115,11 @@ namespace JuvoProcess.Net.Discord
         public event HelloResponseReceivedEventHandler HelloResponseReceived;
 
         /// <summary>
+        /// Fires when a presence updated response is received.
+        /// </summary>
+        public event PresenceUpdatedEventHandler PresenceUpdated;
+
+        /// <summary>
         /// Fires when a ready event is received.
         /// </summary>
         public event ReadyReceivedEventHandler ReadyReceived;
@@ -152,6 +165,7 @@ namespace JuvoProcess.Net.Discord
             this.log.Info($"Connecting to {wssUrl}");
             await this.socket.ConnectAsync(new Uri(wssUrl), this.cancelToken);
 
+            this.isConnected = true;
             this.log.Info("Connected to Discord, starting listener...");
             this.Listen();
         }
@@ -173,10 +187,17 @@ namespace JuvoProcess.Net.Discord
         /// <param name="state">Stateful object assigned to the timer.</param>
         protected virtual void OnHeartbeatInterval(object state)
         {
-            var d = this.lastSequence.HasValue ? this.lastSequence.Value.ToString() : "null";
+            if (this.isConnected)
+            {
+                var d = this.lastSequence.HasValue ? this.lastSequence.Value.ToString() : "null";
 
-            this.log.Info($"{SndInd} Heartbeat");
-            this.SendText($"{{ \"op\": 1, \"d\": {d} }}").Wait();
+                this.log.Info($"{SndInd} Heartbeat");
+                this.SendText($"{{ \"op\": 1, \"d\": {d} }}").Wait();
+            }
+            else
+            {
+                this.Connect().Wait();
+            }
         }
 
         /// <summary>
@@ -245,11 +266,22 @@ namespace JuvoProcess.Net.Discord
         }
 
         /// <summary>
+        /// Called when the Presence Updated response is received.
+        /// </summary>
+        /// <param name="response">Data associated with the response.</param>
+        protected virtual void OnPresenceUpdatedReceived(PresenceUpdateResponse response)
+        {
+            this.log.Info($"{RecInd} Presence: {response.Data.Nick} is now {response.Data.Status}");
+            this.PresenceUpdated?.Invoke(this, response);
+        }
+
+        /// <summary>
         /// Called when the Ready event is received.
         /// </summary>
         /// <param name="data">Data associated with the event.</param>
         protected virtual void OnReadyReceived(ReadyEventData data)
         {
+            this.log.Info($"{RecInd} Ready -- Session '{data.Data.SessionId}'");
             this.ReadyReceived?.Invoke(this, data);
         }
 
@@ -287,6 +319,9 @@ namespace JuvoProcess.Net.Discord
                 case 0: // Dispatch
                     switch (msg["t"].ToString())
                     {
+                        case "PRESENCE_UPDATE":
+                            this.OnPresenceUpdatedReceived(msg.ToObject<PresenceUpdateResponse>());
+                            break;
                         case "READY":
                             this.OnReadyReceived(msg.ToObject<ReadyEventData>());
                             break;
@@ -327,7 +362,7 @@ namespace JuvoProcess.Net.Discord
             {
                 var buffer = new byte[4096];
 
-                while (this.socket.State == WebSocketState.Open)
+                while (this.isConnected && this.socket.State == WebSocketState.Open)
                 {
                     WebSocketReceiveResult result;
                     var message = new StringBuilder();
@@ -347,6 +382,7 @@ namespace JuvoProcess.Net.Discord
                     }
                     else
                     {
+                        this.isConnected = false;
                         this.log.Info("Connection closed!");
                     }
                 }
