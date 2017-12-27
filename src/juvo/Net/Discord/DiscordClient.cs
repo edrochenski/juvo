@@ -251,7 +251,8 @@ namespace JuvoProcess.Net.Discord
                                 + "\"$device\": \"disco\","
                                 + "\"$os\": \"windows\""
                             + "},"
-                            + "\"token\": \"Mzc2NTM1NDQ0OTIzMzUxMDQx.DOaZWw.bYZO4nsYktA83HCeK1zneFNKtfY\""
+                            + "\"token\": "
+                            + "\"Mzc2NTM1NDQ0OTIzMzUxMDQx.DOaZWw.bYZO4nsYktA83HCeK1zneFNKtfY\""
                         + "}"
 
                     // + "\"shard\": [],"
@@ -271,7 +272,8 @@ namespace JuvoProcess.Net.Discord
         /// <param name="response">Data associated with the response.</param>
         protected virtual void OnPresenceUpdatedReceived(PresenceUpdateResponse response)
         {
-            this.log.Info($"{RecInd} Presence: {response.Data.Nick} is now {response.Data.Status}");
+            this.log.Info(
+                $"{RecInd} Presence: {response.Data.User.Id} is now {response.Data.Status}");
             this.PresenceUpdated?.Invoke(this, response);
         }
 
@@ -296,15 +298,18 @@ namespace JuvoProcess.Net.Discord
         private async Task GetGateway()
         {
             this.log.Debug(
-                $"Retrieving gateway from {this.httpClient.BaseAddress}{Discord.ApiPaths.Gateway}");
+                $"Retrieving gateway from " +
+                $"{this.httpClient.BaseAddress}{Discord.ApiPaths.Gateway}");
             var response = await this.httpClient.GetStringAsync(Discord.ApiPaths.Gateway);
-            this.Options.GatewayUri = new Uri(JsonConvert.DeserializeObject<GatewayResponse>(response)?.Url);
+            this.Options.GatewayUri =
+                new Uri(JsonConvert.DeserializeObject<GatewayResponse>(response)?.Url);
         }
 
         private async Task GetGatewayBot()
         {
             this.log.Debug(
-                $"Retrieving bot-gateway from {this.httpClient.BaseAddress}{Discord.ApiPaths.GatewayBot}");
+                $"Retrieving bot-gateway from " +
+                $"{this.httpClient.BaseAddress}{Discord.ApiPaths.GatewayBot}");
             var json = await this.httpClient.GetStringAsync(Discord.ApiPaths.GatewayBot);
             var resp = JsonConvert.DeserializeObject<GatewayBotResponse>(json);
             this.Options.GatewayUri = new Uri(resp.Url);
@@ -369,7 +374,9 @@ namespace JuvoProcess.Net.Discord
 
                     do
                     {
-                        result = await this.socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                        result = await this.socket.ReceiveAsync(
+                            new ArraySegment<byte>(buffer),
+                            CancellationToken.None);
                         message.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
                     }
                     while (!result.EndOfMessage);
@@ -396,7 +403,9 @@ namespace JuvoProcess.Net.Discord
 
         private async Task SendText(string jsonString)
         {
-            Debug.Assert(!string.IsNullOrEmpty(jsonString), $"{nameof(jsonString)} == null | empty");
+            Debug.Assert(
+                !string.IsNullOrEmpty(jsonString),
+                $"{nameof(jsonString)} == null | empty");
 
             this.log.Debug($"{SndInd} {jsonString}");
 
