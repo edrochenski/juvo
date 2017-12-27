@@ -5,7 +5,10 @@
 namespace JuvoProcess.Modules.Weather
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
+    using System.Text;
     using AngleSharp.Parser.Html;
     using JuvoProcess.Bots;
     using JuvoProcess.Net;
@@ -19,13 +22,23 @@ namespace JuvoProcess.Modules.Weather
     {
 /*/ Constants /*/
         private const string DarkSkyForecastUrl = "https://api.darksky.net/forecast/a4b34f1591b0da62f90e1eb28d1eb627/";
+        private const string GpsCachFile = "gps.dat";
         private const string GpsUrl = "https://www.bing.com/search?q={0}+longitude+latitude&qs=n&form=QBLH";
         private const string ModuleName = "weather";
+        private const string UsnoSunMoonUrl = "http://api.usno.navy.mil/rstt/oneday";
 
 /*/ Fields /*/
+        private static readonly Dictionary<string, GeoCoordinate> GpsCache;
+        private static bool gpsCachLoaded;
         private readonly IJuvoClient juvoClient;
 
 /*/ Constructors /*/
+
+        static WeatherModule()
+        {
+            GpsCache = new Dictionary<string, GeoCoordinate>();
+            gpsCachLoaded = false;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WeatherModule"/> class.
@@ -45,8 +58,17 @@ namespace JuvoProcess.Modules.Weather
         /// <param name="httpClient">Http client.</param>
         /// <param name="log">Log.</param>
         /// <returns>If successful, a <see cref="GeoCoordinate"/> with valid lat/long values.</returns>
-        public static GeoCoordinate? FindCoordinates(string location, IHttpClient httpClient, ILog log)
+        public static GeoCoordinate? FindCoordinates(
+            string location,
+            IHttpClient httpClient,
+            ILog log)
         {
+            var cache = TryGpsCache(location);
+            if (cache.HasValue)
+            {
+                return cache.Value;
+            }
+
             var parser = new HtmlParser();
             var gpsQuery = string.Format(GpsUrl, location);
 
@@ -60,7 +82,9 @@ namespace JuvoProcess.Modules.Weather
                     if (input != null && !string.IsNullOrEmpty(input.TextContent))
                     {
                         log.Debug($"[{ModuleName}] Using Geo Coords '{input.TextContent}'");
-                        return new GeoCoordinate(input.TextContent);
+                        var geo = new GeoCoordinate(input.TextContent);
+                        AddToCache(location, geo);
+                        return geo;
                     }
                     else
                     {
@@ -111,17 +135,17 @@ namespace JuvoProcess.Modules.Weather
                             var bearDisplay = this.GetBearingDisplay(dsResponse.Currently.WindBearing);
                             cmd.ResponseText =
                                 $"Currently: {dsResponse.Currently.Summary} and " +
-                                $"{dsResponse.Currently.Temperature:.0}°F " +
-                                $"(Feels like {dsResponse.Currently.ApparentTemperature:.0}°F) " +
-                                $"| Dew Point: {dsResponse.Currently.DewPoint:.00}°F, " +
-                                $"Humidity: {dsResponse.Currently.Humidity * 100:.0}%, " +
-                                $"Pressure: {dsResponse.Currently.Pressure:.00}mb, " +
+                                $"{dsResponse.Currently.Temperature:0.0}°F " +
+                                $"(Feels like {dsResponse.Currently.ApparentTemperature:0.0}°F) " +
+                                $"| Dew Point: {dsResponse.Currently.DewPoint:0.00}°F, " +
+                                $"Humidity: {dsResponse.Currently.Humidity * 100:0.0}%, " +
+                                $"Pressure: {dsResponse.Currently.Pressure:0.00}mb, " +
                                 $"UV Index: {dsResponse.Currently.UvIndex:0} " +
                                 $"| Wind from the {bearDisplay} " +
                                 $"({dsResponse.Currently.WindBearing}°) " +
-                                $"at {dsResponse.Currently.WindSpeed}mph " +
-                                $"(Gusting at {dsResponse.Currently.WindGust}mph) " +
-                                $"| Updated: {updated}";
+                                $"at {dsResponse.Currently.WindSpeed:0.0}mph " +
+                                $"(Gusting at {dsResponse.Currently.WindGust:0.0}mph) " +
+                                $"| Updated: {updated} UTC";
                         }
                         else
                         {
@@ -132,6 +156,141 @@ namespace JuvoProcess.Modules.Weather
             }
             catch (Exception exc)
             {
+                this.juvoClient.Log.Error("[{ModuleName}] Error executing", exc);
+                cmd.ResponseText = $"Error: {exc.Message}";
+            }
+        }
+
+        private static void AddToCache(string location, GeoCoordinate coord)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(location), $"{nameof(location)} == null|empty");
+
+            Program.Juvo.Log.Debug($"[{ModuleName}] Adding '{location}' @ {coord} to cache");
+
+            if (!gpsCachLoaded && !LoadGpsCache())
+            {
+                Program.Juvo.Log.Warn($"[{ModuleName}] Could not add GPS to cache");
+                return;
+            }
+
+            GpsCache.Add(location.ToLowerInvariant(), coord);
+            SaveGpsCache();
+        }
+
+        private static bool CreateGpsCache()
+        {
+            try
+            {
+                var path = Path.Combine(
+                    Program.Juvo.SystemInfo.AppDataPath.FullName, GpsCachFile);
+
+                Program.Juvo.Log.Debug($"[{ModuleName}] Creating GPS cache '{path}'");
+
+                using (var file = new BinaryWriter(File.Create(path)))
+                {
+                    file.Write(0);
+                    file.Flush();
+                }
+
+                return true;
+            }
+            catch (Exception exc)
+            {
+                Program.Juvo.Log.Error($"[{ModuleName}] Failed creating GPS cache file", exc);
+                return false;
+            }
+        }
+
+        private static bool LoadGpsCache()
+        {
+            try
+            {
+                Program.Juvo.Log.Debug($"[{ModuleName}] Loading GPS cache");
+
+                var path = Path.Combine(
+                    Program.Juvo.SystemInfo.AppDataPath.FullName, GpsCachFile);
+
+                GpsCache.Clear();
+
+                if (!File.Exists(path))
+                {
+                    if (!CreateGpsCache())
+                    {
+                        Program.Juvo.Log.Warn($"[{ModuleName}] Skipping GPS cache load");
+                        return false;
+                    }
+                }
+
+                using (var file = new BinaryReader(File.OpenRead(path)))
+                {
+                    var count = file.ReadInt32();
+
+                    for (var x = 0; x < count; ++x)
+                    {
+                        GpsCache.Add(
+                            file.ReadString(),
+                            new GeoCoordinate(file.ReadDouble(), file.ReadDouble()));
+                    }
+
+                    Program.Juvo.Log.Info($"[{ModuleName}] Loaded {count} GPS cache entries");
+                    gpsCachLoaded = true;
+                }
+
+                return true;
+            }
+            catch (Exception exc)
+            {
+                Program.Juvo.Log.Error($"[{ModuleName}] Failed loading GPS cache", exc);
+                return false;
+            }
+        }
+
+        private static void SaveGpsCache()
+        {
+            try
+            {
+                Program.Juvo.Log.Debug($"[{ModuleName}] Saving GPS cache");
+
+                var path = Path.Combine(
+                    Program.Juvo.SystemInfo.AppDataPath.FullName, GpsCachFile);
+                using (var file = new BinaryWriter(File.Create(path)))
+                {
+                    file.Write(GpsCache.Count);
+                    foreach (var item in GpsCache)
+                    {
+                        file.Write(item.Key);
+                        file.Write(item.Value.Latitude);
+                        file.Write(item.Value.Longitude);
+                    }
+
+                    file.Flush();
+                }
+            }
+            catch (Exception exc)
+            {
+                Program.Juvo.Log.Error($"[{ModuleName}] Failed to save GPS file", exc);
+            }
+        }
+
+        private static GeoCoordinate? TryGpsCache(string location)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(location), $"{nameof(location)} == null|empty");
+
+            if (!gpsCachLoaded && !LoadGpsCache())
+            {
+                return null;
+            }
+
+            Program.Juvo.Log.Debug($"[{ModuleName}] Searching cache for '{location}'");
+            if (GpsCache.TryGetValue(location.ToLowerInvariant(), out GeoCoordinate geo))
+            {
+                Program.Juvo.Log.Info($"[{ModuleName}] GPS cache hit on '{location}'");
+                return geo;
+            }
+
+            return null;
+        }
+
         private void ExecuteSky(IBotCommand cmd, GeoCoordinate coords)
         {
             Debug.Assert(cmd != null, $"{nameof(cmd)} is null");

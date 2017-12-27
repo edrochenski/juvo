@@ -39,6 +39,17 @@ namespace JuvoProcess.Modules.Weather
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="GeoCoordinate"/> struct.
+        /// </summary>
+        /// <param name="lat">Latitude of coordinates.</param>
+        /// <param name="lon">Longitude of coordinates.</param>
+        public GeoCoordinate(double lat, double lon)
+        {
+            this.Latitude = lat;
+            this.Longitude = lon;
+        }
+
+        /// <summary>
         /// Gets or sets the latitude of the GeoCoordinate.
         /// </summary>
         public double Latitude { get; set; }
