@@ -89,7 +89,13 @@ namespace JuvoProcess.Modules.Weather
 
                     if (cmdParts[0] == "gps")
                     {
-                        cmd.ResponseText = $"Coordinates: {geo}";
+                        cmd.ResponseText = $"Coordinates: {geo.Value}";
+                        return;
+                    }
+
+                    if (cmdParts[0] == "sky")
+                    {
+                        this.ExecuteSky(cmd, geo.Value);
                         return;
                     }
 
@@ -126,8 +132,112 @@ namespace JuvoProcess.Modules.Weather
             }
             catch (Exception exc)
             {
+        private void ExecuteSky(IBotCommand cmd, GeoCoordinate coords)
+        {
+            Debug.Assert(cmd != null, $"{nameof(cmd)} is null");
+            this.juvoClient.Log.Debug($"[{ModuleName}] Getting sky results for {coords}");
+
+            try
+            {
+                // NOTE(er): Dates *need* to be MM/dd/yyyy, was having trouble
+                // trying to do this in string.Format, date always came out
+                // with hyphens instead of forward slashes
+                var now = DateTime.Now;
+                var dt = $"{now.Month:00}/{now.Day:00}/{now.Year}";
+                var url = $"{UsnoSunMoonUrl}" +
+                    $"?date={dt}" +
+                    $"&coords={coords.Latitude}N,{coords.Longitude}E";
+
+                this.juvoClient.Log.Debug($"[{ModuleName}] Retrieving '{url}'");
+                using (var response = this.juvoClient.HttpClient.GetAsync(url).Result)
+                {
+                    var json = response.Content.ReadAsStringAsync().Result;
+                    var resp = JsonConvert.DeserializeObject<UsnoSunMoonData>(json);
+                    if (resp != null && !resp.Error)
+                    {
+                        var skyMessage = new StringBuilder();
+
+                        // TODO(er): extract into a method
+                        if (resp.SunData != null && resp.SunData.Length > 0)
+                        {
+                            skyMessage.Append("(Sun) ");
+                            for (var x = 0; x < resp.SunData.Length; ++x)
+                            {
+                                var phen = resp.SunData[x];
+                                if (x > 0)
+                                {
+                                    skyMessage.Append(", ");
+                                }
+
+                                skyMessage.Append(
+                                    $"{this.GetPhenomenaDisplay(phen.Phen)}@{phen.Time}UTC ");
+                            }
+                        }
+
+                        if (resp.NextSunData != null && resp.NextSunData.Length > 0)
+                        {
+                            skyMessage.Append("(Next Sun) ");
+                            for (var x = 0; x < resp.NextSunData.Length; ++x)
+                            {
+                                var phen = resp.NextSunData[x];
+                                if (x > 0)
+                                {
+                                    skyMessage.Append(", ");
+                                }
+
+                                skyMessage.Append(
+                                    $"{this.GetPhenomenaDisplay(phen.Phen)}@{phen.Time}UTC ");
+                            }
+                        }
+
+                        skyMessage.Append($"(Moon) {resp.CurPhase}/{resp.Fracillum} ");
+                        if (resp.MoonData != null && resp.MoonData.Length > 0)
+                        {
+                            for (var x = 0; x < resp.MoonData.Length; ++x)
+                            {
+                                var phen = resp.MoonData[x];
+                                if (x > 0)
+                                {
+                                    skyMessage.Append(", ");
+                                }
+
+                                skyMessage.Append(
+                                    $"{this.GetPhenomenaDisplay(phen.Phen)}@{phen.Time}UTC ");
+                            }
+                        }
+
+                        if (resp.NextMoonData != null && resp.NextMoonData.Length > 0)
+                        {
+                            skyMessage.Append("(Next Moon) ");
+                            for (var x = 0; x < resp.NextMoonData.Length; ++x)
+                            {
+                                var phen = resp.NextMoonData[x];
+                                if (x > 0)
+                                {
+                                    skyMessage.Append(", ");
+                                }
+
+                                skyMessage.Append(
+                                    $"{this.GetPhenomenaDisplay(phen.Phen)}@{phen.Time}UTC ");
+                            }
+                        }
+
+                        cmd.ResponseText = skyMessage.ToString();
+                    }
+                    else if (resp.Error)
+                    {
+                        cmd.ResponseText = resp.Type;
+                    }
+                    else
+                    {
+                        cmd.ResponseText = "No results found!";
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                this.juvoClient.Log.Error("[{ModuleName}] Error retrieivng sky results", exc);
                 cmd.ResponseText = $"Error: {exc.Message}";
-                Debug.WriteLine(exc);
             }
         }
 
@@ -219,6 +329,24 @@ namespace JuvoProcess.Modules.Weather
             }
 
             return null;
+        }
+
+        private string GetPhenomenaDisplay(string phen)
+        {
+            switch (phen.ToLowerInvariant())
+            {
+                case "bc": return "Begin CT";
+                case "ec": return "End CT";
+                case "l": return "Lower Transit";
+                case "r": return "Rise";
+                case "s": return "Set";
+                case "u": return "Upper Transit";
+                case "**": return "OCA horizon";
+                case "--": return "OCB horizon";
+                case "^^": return "OCA twilight limit";
+                case "~~": return "OCB twilight limit";
+                default: return string.Empty;
+            }
         }
     }
 }

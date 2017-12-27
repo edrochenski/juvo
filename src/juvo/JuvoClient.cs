@@ -86,11 +86,14 @@ namespace JuvoProcess
 
             this.modules = new Dictionary<string[], IBotModule>
             {
-                { new[] { "gps", "weather" }, new WeatherModule(this) }
+                { new[] { "gps", "sky", "weather" }, new WeatherModule(this) }
             };
         }
 
 /*/ Properties /*/
+
+        /// <inheritdoc/>
+        public Config Config => this.config;
 
         /// <inheritdoc/>
         public IHttpClient HttpClient => this.httpClient;
