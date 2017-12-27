@@ -106,6 +106,9 @@ namespace JuvoProcess
         /// </summary>
         public JuvoState State { get; protected set; }
 
+        /// <inheritdoc/>
+        public SystemInfo SystemInfo => this.sysInfo;
+
 /*/ Methods /*/
 
     // Public

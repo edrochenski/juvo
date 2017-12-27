@@ -5,6 +5,7 @@
 namespace JuvoProcess
 {
     using JuvoProcess.Bots;
+    using JuvoProcess.Configuration;
     using JuvoProcess.Net;
     using log4net;
 
@@ -14,6 +15,11 @@ namespace JuvoProcess
     public interface IJuvoClient
     {
         /// <summary>
+        /// Gets the config.
+        /// </summary>
+        Config Config { get; }
+
+        /// <summary>
         /// Gets the log.
         /// </summary>
         ILog Log { get; }
@@ -22,6 +28,11 @@ namespace JuvoProcess
         /// Gets the Http Client.
         /// </summary>
         IHttpClient HttpClient { get; }
+
+        /// <summary>
+        /// Gets the System Information.
+        /// </summary>
+        SystemInfo SystemInfo { get; }
 
         /// <summary>
         /// Queues a command for the bot to execute.
