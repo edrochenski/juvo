@@ -390,6 +390,9 @@ namespace JuvoProcess.Net.Discord
                     else
                     {
                         this.isConnected = false;
+                        await this.socket.CloseAsync(
+                            WebSocketCloseStatus.Empty, string.Empty, this.cancelToken);
+
                         this.log.Info("Connection closed!");
                     }
                 }
