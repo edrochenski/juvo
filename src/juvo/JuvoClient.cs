@@ -289,7 +289,16 @@ namespace JuvoProcess
             var module = this.modules.SingleOrDefault(p => p.Key.Contains(cmdName));
             if (module.Value != null)
             {
-                module.Value.Execute(cmd);
+                try
+                {
+                    module.Value.Execute(cmd);
+                }
+                catch (Exception exc)
+                {
+                    var message = $"Error executing module '{module.GetType().Name}'";
+                    this.log?.Error(message, exc);
+                    cmd.ResponseText = message;
+                }
             }
             else
             {
