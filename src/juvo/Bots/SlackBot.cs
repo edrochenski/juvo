@@ -73,7 +73,7 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public async Task QueueResponse(IBotCommand cmd)
         {
-            if (cmd is SlackBotCommand sbCmd)
+            if (cmd is SlackBotCommand sbCmd && !string.IsNullOrEmpty(cmd.ResponseText))
             {
                 // For now we just process them right away
                 await this.slackClient.SendMessage(sbCmd.Channel, sbCmd.ResponseText);

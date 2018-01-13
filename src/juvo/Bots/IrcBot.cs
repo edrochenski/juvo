@@ -99,7 +99,7 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public Task QueueResponse(IBotCommand cmd)
         {
-            if (cmd is IrcBotCommand ircCmd)
+            if (cmd is IrcBotCommand ircCmd && !string.IsNullOrEmpty(cmd.ResponseText))
             {
                 this.client.SendMessage(ircCmd.Channel, ircCmd.ResponseText);
             }
