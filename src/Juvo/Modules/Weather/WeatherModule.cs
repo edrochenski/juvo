@@ -30,6 +30,7 @@ namespace JuvoProcess.Modules.Weather
 /*/ Fields /*/
         private static readonly Dictionary<string, GeoCoordinate> GpsCache;
         private static bool gpsCachLoaded;
+        private readonly IHttpClient httpClient;
         private readonly IJuvoClient juvoClient;
 
 /*/ Constructors /*/
@@ -44,9 +45,11 @@ namespace JuvoProcess.Modules.Weather
         /// Initializes a new instance of the <see cref="WeatherModule"/> class.
         /// </summary>
         /// <param name="juvoClient">Juvo client.</param>
-        public WeatherModule(IJuvoClient juvoClient)
+        /// <param name="httpClient">Http client.</param>
+        public WeatherModule(IJuvoClient juvoClient, IHttpClient httpClient)
         {
             this.juvoClient = juvoClient ?? throw new System.ArgumentNullException(nameof(juvoClient));
+            this.httpClient = httpClient;
         }
 
 /*/ Methods /*/
@@ -102,8 +105,12 @@ namespace JuvoProcess.Modules.Weather
                 var cmdParts = cmd.RequestText.Split(' ');
                 if (cmdParts.Length > 1)
                 {
+                    // LEFT OFF HERE
+                    // These calls using the http client from juvo will need to use some other
+                    // client, or we may need to decide that juvoclient does need an http client
+                    // for modules to use?
                     var location = string.Join('+', cmdParts, 1, cmdParts.Length - 1);
-                    var geo = FindCoordinates(location, this.juvoClient.HttpClient, this.juvoClient.Log);
+                    var geo = FindCoordinates(location, this.httpClient, this.juvoClient.Log);
 
                     if (!geo.HasValue)
                     {
@@ -125,7 +132,7 @@ namespace JuvoProcess.Modules.Weather
 
                     var url = $"{DarkSkyForecastUrl}{geo}";
 
-                    using (var response = this.juvoClient.HttpClient.GetAsync(url).Result)
+                    using (var response = this.httpClient.GetAsync(url).Result)
                     {
                         var json = response.Content.ReadAsStringAsync().Result;
                         var dsResponse = JsonConvert.DeserializeObject<DarkSkyResponse>(json);
@@ -308,7 +315,7 @@ namespace JuvoProcess.Modules.Weather
                     $"&coords={coords.Latitude}N,{coords.Longitude}E";
 
                 this.juvoClient.Log.Debug($"[{ModuleName}] Retrieving '{url}'");
-                using (var response = this.juvoClient.HttpClient.GetAsync(url).Result)
+                using (var response = this.httpClient.GetAsync(url).Result)
                 {
                     var json = response.Content.ReadAsStringAsync().Result;
                     var resp = JsonConvert.DeserializeObject<UsnoSunMoonData>(json);

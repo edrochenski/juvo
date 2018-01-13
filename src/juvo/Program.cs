@@ -31,6 +31,7 @@ namespace JuvoProcess
 
     // PRIVATE
         private static readonly ILog Log;
+        private static readonly ILogManager LogMgr;
         private static readonly ManualResetEvent ResetEvent;
 
 /*/ Constructors /*/
@@ -40,18 +41,17 @@ namespace JuvoProcess
             XmlConfigurator.ConfigureAndWatch(
                 LogManager.GetRepository(Assembly.GetEntryAssembly()),
                 new FileInfo("log4net.config"));
-            Log = LogManager.GetLogger(typeof(Program));
+            LogMgr = new LogManagerProxy();
+            Log = LogMgr.GetLogger(typeof(Program));
 
-            var report = DiagnosticReport.Generate();
-            Log.Debug($"Diagnostic report:{Environment.NewLine}{report}");
-
+            // var report = DiagnosticReport.Generate();
+            // Log.Debug($"Diagnostic report:{Environment.NewLine}{report}");
             ResetEvent = new ManualResetEvent(false);
             Juvo = new JuvoClient(
-                new DiscordBotFactory(),
-                new IrcBotFactory(),
-                new SlackBotFactory(),
-                new HttpClientProxy(new HttpClientHandler()),
-                new ClientWebSocketProxy(),
+                new DiscordBotFactory(LogMgr),
+                new IrcBotFactory(LogMgr),
+                new SlackBotFactory(LogMgr),
+                LogMgr,
                 ResetEvent);
         }
 

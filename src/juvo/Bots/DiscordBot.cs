@@ -7,7 +7,6 @@ namespace JuvoProcess.Bots
     using System;
     using System.Threading.Tasks;
     using JuvoProcess.Configuration;
-    using JuvoProcess.Net;
     using JuvoProcess.Net.Discord;
 
     /// <summary>
@@ -16,8 +15,8 @@ namespace JuvoProcess.Bots
     public class DiscordBot : IDiscordBot
     {
 /*/ Fields /*/
-        private readonly IClientWebSocket clientWebSocket;
-        private readonly DiscordClient discordClient;
+        private readonly IDiscordClient discordClient;
+        private readonly DiscordConfigConnection discordConfig;
         private readonly IJuvoClient juvoClient;
         private bool isDisposed;
 
@@ -27,21 +26,18 @@ namespace JuvoProcess.Bots
         /// Initializes a new instance of the <see cref="DiscordBot"/> class.
         /// </summary>
         /// <param name="config">Discord config file.</param>
-        /// <param name="host">Host client.</param>
-        /// <param name="httpClient">Http client.</param>
-        /// <param name="clientWebSocket">Client web socket.</param>
+        /// <param name="discordClient">Discord client.</param>
+        /// <param name="juvoClient">Juvo client.</param>
         public DiscordBot(
             DiscordConfigConnection config,
-            IJuvoClient host,
-            IHttpClient httpClient,
-            IClientWebSocket clientWebSocket)
+            IDiscordClient discordClient,
+            IJuvoClient juvoClient)
         {
-            this.discordClient = new DiscordClient(
-                clientWebSocket,
-                httpClient,
-                new DiscordClientOptions { AuthToken = config.AuthToken, IsBot = true });
-            this.juvoClient = host;
-            this.clientWebSocket = clientWebSocket;
+            this.discordConfig = config;
+            this.juvoClient = juvoClient
+                ?? throw new ArgumentNullException(nameof(juvoClient));
+            this.discordClient = discordClient
+                ?? throw new ArgumentNullException(nameof(discordClient));
         }
 
 /*/ Properties /*/
@@ -83,7 +79,7 @@ namespace JuvoProcess.Bots
             {
                 if (!this.isDisposed && isDisposing)
                 {
-                    this.clientWebSocket.Dispose();
+                    this.discordClient.Dispose();
                 }
             }
             finally

@@ -4,29 +4,38 @@
 
 namespace JuvoProcess.Bots
 {
+    using System.Net.Http;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net;
+    using JuvoProcess.Net.Discord;
 
     /// <summary>
     /// Default Discord Bot factory.
     /// </summary>
     public class DiscordBotFactory : IDiscordBotFactory
     {
+        private readonly ILogManager logManager;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscordBotFactory"/> class.
         /// </summary>
-        public DiscordBotFactory()
+        /// <param name="logManager">Log manager.</param>
+        public DiscordBotFactory(ILogManager logManager)
         {
+            this.logManager = logManager;
         }
 
         /// <inheritdoc />
         public IDiscordBot Create(
             DiscordConfigConnection config,
-            IJuvoClient client,
-            IHttpClient httpClient,
-            IClientWebSocket clientWebSocket)
+            IDiscordClient discordClient,
+            IJuvoClient juvoClient)
         {
-            return new DiscordBot(config, client, httpClient, clientWebSocket);
+            // TODO: this should NOT be using concrete classes
+            return new DiscordBot(
+                config,
+                discordClient,
+                juvoClient);
         }
     }
 }

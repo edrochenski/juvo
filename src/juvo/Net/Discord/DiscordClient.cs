@@ -41,7 +41,7 @@ namespace JuvoProcess.Net.Discord
     /// <summary>
     /// Discord client.
     /// </summary>
-    public class DiscordClient : IDisposable
+    public class DiscordClient : IDiscordClient, IDisposable
     {
 /*/ Constants /*/
 
@@ -142,10 +142,7 @@ namespace JuvoProcess.Net.Discord
 
     // Public
 
-        /// <summary>
-        /// Starts the connection process.
-        /// </summary>
-        /// <returns>A Task associated with the async operation.</returns>
+        /// <inheritdoc/>
         public async Task Connect()
         {
             if (this.Options.GatewayUri == null)
@@ -162,12 +159,29 @@ namespace JuvoProcess.Net.Discord
 
             var wssUrl = this.BuildWssUrl();
 
-            this.log.Info($"Connecting to {wssUrl}");
-            await this.socket.ConnectAsync(new Uri(wssUrl), this.cancelToken);
+            if (this.socket.State != WebSocketState.Closed &&
+                this.socket.State != WebSocketState.None)
+            {
+                var result = await this.CloseSocket();
+                if (result != WebSocketState.Closed && result != WebSocketState.None)
+                {
+                    // TODO: probably move this into CloseSocket() with guards
+                    this.log.Warn("Unable to close the web socket before reconnecting.");
+                }
+            }
 
-            this.isConnected = true;
-            this.log.Info("Connected to Discord, starting listener...");
-            this.Listen();
+            this.log.Info($"Connecting to {wssUrl}");
+            try
+            {
+                await this.socket.ConnectAsync(new Uri(wssUrl), this.cancelToken);
+                this.isConnected = true;
+                this.log.Info("Connected to Discord, starting listener...");
+                this.Listen();
+            }
+            catch (Exception exc)
+            {
+                this.log.Error("Connect()", exc);
+            }
         }
 
         /// <summary>
@@ -185,18 +199,18 @@ namespace JuvoProcess.Net.Discord
         /// Called when the heartbeat interval is reached.
         /// </summary>
         /// <param name="state">Stateful object assigned to the timer.</param>
-        protected virtual void OnHeartbeatInterval(object state)
+        protected virtual async void OnHeartbeatInterval(object state)
         {
             if (this.isConnected)
             {
                 var d = this.lastSequence.HasValue ? this.lastSequence.Value.ToString() : "null";
 
                 this.log.Info($"{SndInd} Heartbeat");
-                this.SendText($"{{ \"op\": 1, \"d\": {d} }}").Wait();
+                await this.SendText($"{{ \"op\": 1, \"d\": {d} }}");
             }
             else
             {
-                this.Connect().Wait();
+                await this.Connect();
             }
         }
 
@@ -271,6 +285,15 @@ namespace JuvoProcess.Net.Discord
         {
             return $"{this.Options.GatewayUri}/?v={this.Options.ApiVersion}&" +
                    $"encoding={Discord.DefaultApiEncoding}";
+        }
+
+        private async Task<WebSocketState> CloseSocket()
+        {
+            await this.socket.CloseAsync(
+                WebSocketCloseStatus.EndpointUnavailable, string.Empty, this.cancelToken);
+            this.isConnected = false;
+            this.log.Info("Connection closed!");
+            return this.socket.State;
         }
 
         private async Task GetGateway()
@@ -367,18 +390,17 @@ namespace JuvoProcess.Net.Discord
                     }
                     else
                     {
-                        this.isConnected = false;
-                        await this.socket.CloseAsync(
-                            WebSocketCloseStatus.Empty, string.Empty, this.cancelToken);
-
-                        this.log.Info("Connection closed!");
+                        if (this.socket.State == WebSocketState.CloseReceived)
+                        {
+                            this.log.Debug("Close request received");
+                        }
                     }
                 }
             }
             catch (Exception exc)
             {
-                this.log.Error(exc.Message);
-                throw;
+                this.log.Error("Listen()", exc);
+                await this.CloseSocket();
             }
         }
 

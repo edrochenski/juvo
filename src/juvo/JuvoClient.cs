@@ -17,7 +17,7 @@ namespace JuvoProcess
     using JuvoProcess.Modules;
     using JuvoProcess.Modules.Weather;
     using JuvoProcess.Net;
-    using log4net;
+    using JuvoProcess.Net.Discord;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -34,14 +34,12 @@ namespace JuvoProcess
         private readonly Timer commandTimer;
         private readonly IDiscordBotFactory discordBotFactory;
         private readonly List<IDiscordBot> discordBots;
-        private readonly IHttpClient httpClient;
-        private readonly IClientWebSocket clientWebSocket;
         private readonly IIrcBotFactory ircBotFactory;
         private readonly List<IIrcBot> ircBots;
+        private readonly ILog log;
         private readonly Dictionary<string[], IBotModule> modules;
         private readonly ISlackBotFactory slackBotFactory;
         private readonly List<ISlackBot> slackBots;
-        private readonly ILog log;
         private readonly ManualResetEvent resetEvent;
         private readonly SystemInfo sysInfo;
 
@@ -56,20 +54,16 @@ namespace JuvoProcess
         /// <param name="discordBotFactory">Factory object for Discord bots.</param>
         /// <param name="ircBotFactory">Factory object for IRC bots.</param>
         /// <param name="slackBotFactory">Factory object for Slack bots.</param>
-        /// <param name="httpClient">Http client for requests.</param>
-        /// <param name="clientWebSocket">Client web socket.</param>
+        /// <param name="logManager">Log manager.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
         public JuvoClient(
             IDiscordBotFactory discordBotFactory,
             IIrcBotFactory ircBotFactory,
             ISlackBotFactory slackBotFactory,
-            IHttpClient httpClient,
-            IClientWebSocket clientWebSocket,
+            ILogManager logManager,
             ManualResetEvent resetEvent = null)
         {
-            this.clientWebSocket = clientWebSocket ?? throw new ArgumentNullException(nameof(clientWebSocket));
             this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
-            this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
             this.resetEvent = resetEvent;
             this.slackBotFactory = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
@@ -79,14 +73,18 @@ namespace JuvoProcess
             this.discordBots = new List<IDiscordBot>();
             this.ircBots = new List<IIrcBot>();
             this.slackBots = new List<ISlackBot>();
-            this.log = LogManager.GetLogger(typeof(JuvoClient));
+            this.log = (ILog)logManager?.GetLogger(typeof(JuvoClient));
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
             this.sysInfo = GetSystemInfo();
 
             this.modules = new Dictionary<string[], IBotModule>
             {
-                { new[] { "gps", "sky", "weather" }, new WeatherModule(this) }
+                // TODO: modules will need to ask for dependencies differently
+                {
+                    new[] { "gps", "sky", "weather" },
+                    new WeatherModule(this, new HttpClientProxy(new HttpClientHandlerProxy()))
+                }
             };
         }
 
@@ -94,9 +92,6 @@ namespace JuvoProcess
 
         /// <inheritdoc/>
         public Config Config => this.config;
-
-        /// <inheritdoc/>
-        public IHttpClient HttpClient => this.httpClient;
 
         /// <inheritdoc/>
         public ILog Log => this.log;
@@ -123,7 +118,7 @@ namespace JuvoProcess
             Debug.Assert(!string.IsNullOrEmpty(cmd.RequestText), "cmd.RequestText != null/empty");
 
             this.commandQueue.Enqueue(cmd);
-            this.log.Info("Queued command");
+            this.log?.Info("Queued command");
         }
 
         /// <summary>
@@ -132,19 +127,19 @@ namespace JuvoProcess
         /// <returns>Result of the call.</returns>
         public async Task<int> Run()
         {
-            this.log.Info("Gathering system information");
+            this.log?.Info("Gathering system information");
             GetSystemInfo();
 
-            this.log.Info("Creating any missing resources");
+            this.log?.Info("Creating any missing resources");
             this.CreateResources();
 
-            this.log.Info("Loading configuration file");
+            this.log?.Info("Loading configuration file");
             this.LoadConfig();
 
-            this.log.Info("Starting bots");
+            this.log?.Info("Starting bots");
             await this.StartBots();
 
-            this.log.Info("Juvo is now running");
+            this.log?.Info("Juvo is now running");
             this.State = JuvoState.Running;
 
             return await Task.FromResult(0);
@@ -269,7 +264,11 @@ namespace JuvoProcess
 
             foreach (var disc in this.config?.Discord?.Connections.Where(x => x.Enabled))
             {
-                this.discordBots.Add(this.discordBotFactory.Create(disc, this, this.httpClient, this.clientWebSocket));
+                var dc = new DiscordClient(
+                    new ClientWebSocketProxy(),
+                    new HttpClientProxy(new HttpClientHandlerProxy()),
+                    new DiscordClientOptions { AuthToken = disc.AuthToken, IsBot = true });
+                this.discordBots.Add(this.discordBotFactory.Create(disc, dc, this));
             }
 
             foreach (var irc in this.config?.Irc?.Connections.Where(x => x.Enabled))
@@ -285,6 +284,7 @@ namespace JuvoProcess
 
         private void ProcessCommand(IBotCommand cmd)
         {
+            this.log?.Info("Processing command");
             var cmdName = cmd.RequestText.Split(' ')[0].ToLowerInvariant();
             var module = this.modules.SingleOrDefault(p => p.Key.Contains(cmdName));
             if (module.Value != null)
@@ -296,28 +296,8 @@ namespace JuvoProcess
                 cmd.ResponseText = "Invalid command";
             }
 
+            this.log?.Info("Queueing response on bot");
             cmd.Bot.QueueResponse(cmd);
-
-            // switch ()
-            // {
-            //     case "ping":
-            //     {
-            //         cmd.ResponseText = "Pong!";
-            //         cmd.Bot.QueueResponse(cmd);
-            //         break;
-            //     }
-            //     case "w":
-            //     case "weather":
-            //     {
-            //         this.CommandWeather(cmd);
-            //         break;
-            //     }
-            //     default:
-            //     {
-            //         // TODO: setting to ignore invalid commands
-            //         break;
-            //     }
-            // }
         }
 
         private async Task StartBots()

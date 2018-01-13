@@ -25,11 +25,6 @@ namespace JuvoProcess
         ILog Log { get; }
 
         /// <summary>
-        /// Gets the Http Client.
-        /// </summary>
-        IHttpClient HttpClient { get; }
-
-        /// <summary>
         /// Gets the System Information.
         /// </summary>
         SystemInfo SystemInfo { get; }

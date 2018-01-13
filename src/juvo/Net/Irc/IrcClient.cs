@@ -73,7 +73,7 @@ namespace JuvoProcess.Net.Irc
 
             this.dataBuffer = new StringBuilder();
             this.currentChannels = new List<string>(0);
-            this.log = LogManager.GetLogger(typeof(IrcClient));
+            this.log = LogManager.GetLogger(typeof(IrcClient)); // TODO: should be using proxy
             this.Network = network;
             this.chanModeDict = this.CompileChannelModeDictionary();
             this.userModeDict = this.CompileUserModeDictionary();
@@ -258,18 +258,19 @@ namespace JuvoProcess.Net.Irc
         /// <inheritdoc/>
         public void Send(string data)
         {
-            this.client.Send(UTF8Encoding.UTF8.GetBytes(data));
+            this.Send(Encoding.UTF8.GetBytes(data));
         }
 
         /// <inheritdoc/>
         public void Send(string format, params object[] args)
         {
-            this.client.Send(string.Format(format, args));
+            this.Send(Encoding.UTF8.GetBytes(string.Format(format, args)));
         }
 
         /// <inheritdoc/>
         public void Send(byte[] data)
         {
+            this.log.Debug($"<< Sending {data.Length} bytes");
             this.client.Send(data);
         }
 
@@ -504,18 +505,17 @@ namespace JuvoProcess.Net.Irc
 
         private void HandleData(byte[] data)
         {
-            string incoming = UTF8Encoding.UTF8.GetString(data);
+            var incoming = Encoding.UTF8.GetString(data);
             this.dataBuffer.Append(incoming);
 
             while (this.dataBuffer.ToString().Contains("\r\n"))
             {
-                string temp = this.dataBuffer.ToString();
-                int rnIndex = temp.IndexOf("\r\n");
-                int length = temp.Length - (temp.Length - rnIndex);
+                var temp = this.dataBuffer.ToString();
+                var rnIndex = temp.IndexOf("\r\n");
+                var length = temp.Length - (temp.Length - rnIndex);
+                var message = temp.Substring(0, length);
 
-                string message = temp.Substring(0, length);
                 this.OnMessageReceived(new MessageReceivedArgs(message));
-
                 this.dataBuffer.Remove(0, length + 2);
             }
         }
@@ -539,8 +539,10 @@ namespace JuvoProcess.Net.Irc
                 case "NOTICE":
                     break;
                 case "PING":
-                    string pingSource = msgParts[1].Replace(":", string.Empty);
+                    this.log.Info(">> PING");
+                    var pingSource = msgParts[1].Replace(":", string.Empty);
                     this.Send("PONG {0}\r\n", pingSource);
+                    this.log.Info("<< PONG");
                     break;
             }
         }
