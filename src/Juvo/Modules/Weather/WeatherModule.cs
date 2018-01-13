@@ -105,11 +105,12 @@ namespace JuvoProcess.Modules.Weather
                 var cmdParts = cmd.RequestText.Split(' ');
                 if (cmdParts.Length > 1)
                 {
-                    // LEFT OFF HERE
-                    // These calls using the http client from juvo will need to use some other
-                    // client, or we may need to decide that juvoclient does need an http client
-                    // for modules to use?
                     var location = string.Join('+', cmdParts, 1, cmdParts.Length - 1);
+                    if (string.IsNullOrEmpty(location))
+                    {
+                        return;
+                    }
+
                     var geo = FindCoordinates(location, this.httpClient, this.juvoClient.Log);
 
                     if (!geo.HasValue)
