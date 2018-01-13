@@ -211,6 +211,12 @@ namespace JuvoProcess.Net.Slack
         {
             var jObject = JObject.Parse(message);
 
+            if (jObject == null)
+            {
+                this.log?.Warn($"Could not parse message: '{message}'");
+                return;
+            }
+
             switch (jObject["type"].Value<string>().ToLowerInvariant())
             {
                 case "message":
