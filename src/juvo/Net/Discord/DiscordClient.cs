@@ -166,21 +166,21 @@ namespace JuvoProcess.Net.Discord
                 if (result != WebSocketState.Closed && result != WebSocketState.None)
                 {
                     // TODO: probably move this into CloseSocket() with guards
-                    this.log.Warn("Unable to close the web socket before reconnecting.");
+                    this.log?.Warn("Unable to close the web socket before reconnecting.");
                 }
             }
 
-            this.log.Info($"Connecting to {wssUrl}");
+            this.log?.Info($"Connecting to {wssUrl}");
             try
             {
                 await this.socket.ConnectAsync(new Uri(wssUrl), this.cancelToken);
                 this.isConnected = true;
-                this.log.Info("Connected to Discord, starting listener...");
+                this.log?.Info("Connected to Discord, starting listener...");
                 this.Listen();
             }
             catch (Exception exc)
             {
-                this.log.Error("Connect()", exc);
+                this.log?.Error("Connect()", exc);
             }
         }
 
@@ -205,7 +205,7 @@ namespace JuvoProcess.Net.Discord
             {
                 var d = this.lastSequence.HasValue ? this.lastSequence.Value.ToString() : "null";
 
-                this.log.Info($"{SndInd} Heartbeat");
+                this.log?.Info($"{SndInd} Heartbeat");
                 await this.SendText($"{{ \"op\": 1, \"d\": {d} }}");
             }
             else
@@ -221,7 +221,7 @@ namespace JuvoProcess.Net.Discord
         /// <returns>Task.</returns>
         protected virtual async Task OnHelloResponseReceived(HelloResponse response)
         {
-            this.log.Info($"{RecInd} Hello");
+            this.log?.Info($"{RecInd} Hello");
             this.lastSequence = response.Sequence;
             this.HeartbeatInterval = response.Data.HeartbeatInterval;
 
@@ -252,7 +252,7 @@ namespace JuvoProcess.Net.Discord
                 Shard = new int[0]
             };
 
-            this.log.Info($"{SndInd} Identifying");
+            this.log?.Info($"{SndInd} Identifying");
             await this.SendText(JsonConvert.SerializeObject(ident));
 
             this.HelloResponseReceived?.Invoke(this, response);
@@ -264,7 +264,7 @@ namespace JuvoProcess.Net.Discord
         /// <param name="response">Data associated with the response.</param>
         protected virtual void OnPresenceUpdatedReceived(PresenceUpdateResponse response)
         {
-            this.log.Info(
+            this.log?.Info(
                 $"{RecInd} Presence: {response.Data.User.Id} is now {response.Data.Status}");
             this.PresenceUpdated?.Invoke(this, response);
         }
@@ -275,7 +275,7 @@ namespace JuvoProcess.Net.Discord
         /// <param name="data">Data associated with the event.</param>
         protected virtual void OnReadyReceived(ReadyEventData data)
         {
-            this.log.Info($"{RecInd} Ready -- Session '{data.Data.SessionId}'");
+            this.log?.Info($"{RecInd} Ready -- Session '{data.Data.SessionId}'");
             this.ReadyReceived?.Invoke(this, data);
         }
 
@@ -292,13 +292,13 @@ namespace JuvoProcess.Net.Discord
             await this.socket.CloseAsync(
                 WebSocketCloseStatus.EndpointUnavailable, string.Empty, this.cancelToken);
             this.isConnected = false;
-            this.log.Info("Connection closed!");
+            this.log?.Info("Connection closed!");
             return this.socket.State;
         }
 
         private async Task GetGateway()
         {
-            this.log.Debug(
+            this.log?.Debug(
                 $"Retrieving gateway from " +
                 $"{this.httpClient.BaseAddress}{Discord.ApiPaths.Gateway}");
             var response = await this.httpClient.GetStringAsync(Discord.ApiPaths.Gateway);
@@ -308,7 +308,7 @@ namespace JuvoProcess.Net.Discord
 
         private async Task GetGatewayBot()
         {
-            this.log.Debug(
+            this.log?.Debug(
                 $"Retrieving bot-gateway from " +
                 $"{this.httpClient.BaseAddress}{Discord.ApiPaths.GatewayBot}");
             var json = await this.httpClient.GetStringAsync(Discord.ApiPaths.GatewayBot);
@@ -333,7 +333,7 @@ namespace JuvoProcess.Net.Discord
                             break;
 
                         default:
-                            this.log.Warn($"Not capturing '{msg["t"]}' event.");
+                            this.log?.Warn($"Not capturing '{msg["t"]}' event.");
                             break;
                     }
 
@@ -352,11 +352,11 @@ namespace JuvoProcess.Net.Discord
                     break;
 
                 case 11: // Heartbeat ACK
-                    this.log.Info($"{RecInd} Heartbeat ACK");
+                    this.log?.Info($"{RecInd} Heartbeat ACK");
                     break;
 
                 default:
-                    this.log.Warn(
+                    this.log?.Warn(
                         msg.ToString().Replace("\n", string.Empty).Replace("\r", string.Empty));
                     break;
             }
@@ -382,7 +382,7 @@ namespace JuvoProcess.Net.Discord
                     }
                     while (!result.EndOfMessage);
 
-                    this.log.Debug($"{RecInd} {message}");
+                    this.log?.Debug($"{RecInd} {message}");
 
                     if (message.Length > 0)
                     {
@@ -392,14 +392,14 @@ namespace JuvoProcess.Net.Discord
                     {
                         if (this.socket.State == WebSocketState.CloseReceived)
                         {
-                            this.log.Debug("Close request received");
+                            this.log?.Debug("Close request received");
                         }
                     }
                 }
             }
             catch (Exception exc)
             {
-                this.log.Error("Listen()", exc);
+                this.log?.Error("Listen()", exc);
                 await this.CloseSocket();
             }
         }
@@ -410,7 +410,7 @@ namespace JuvoProcess.Net.Discord
                 !string.IsNullOrEmpty(jsonString),
                 $"{nameof(jsonString)} == null | empty");
 
-            this.log.Debug($"{SndInd} {jsonString}");
+            this.log?.Debug($"{SndInd} {jsonString}");
 
             if (this.socket.State == WebSocketState.Open)
             {
@@ -441,7 +441,7 @@ namespace JuvoProcess.Net.Discord
         {
             Debug.Assert(intervalMs > 0, $"{nameof(intervalMs)} <= 0");
 
-            this.log.Info($"Heartbeat interval changed to {intervalMs}");
+            this.log?.Info($"Heartbeat interval changed to {intervalMs}");
             this.heartbeatTimer.Change(intervalMs, intervalMs);
         }
     }
