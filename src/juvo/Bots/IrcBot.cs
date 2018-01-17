@@ -343,16 +343,6 @@ namespace JuvoProcess.Bots
                     Channel = e.Channel,
                     RequestText = e.Message.Remove(0, this.config.CommandToken.Length)
                 });
-
-                // var cmdParts = e.Message.Split(' ');
-                // switch (cmdParts[0].Replace(config.CommandToken, "").ToLowerInvariant())
-                // {
-                //     case "join":    CommandJoin(cmdParts); break;
-                //     case "psh":     CommandPowershell(cmdParts); break;
-                //     case "quit":    CommandQuit(cmdParts); break;
-                //     case "raw":     CommandRaw(cmdParts); break;
-                //     case "twitter": CommandTwitter(cmdParts); break;
-                // }
             }
         }
 
