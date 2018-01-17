@@ -412,9 +412,29 @@ namespace JuvoProcess.Net.Discord
 
             this.log.Debug($"{SndInd} {jsonString}");
 
-            var encoded = Encoding.UTF8.GetBytes(jsonString);
-            var buffer = new ArraySegment<byte>(encoded, 0, encoded.Length);
-            await this.socket.SendAsync(buffer, WebSocketMessageType.Text, true, this.cancelToken);
+            if (this.socket.State == WebSocketState.Open)
+            {
+                try
+                {
+                    var encoded = Encoding.UTF8.GetBytes(jsonString);
+                    var buffer = new ArraySegment<byte>(encoded, 0, encoded.Length);
+                    await this.socket.SendAsync(
+                        buffer,
+                        WebSocketMessageType.Text,
+                        true,
+                        this.cancelToken);
+                }
+                catch (Exception exc)
+                {
+                    // TODO: what should we do here?
+                    this.log?.Error("SendText()", exc);
+                }
+            }
+            else
+            {
+                // TODO: what should we do here?
+                this.log?.Warn($"Socket in '{this.socket.State}' state. Could not send message.");
+            }
         }
 
         private void SetHeartbeatInterval(int intervalMs)
