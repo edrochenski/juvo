@@ -337,6 +337,7 @@ namespace JuvoProcess.Bots
             this.log.Debug($"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
             if (e.Message.StartsWith(this.config.CommandToken))
             {
+                this.log.Info($"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
                 this.host.QueueCommand(new IrcBotCommand
                 {
                     Bot = this,
