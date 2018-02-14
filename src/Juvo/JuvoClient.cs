@@ -368,7 +368,7 @@ namespace JuvoProcess
                 Environment.Exit(-1);
             }
 
-            foreach (var disc in this.config?.Discord?.Connections.Where(x => x.Enabled))
+            foreach (var disc in this.config?.Discord?.Connections?.Where(x => x.Enabled))
             {
                 var dc = new DiscordClient(
                     new ClientWebSocketProxy(),
@@ -377,12 +377,12 @@ namespace JuvoProcess
                 this.discordBots.Add(this.discordBotFactory.Create(disc, dc, this));
             }
 
-            foreach (var irc in this.config?.Irc?.Connections.Where(x => x.Enabled))
+            foreach (var irc in this.config?.Irc?.Connections?.Where(x => x.Enabled))
             {
                 this.ircBots.Add(this.ircBotFactory.Create(irc, this));
             }
 
-            foreach (var slack in this.config?.Slack?.Connections.Where(x => x.Enabled))
+            foreach (var slack in this.config?.Slack?.Connections?.Where(x => x.Enabled))
             {
                 this.slackBots.Add(this.slackBotFactory.Create(slack, this));
             }
