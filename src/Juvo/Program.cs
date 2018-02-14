@@ -5,15 +5,20 @@
 namespace JuvoProcess
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
-    using System.Net.Http;
+    using System.Net;
     using System.Reflection;
     using System.Threading;
-    using Easy.Common;
     using JuvoProcess.Bots;
-    using JuvoProcess.Net;
+    using JuvoProcess.Logging;
     using log4net;
     using log4net.Config;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.FileProviders;
+    using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// Main class for the assembly, contains entry point.
