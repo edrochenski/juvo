@@ -66,10 +66,16 @@ namespace JuvoProcess.Bots
 
 /*/ Properties /*/
 
+        /// <inheritdoc/>
+        public string CurrentNickname => this.client.CurrentNickname;
+
         /// <summary>
         /// Gets or sets a value indicating whether the bot has authenticated.
         /// </summary>
         public bool IsAuthenticated { get; protected set; }
+
+        /// <inheritdoc/>
+        public IrcNetwork Network => this.client.Network;
 
         /// <inheritdoc/>
         public BotType Type { get => BotType.Irc; }
@@ -99,12 +105,18 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public Task QueueResponse(IBotCommand cmd)
         {
-            if (cmd is IrcBotCommand ircCmd && !string.IsNullOrEmpty(cmd.ResponseText))
+            if (/*cmd is IrcBotCommand ircCmd && */!string.IsNullOrEmpty(cmd.ResponseText))
             {
-                this.client.SendMessage(ircCmd.Channel, ircCmd.ResponseText);
+                this.client.SendMessage(cmd.Source.Identifier, cmd.ResponseText);
             }
 
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public async Task Quit(string message)
+        {
+            await Task.Run(() => this.client.Quit(message));
         }
 
     // Protected
@@ -341,8 +353,12 @@ namespace JuvoProcess.Bots
                 this.host.QueueCommand(new IrcBotCommand
                 {
                     Bot = this,
-                    Channel = e.Channel,
-                    RequestText = e.Message.Remove(0, this.config.CommandToken.Length)
+                    RequestText = e.Message.Remove(0, this.config.CommandToken.Length),
+                    Source = new CommandSource
+                    {
+                        Identifier = e.Channel,
+                        SourceType = CommandSourceType.ChannelOrGroup
+                    }
                 });
             }
         }

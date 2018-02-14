@@ -10,11 +10,13 @@ namespace JuvoProcess
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
     using JuvoProcess.Modules;
+    using JuvoProcess.Modules.HackerNews;
     using JuvoProcess.Modules.Weather;
     using JuvoProcess.Net;
     using JuvoProcess.Net.Discord;
@@ -31,6 +33,7 @@ namespace JuvoProcess
 
 /*/ Fields /*/
         private readonly Queue<IBotCommand> commandQueue;
+        private readonly Dictionary<string[], Func<IBotCommand, Task>> commands;
         private readonly Timer commandTimer;
         private readonly IDiscordBotFactory discordBotFactory;
         private readonly List<IDiscordBot> discordBots;
@@ -44,6 +47,9 @@ namespace JuvoProcess
         private readonly SystemInfo sysInfo;
 
         private Config config;
+        private string lastPerf;
+        private DateTime lastPerfTime;
+        private Mutex lastPerfLock;
         private DateTime started;
 
 /*/ Constructors /*/
@@ -73,17 +79,35 @@ namespace JuvoProcess
             this.discordBots = new List<IDiscordBot>();
             this.ircBots = new List<IIrcBot>();
             this.slackBots = new List<ISlackBot>();
-            this.log = (ILog)logManager?.GetLogger(typeof(JuvoClient));
+            this.log = logManager?.GetLogger(typeof(JuvoClient));
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
             this.sysInfo = GetSystemInfo();
+            this.lastPerfLock = new Mutex();
 
+            // this block maps the bots internal commands to the appropriate
+            // internal methods.
+            // ?: should these commands be overridable in some way, for example
+            // if a plugin/module wanted to handle one of these.
+            this.commands = new Dictionary<string[], Func<IBotCommand, Task>>
+            {
+                { new[] { "shutdown", "die" }, this.CommandShutdown },
+                { new[] { "perf" }, this.CommandPerf },
+                { new[] { "status" }, this.CommandStatus }
+            };
+
+            // this block maps commands to plugins/modules.
+            // TODO: this needs to be externalized
             this.modules = new Dictionary<string[], IBotModule>
             {
                 // TODO: modules will need to ask for dependencies differently
                 {
                     new[] { "gps", "sky", "weather" },
                     new WeatherModule(this, new HttpClientProxy(new HttpClientHandlerProxy()))
+                },
+                {
+                    new[] { "hn" },
+                    new HackerNewsModule(this, new HttpClientProxy(new HttpClientHandlerProxy()))
                 }
             };
         }
@@ -160,14 +184,86 @@ namespace JuvoProcess
                     IBotCommand cmd;
                     while (this.commandQueue.Count > 0 && (cmd = this.commandQueue.Dequeue()) != null)
                     {
-                        this.ProcessCommand(cmd);
+                        this.ProcessCommand(cmd).Wait();
                     }
+                }
+            }
+
+            lock (this.lastPerfLock)
+            {
+                if (DateTime.Now.Minute % 5 == 0 && DateTime.Now.Second == 0 &&
+                    (this.lastPerf == null || this.lastPerfTime.AddMinutes(5) < DateTime.UtcNow))
+                {
+                    this.LogPerf();
                 }
             }
         }
 
-    // Private
-    // |
+        /// <summary>
+        /// Commands the bot to return the latest perf results.
+        /// </summary>
+        /// <param name="command">Bot command.</param>
+        /// <returns>A Task object associated with the async operation.</returns>
+        protected async Task CommandPerf(IBotCommand command)
+        {
+            command.ResponseText = this.lastPerf ?? "No performance info collected yet.";
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Commands the bot to shutdown.
+        /// </summary>
+        /// <param name="command">Bot command.</param>
+        /// <returns>A Task object associated with the async operation.</returns>
+        protected async Task CommandShutdown(IBotCommand command)
+        {
+            this.log?.Info($"Shutting down...");
+            await this.StopBots("Requested");
+            Environment.Exit(0);
+        }
+
+        /// <summary>
+        /// Commands the bot to return the status of the bot.
+        /// </summary>
+        /// <param name="command">Bot command.</param>
+        /// <returns>A Task object associated with the async operation.</returns>
+        protected async Task CommandStatus(IBotCommand command)
+        {
+            var status = new StringBuilder();
+
+            if (this.ircBots.Any())
+            {
+                status.Append("[IRC] ");
+                foreach (var bot in this.ircBots)
+                {
+                    status.Append($"{bot.GetHashCode()} ");
+                }
+            }
+
+            if (this.discordBots.Any())
+            {
+                status.Append("[Discord] ");
+                foreach (var bot in this.discordBots)
+                {
+                    status.Append($"{bot.GetHashCode()} ");
+                }
+            }
+
+            if (this.slackBots.Any())
+            {
+                status.Append("[Slack] ");
+                foreach (var bot in this.slackBots)
+                {
+                    status.Append($"{bot.GetHashCode()} ");
+                }
+            }
+
+            command.ResponseText = status.ToString();
+            await Task.CompletedTask;
+        }
+
+        // Private
+        // |
         private static string GetDefaultConfig()
         {
             // TODO: decide if we should use a resource instead
@@ -254,12 +350,22 @@ namespace JuvoProcess
 
         private void LoadConfig()
         {
+            this.log?.Info("Loading configuration");
+
             var file = Path.Combine(this.sysInfo.AppDataPath.FullName, ConfigFileName);
-            if (File.Exists(file))
+            if (!File.Exists(file))
             {
-                this.log.Info("Loading configuration");
-                var json = File.ReadAllText(file);
-                this.config = JsonConvert.DeserializeObject<Config>(json);
+                this.log?.Error($"Configuration file is missing ({file})");
+                Environment.Exit(-1);
+            }
+
+            var json = File.ReadAllText(file);
+            this.config = JsonConvert.DeserializeObject<Config>(json);
+
+            if (this.config == null)
+            {
+                this.log?.Error($"Configuration file could not be loaded (length: {json.Length})");
+                Environment.Exit(-1);
             }
 
             foreach (var disc in this.config?.Discord?.Connections.Where(x => x.Enabled))
@@ -282,31 +388,76 @@ namespace JuvoProcess
             }
         }
 
-        private void ProcessCommand(IBotCommand cmd)
+        private void LogPerf()
+        {
+            using (var proc = Process.GetCurrentProcess())
+            {
+                this.lastPerf =
+                    $"[PRC] " +
+                    $"Threads:{proc.Threads.Count} " +
+                    $"Handles:{proc.HandleCount} " +
+                    $"TPT:{proc.TotalProcessorTime.TotalSeconds:0.00}s " +
+                    $"PPT:{proc.PrivilegedProcessorTime.TotalSeconds:0.00}s " +
+                    $"UPT:{proc.TotalProcessorTime.TotalSeconds:0.00}s " +
+                    $"[MEM] " +
+                    $"WS:{this.ToMb(proc.WorkingSet64):0.00}mB " +
+                    $"PM:{this.ToMb(proc.PrivateMemorySize64):0.00}mB " +
+                    $"PS:{this.ToMb(proc.PagedSystemMemorySize64):0.00}mB " +
+                    $"NP:{this.ToMb(proc.NonpagedSystemMemorySize64):0.00}mB " +
+                    $"[INF] " +
+                    $"PID:{proc.Id} " +
+                    $"SID:{proc.SessionId} " +
+                    $"Up:{DateTime.Now - proc.StartTime} " +
+                    $"Taken:{DateTime.UtcNow} UTC";
+                this.lastPerfTime = DateTime.UtcNow;
+            }
+
+            this.log?.Info(this.lastPerf);
+        }
+
+        private async Task ProcessCommand(IBotCommand cmd)
         {
             this.log?.Info("Processing command");
             var cmdName = cmd.RequestText.Split(' ')[0].ToLowerInvariant();
-            var module = this.modules.SingleOrDefault(p => p.Key.Contains(cmdName));
-            if (module.Value != null)
+
+            var command = this.commands.SingleOrDefault(c => c.Key.Contains(cmdName));
+            if (command.Value != null)
             {
                 try
                 {
-                    module.Value.Execute(cmd);
+                    await command.Value(cmd);
                 }
                 catch (Exception exc)
                 {
-                    var message = $"Error executing module '{module.GetType().Name}'";
+                    var message = $"Error executing command '{command.Value.Method.Name}'";
                     this.log?.Error(message, exc);
                     cmd.ResponseText = message;
                 }
             }
             else
             {
-                cmd.ResponseText = "Invalid command";
+                var module = this.modules.SingleOrDefault(p => p.Key.Contains(cmdName));
+                if (module.Value != null)
+                {
+                    try
+                    {
+                        await module.Value.Execute(cmd);
+                    }
+                    catch (Exception exc)
+                    {
+                        var message = $"Error executing module '{module.Value.GetType().Name}'";
+                        this.log?.Error(message, exc);
+                        cmd.ResponseText = message;
+                    }
+                }
+                else
+                {
+                    cmd.ResponseText = "Invalid command";
+                }
             }
 
             this.log?.Info("Queueing response on bot");
-            cmd.Bot.QueueResponse(cmd);
+            await cmd.Bot.QueueResponse(cmd);
         }
 
         private async Task StartBots()
@@ -338,6 +489,29 @@ namespace JuvoProcess
             {
                 await bot.Connect();
             }
+        }
+
+        private async Task StopBots(string quitMessage)
+        {
+            foreach (var bot in this.discordBots)
+            {
+                await bot.Quit(quitMessage);
+            }
+
+            foreach (var bot in this.ircBots)
+            {
+                await bot.Quit(quitMessage);
+            }
+
+            foreach (var bot in this.slackBots)
+            {
+                await bot.Quit(quitMessage);
+            }
+        }
+
+        private double ToMb(long bytes)
+        {
+            return bytes / (1024D * 1024D);
         }
     }
 }

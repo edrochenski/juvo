@@ -14,6 +14,11 @@ namespace JuvoProcess.Net.Discord
     public interface IDiscordClient : IDisposable
     {
         /// <summary>
+        /// Fires when a ready event is received.
+        /// </summary>
+        event ReadyReceivedEventHandler ReadyReceived;
+
+        /// <summary>
         /// Connects to discord.
         /// </summary>
         /// <returns>A task.</returns>

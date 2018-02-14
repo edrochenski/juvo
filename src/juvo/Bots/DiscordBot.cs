@@ -8,6 +8,8 @@ namespace JuvoProcess.Bots
     using System.Threading.Tasks;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net.Discord;
+    using JuvoProcess.Net.Discord.Model;
+    using static JuvoProcess.Net.Discord.Model.ReadyEventData;
 
     /// <summary>
     /// Discord bot.
@@ -19,6 +21,7 @@ namespace JuvoProcess.Bots
         private readonly DiscordConfigConnection discordConfig;
         private readonly IJuvoClient juvoClient;
         private bool isDisposed;
+        private ReadyData discordData;
 
 /*/ Constructors /*/
 
@@ -38,6 +41,8 @@ namespace JuvoProcess.Bots
                 ?? throw new ArgumentNullException(nameof(juvoClient));
             this.discordClient = discordClient
                 ?? throw new ArgumentNullException(nameof(discordClient));
+
+            this.discordClient.ReadyReceived += this.DiscordClient_ReadyReceived;
         }
 
 /*/ Properties /*/
@@ -69,6 +74,13 @@ namespace JuvoProcess.Bots
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
+        public async Task Quit(string message)
+        {
+            // TODO: DiscordBot.Quit();
+            await Task.CompletedTask;
+        }
+
         /// <summary>
         /// Clean up object and release resources.
         /// </summary>
@@ -86,6 +98,11 @@ namespace JuvoProcess.Bots
             {
                 this.isDisposed = true;
             }
+        }
+
+        private void DiscordClient_ReadyReceived(object sender, ReadyEventData data)
+        {
+            this.discordData = data.Data;
         }
     }
 }

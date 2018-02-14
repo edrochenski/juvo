@@ -4,10 +4,21 @@
 
 namespace JuvoProcess.Bots
 {
+    using JuvoProcess.Net.Irc;
+
     /// <summary>
     /// Represents an IRC Bot.
     /// </summary>
     public interface IIrcBot : IBot
     {
+        /// <summary>
+        /// Gets the bot's current nickname.
+        /// </summary>
+        string CurrentNickname { get; }
+
+        /// <summary>
+        /// Gets the bot's network.
+        /// </summary>
+        IrcNetwork Network { get; }
     }
 }

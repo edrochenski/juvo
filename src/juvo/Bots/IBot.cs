@@ -30,5 +30,12 @@ namespace JuvoProcess.Bots
         /// <param name="cmd">Command to queue.</param>
         /// <returns>A Task object associated with the async operation.</returns>
         Task QueueResponse(IBotCommand cmd);
+
+        /// <summary>
+        /// Instructs the bot to quit/disconnect.
+        /// </summary>
+        /// <param name="message">Quit message to display (if supported).</param>
+        /// <returns>A Task object associated with the async operation.</returns>
+        Task Quit(string message);
     }
 }

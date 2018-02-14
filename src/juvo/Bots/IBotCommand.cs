@@ -23,5 +23,10 @@ namespace JuvoProcess.Bots
         /// Gets or sets the response.
         /// </summary>
         string ResponseText { get; set; }
+
+        /// <summary>
+        /// Gets or sets the source of the command.
+        /// </summary>
+        CommandSource Source { get; set; }
     }
 }

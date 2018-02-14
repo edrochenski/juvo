@@ -1,13 +1,13 @@
-﻿// <copyright file="IrcBotCommand.cs" company="https://gitlab.com/edrochenski/juvo">
+﻿// <copyright file="BotCommand.cs" company="https://gitlab.com/edrochenski/juvo">
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
 namespace JuvoProcess.Bots
 {
     /// <summary>
-    /// Represents an IRC bot command.
+    /// Generic bot command.
     /// </summary>
-    public struct IrcBotCommand : IBotCommand
+    public class BotCommand : IBotCommand
     {
         /// <inheritdoc/>
         public IBot Bot { get; set; }

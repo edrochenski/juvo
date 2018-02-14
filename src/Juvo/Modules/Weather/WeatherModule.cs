@@ -9,6 +9,7 @@ namespace JuvoProcess.Modules.Weather
     using System.Diagnostics;
     using System.IO;
     using System.Text;
+    using System.Threading.Tasks;
     using AngleSharp.Parser.Html;
     using JuvoProcess.Bots;
     using JuvoProcess.Net;
@@ -61,7 +62,7 @@ namespace JuvoProcess.Modules.Weather
         /// <param name="httpClient">Http client.</param>
         /// <param name="log">Log.</param>
         /// <returns>If successful, a <see cref="GeoCoordinate"/> with valid lat/long values.</returns>
-        public static GeoCoordinate? FindCoordinates(
+        public static async Task<GeoCoordinate?> FindCoordinates(
             string location,
             IHttpClient httpClient,
             ILog log)
@@ -76,9 +77,9 @@ namespace JuvoProcess.Modules.Weather
             var gpsQuery = string.Format(GpsUrl, location);
 
             log.Debug($"[{ModuleName}] Looking up '{location}'");
-            using (var gpsResponse = httpClient.GetAsync(gpsQuery).Result)
+            using (var gpsResponse = await httpClient.GetAsync(gpsQuery))
             {
-                var doc = gpsResponse.Content.ReadAsStringAsync().Result;
+                var doc = await gpsResponse.Content.ReadAsStringAsync();
                 using (var gpsDoc = parser.Parse(doc))
                 {
                     var input = gpsDoc.QuerySelector("div.tpft div.b_focusTextMedium");
@@ -98,7 +99,7 @@ namespace JuvoProcess.Modules.Weather
         }
 
         /// <inheritdoc />
-        public void Execute(IBotCommand cmd)
+        public async Task Execute(IBotCommand cmd)
         {
             try
             {
@@ -111,7 +112,7 @@ namespace JuvoProcess.Modules.Weather
                         return;
                     }
 
-                    var geo = FindCoordinates(location, this.httpClient, this.juvoClient.Log);
+                    var geo = await FindCoordinates(location, this.httpClient, this.juvoClient.Log);
 
                     if (!geo.HasValue)
                     {
@@ -135,7 +136,7 @@ namespace JuvoProcess.Modules.Weather
 
                     using (var response = this.httpClient.GetAsync(url).Result)
                     {
-                        var json = response.Content.ReadAsStringAsync().Result;
+                        var json = await response.Content.ReadAsStringAsync();
                         var dsResponse = JsonConvert.DeserializeObject<DarkSkyResponse>(json);
                         if (dsResponse != null)
                         {

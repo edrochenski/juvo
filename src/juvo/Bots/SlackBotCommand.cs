@@ -8,24 +8,16 @@ namespace JuvoProcess.Bots
     /// </summary>
     public struct SlackBotCommand : IBotCommand
     {
-        /// <summary>
-        /// Gets or sets the bot the command was sent to/from.
-        /// </summary>
+        /// <inheritdoc/>
         public IBot Bot { get; set; }
 
-        /// <summary>
-        /// Gets or sets the channel for the command.
-        /// </summary>
-        public string Channel { get; set; }
-
-        /// <summary>
-        /// Gets or sets the text of the request.
-        /// </summary>
+        /// <inheritdoc/>
         public string RequestText { get; set; }
 
-        /// <summary>
-        /// Gets or sets the text of the response.
-        /// </summary>
+        /// <inheritdoc/>
         public string ResponseText { get; set; }
+
+        /// <inheritdoc/>
+        public CommandSource Source { get; set; }
     }
 }

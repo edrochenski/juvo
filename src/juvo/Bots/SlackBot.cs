@@ -73,11 +73,18 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public async Task QueueResponse(IBotCommand cmd)
         {
-            if (cmd is SlackBotCommand sbCmd && !string.IsNullOrEmpty(cmd.ResponseText))
+            if (/*cmd is SlackBotCommand sbCmd && */!string.IsNullOrEmpty(cmd.ResponseText))
             {
                 // For now we just process them right away
-                await this.slackClient.SendMessage(sbCmd.Channel, sbCmd.ResponseText);
+                await this.slackClient.SendMessage(cmd.Source.Identifier, cmd.ResponseText);
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task Quit(string message)
+        {
+            // TODO: SlackBot.Quit();
+            await Task.CompletedTask;
         }
 
     // Protected
@@ -108,8 +115,12 @@ namespace JuvoProcess.Bots
                 this.host.QueueCommand(new SlackBotCommand
                 {
                     Bot = this,
-                    Channel = arg.Channel,
-                    RequestText = arg.Text.Remove(0, this.config.CommandToken.Length)
+                    RequestText = arg.Text.Remove(0, this.config.CommandToken.Length),
+                    Source = new CommandSource
+                    {
+                        Identifier = arg.Channel,
+                        SourceType = CommandSourceType.ChannelOrGroup
+                    }
                 });
 
                 // var greet = greetings[random.Next(0, greetings.Length - 1)];

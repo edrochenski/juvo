@@ -4,6 +4,7 @@
 
 namespace JuvoProcess.Modules
 {
+    using System.Threading.Tasks;
     using JuvoProcess.Bots;
 
     /// <summary>
@@ -15,6 +16,7 @@ namespace JuvoProcess.Modules
         /// Executes the module.
         /// </summary>
         /// <param name="cmd">Originating command.</param>
-        void Execute(IBotCommand cmd);
+        /// <returns>A Task object associated with the async operation.</returns>
+        Task Execute(IBotCommand cmd);
     }
 }
