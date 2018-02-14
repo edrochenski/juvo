@@ -33,6 +33,8 @@ namespace JuvoProcess
         private static readonly ILog Log;
         private static readonly ILogManager LogMgr;
         private static readonly ManualResetEvent ResetEvent;
+        private static readonly IWebHost WebServer;
+        private static readonly CancellationToken WebHostToken;
 
 /*/ Constructors /*/
         static Program()
@@ -43,6 +45,9 @@ namespace JuvoProcess
                 new FileInfo("log4net.config"));
             LogMgr = new LogManagerProxy();
             Log = LogMgr.GetLogger(typeof(Program));
+            WebHostToken = default(CancellationToken);
+            WebServer = BuildWebHost();
+            WebServer.RunAsync(WebHostToken);
 
             // var report = DiagnosticReport.Generate();
             // Log.Debug($"Diagnostic report:{Environment.NewLine}{report}");
@@ -56,6 +61,41 @@ namespace JuvoProcess
         }
 
 /*/ Methods /*/
+        private static IWebHost BuildWebHost()
+        {
+            var builder = new WebHostBuilder();
+            return builder
+                .UseContentRoot(Path.Combine(Environment.CurrentDirectory, "wwwroot"))
+                .UseKestrel(options =>
+                {
+                    options.Listen(IPAddress.Any, 5000);
+                })
+                .Configure(cfg =>
+                {
+                    cfg.UseDefaultFiles(new DefaultFilesOptions
+                    {
+                        DefaultFileNames = new List<string> { "index.html" },
+                        FileProvider = new PhysicalFileProvider(Path.Combine(Environment.CurrentDirectory, "wwwroot")),
+                        RequestPath = string.Empty
+                    });
+                    cfg.UseStaticFiles(new StaticFileOptions
+                    {
+                        FileProvider = new PhysicalFileProvider(Path.Combine(Environment.CurrentDirectory, "wwwroot")),
+                        RequestPath = string.Empty
+                    });
+                })
+                .ConfigureServices(cfg =>
+                {
+                    cfg.AddLogging();
+                })
+                .ConfigureLogging(cfg =>
+                {
+                    cfg.AddProvider(new Log4NetLoggerProvider(null));
+                    cfg.SetMinimumLevel(LogLevel.Trace);
+                })
+                .Build();
+        }
+
         private static void Main(string[] args)
         {
             Log.Info("Attempting to launch Juvo...");
