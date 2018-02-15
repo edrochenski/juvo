@@ -11,13 +11,13 @@
 ## `JuvoProcess.Net.Discord`
 * `DiscordClient`: Occassional disconnection(?) occurs and recovery/reconnection fails causing an unhandled exception with `Listen()`
 
-# Changes
+# Planned Changes
 
 ## `JuvoProcess`
 * Move `WebHost` refs/code from `Program` into `JuvoClient`
 * Move configuration code from `JuvoClient` into `Program` and allow it to be injected in
 
-# Additions
+# Planned Additions
 
 ## `JuvoProcess.*`
 * Add unit tests for everything we can
