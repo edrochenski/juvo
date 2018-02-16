@@ -1,25 +1,6 @@
 // <copyright file="Config.cs" company="https://gitlab.com/edrochenski/juvo">
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
-
-/* Hierarchy of config file
- * ========================
- *
- *  Configuration File (root)
- *      |
- *      |-- IrcConfig ("irc")
- *      |       |
- *      |       |-- Fields...
- *      |       |
- *      |       |-- IrcConfigServer[] ("servers")
- *      |       |     `-- Fields...
- *      |       |
- *      |       `-- IrcConfigChannel[] ("channels")
- *      |             `-- Fields...
- *      |
- *
- */
-
 namespace JuvoProcess.Configuration
 {
     /// <summary>
@@ -41,5 +22,10 @@ namespace JuvoProcess.Configuration
         /// Gets or sets the Slack config.
         /// </summary>
         public SlackConfig Slack { get; set; }
+
+        /// <summary>
+        /// Gets or sets the WebServer config.
+        /// </summary>
+        public WebServerConfig WebServer { get; set; }
     }
 }
