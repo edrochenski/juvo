@@ -9,8 +9,10 @@ namespace JuvoProcess
     using System.IO;
     using System.Net;
     using System.Reflection;
+    using System.Runtime.InteropServices;
     using System.Threading;
     using JuvoProcess.Bots;
+    using JuvoProcess.Configuration;
     using JuvoProcess.Logging;
     using log4net;
     using log4net.Config;
@@ -19,6 +21,7 @@ namespace JuvoProcess
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.FileProviders;
     using Microsoft.Extensions.Logging;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Main class for the assembly, contains entry point.
@@ -28,6 +31,11 @@ namespace JuvoProcess
 /*/ Fields /*/
 
     // PUBLIC
+
+        /// <summary>
+        /// Default file name for the configuration.
+        /// </summary>
+        public const string DefaultConfigFileName = "config.json";
 
         /// <summary>
         /// Juvo client instance.
@@ -44,20 +52,25 @@ namespace JuvoProcess
 /*/ Constructors /*/
         static Program()
         {
-            // GlobalContext.Properties["juvo_appdata"] =
-            XmlConfigurator.ConfigureAndWatch(
-                LogManager.GetRepository(Assembly.GetEntryAssembly()),
-                new FileInfo("log4net.config"));
+            var logCfg = new FileInfo("log4net.config");
+            var logMgr = LogManager.GetRepository(Assembly.GetEntryAssembly());
+
+            XmlConfigurator.ConfigureAndWatch(logMgr, logCfg);
             LogMgr = new LogManagerProxy();
             Log = LogMgr.GetLogger(typeof(Program));
+
+            // block needs to move into JuvoClient
             WebHostToken = default(CancellationToken);
             WebServer = BuildWebHost();
             WebServer.RunAsync(WebHostToken);
+
+            Log.Info($"current_directory :: {Environment.CurrentDirectory}");
 
             // var report = DiagnosticReport.Generate();
             // Log.Debug($"Diagnostic report:{Environment.NewLine}{report}");
             ResetEvent = new ManualResetEvent(false);
             Juvo = new JuvoClient(
+                LoadConfiguration(),
                 new DiscordBotFactory(LogMgr),
                 new IrcBotFactory(LogMgr),
                 new SlackBotFactory(LogMgr),
@@ -99,6 +112,72 @@ namespace JuvoProcess
                     cfg.SetMinimumLevel(LogLevel.Trace);
                 })
                 .Build();
+        }
+
+        private static void CreateConfigFile()
+        {
+            // var appData = this.config.System.AppDataPath.FullName;
+            // if (!File.Exists(Path.Combine(appData, ConfigFileName)))
+            // {
+            //     using (var file = File.CreateText(Path.Combine(appData, ConfigFileName)))
+            //     {
+            //         file.Write(GetDefaultConfig());
+            //         file.Flush();
+            //     }
+            // }
+        }
+
+        private static SystemInfo GetSystemInfo()
+        {
+            var result = new SystemInfo { AppDataPath = null, Os = OperatingSystem.Unknown };
+
+            // TODO: extract constant path/dir name
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%APPDATA%/juvo"));
+                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%/juvo"));
+                result.Os = OperatingSystem.Windows;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.juvo"));
+                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.juvo"));
+                result.Os = OperatingSystem.Linux;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                // TODO: Set AppDataPath on OSX
+                result.Os = OperatingSystem.Osx;
+            }
+
+            return result;
+        }
+
+        private static Config LoadConfiguration()
+        {
+            Log?.Info("Loading configuration");
+
+            var sysInfo = GetSystemInfo();
+
+            var file = Path.Combine(sysInfo.AppDataPath.FullName, DefaultConfigFileName);
+
+            if (!File.Exists(file))
+            {
+                Log?.Error($"Configuration file is missing ({file})");
+                Environment.Exit(-1);
+            }
+
+            var json = File.ReadAllText(file);
+            var config = JsonConvert.DeserializeObject<Config>(json);
+            config.System = sysInfo;
+
+            if (config == null)
+            {
+                Log?.Error($"Configuration file could not be loaded (length: {json.Length})");
+                Environment.Exit(-1);
+            }
+
+            return config;
         }
 
         private static void Main(string[] args)

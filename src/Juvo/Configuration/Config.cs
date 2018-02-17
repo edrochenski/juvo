@@ -24,6 +24,11 @@ namespace JuvoProcess.Configuration
         public SlackConfig Slack { get; set; }
 
         /// <summary>
+        /// Gets or sets the system information.
+        /// </summary>
+        public SystemInfo System { get; set; }
+
+        /// <summary>
         /// Gets or sets the WebServer config.
         /// </summary>
         public WebServerConfig WebServer { get; set; }

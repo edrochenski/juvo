@@ -15,7 +15,7 @@
 
 ## `JuvoProcess`
 * Move `WebHost` refs/code from `Program` into `JuvoClient`
-* Move configuration code from `JuvoClient` into `Program` and allow it to be injected in
+* ~~Move configuration code from `JuvoClient` into `Program` and allow it to be injected in~~
 
 # Planned Additions
 

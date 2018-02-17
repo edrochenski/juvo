@@ -28,7 +28,6 @@ namespace JuvoProcess
     public class JuvoClient : IJuvoClient
     {
 /*/ Constants /*/
-        private const string ConfigFileName = "config.json";
         private const int TimerTickRate = 10;
 
 /*/ Fields /*/
@@ -44,7 +43,6 @@ namespace JuvoProcess
         private readonly ISlackBotFactory slackBotFactory;
         private readonly List<ISlackBot> slackBots;
         private readonly ManualResetEvent resetEvent;
-        private readonly SystemInfo sysInfo;
 
         private Config config;
         private string lastPerf;
@@ -57,18 +55,21 @@ namespace JuvoProcess
         /// <summary>
         /// Initializes a new instance of the <see cref="JuvoClient"/> class.
         /// </summary>
+        /// <param name="configuration">Bot's configuration.</param>
         /// <param name="discordBotFactory">Factory object for Discord bots.</param>
         /// <param name="ircBotFactory">Factory object for IRC bots.</param>
         /// <param name="slackBotFactory">Factory object for Slack bots.</param>
         /// <param name="logManager">Log manager.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
         public JuvoClient(
+            Config configuration,
             IDiscordBotFactory discordBotFactory,
             IIrcBotFactory ircBotFactory,
             ISlackBotFactory slackBotFactory,
             ILogManager logManager,
             ManualResetEvent resetEvent = null)
         {
+            this.config = configuration ?? throw new ArgumentException(nameof(configuration));
             this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
             this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
             this.resetEvent = resetEvent;
@@ -82,7 +83,6 @@ namespace JuvoProcess
             this.log = logManager?.GetLogger(typeof(JuvoClient));
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
-            this.sysInfo = GetSystemInfo();
             this.lastPerfLock = new Mutex();
 
             // this block maps the bots internal commands to the appropriate
@@ -126,7 +126,7 @@ namespace JuvoProcess
         public JuvoState State { get; protected set; }
 
         /// <inheritdoc/>
-        public SystemInfo SystemInfo => this.sysInfo;
+        public SystemInfo SystemInfo => this.config.System;
 
 /*/ Methods /*/
 
@@ -151,9 +151,6 @@ namespace JuvoProcess
         /// <returns>Result of the call.</returns>
         public async Task<int> Run()
         {
-            this.log?.Info("Gathering system information");
-            GetSystemInfo();
-
             this.log?.Info("Creating any missing resources");
             this.CreateResources();
 
@@ -297,77 +294,19 @@ namespace JuvoProcess
                    "}";
         }
 
-        private static SystemInfo GetSystemInfo()
-        {
-            var result = new SystemInfo { AppDataPath = null, Os = OperatingSystem.Unknown };
-
-            // TODO: extract constant path/dir name
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%APPDATA%/juvo"));
-                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%/juvo"));
-                result.Os = OperatingSystem.Windows;
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.juvo"));
-                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.juvo"));
-                result.Os = OperatingSystem.Linux;
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                // TODO: Set AppDataPath on OSX
-                result.Os = OperatingSystem.Osx;
-            }
-
-            return result;
-        }
-
         private void CreateAppFolders()
         {
-            Directory.CreateDirectory(this.sysInfo.AppDataPath.FullName);
-            Directory.CreateDirectory(this.sysInfo.LocalAppDataPath.FullName);
-        }
-
-        private void CreateConfigFile()
-        {
-            var appData = this.sysInfo.AppDataPath.FullName;
-            if (!File.Exists(Path.Combine(appData, ConfigFileName)))
-            {
-                using (var file = File.CreateText(Path.Combine(appData, ConfigFileName)))
-                {
-                    file.Write(GetDefaultConfig());
-                    file.Flush();
-                }
-            }
+            Directory.CreateDirectory(this.config.System.AppDataPath.FullName);
+            Directory.CreateDirectory(this.config.System.LocalAppDataPath.FullName);
         }
 
         private void CreateResources()
         {
             this.CreateAppFolders();
-            this.CreateConfigFile();
         }
 
         private void LoadConfig()
         {
-            this.log?.Info("Loading configuration");
-
-            var file = Path.Combine(this.sysInfo.AppDataPath.FullName, ConfigFileName);
-            if (!File.Exists(file))
-            {
-                this.log?.Error($"Configuration file is missing ({file})");
-                Environment.Exit(-1);
-            }
-
-            var json = File.ReadAllText(file);
-            this.config = JsonConvert.DeserializeObject<Config>(json);
-
-            if (this.config == null)
-            {
-                this.log?.Error($"Configuration file could not be loaded (length: {json.Length})");
-                Environment.Exit(-1);
-            }
-
             foreach (var disc in this.config?.Discord?.Connections?.Where(x => x.Enabled))
             {
                 var dc = new DiscordClient(
