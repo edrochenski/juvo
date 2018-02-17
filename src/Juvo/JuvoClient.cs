@@ -9,7 +9,7 @@ namespace JuvoProcess
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
-    using System.Runtime.InteropServices;
+    using System.Net;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -20,7 +20,7 @@ namespace JuvoProcess
     using JuvoProcess.Modules.Weather;
     using JuvoProcess.Net;
     using JuvoProcess.Net.Discord;
-    using Newtonsoft.Json;
+    using Microsoft.AspNetCore.Hosting;
 
     /// <summary>
     /// Juvo client.
@@ -43,6 +43,8 @@ namespace JuvoProcess
         private readonly ISlackBotFactory slackBotFactory;
         private readonly List<ISlackBot> slackBots;
         private readonly ManualResetEvent resetEvent;
+        private readonly IWebHost webServer;
+        private readonly CancellationToken webHostToken;
 
         private Config config;
         private string lastPerf;
@@ -59,6 +61,7 @@ namespace JuvoProcess
         /// <param name="discordBotFactory">Factory object for Discord bots.</param>
         /// <param name="ircBotFactory">Factory object for IRC bots.</param>
         /// <param name="slackBotFactory">Factory object for Slack bots.</param>
+        /// <param name="webServer">Web server for managing the bot.</param>
         /// <param name="logManager">Log manager.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
         public JuvoClient(
@@ -67,6 +70,7 @@ namespace JuvoProcess
             IIrcBotFactory ircBotFactory,
             ISlackBotFactory slackBotFactory,
             ILogManager logManager,
+            IWebHost webServer,
             ManualResetEvent resetEvent = null)
         {
             this.config = configuration ?? throw new ArgumentException(nameof(configuration));
@@ -74,6 +78,8 @@ namespace JuvoProcess
             this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
             this.resetEvent = resetEvent;
             this.slackBotFactory = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
+            this.webHostToken = default(CancellationToken);
+            this.webServer = webServer;
 
             this.commandQueue = new Queue<IBotCommand>();
             this.commandTimer = new Timer(this.CommandTimerTick, null, TimerTickRate, TimerTickRate);
@@ -149,7 +155,7 @@ namespace JuvoProcess
         /// Starts the bot.
         /// </summary>
         /// <returns>Result of the call.</returns>
-        public async Task<int> Run()
+        public async Task Run()
         {
             this.log?.Info("Creating any missing resources");
             this.CreateResources();
@@ -163,10 +169,14 @@ namespace JuvoProcess
             this.log?.Info("Juvo is now running");
             this.State = JuvoState.Running;
 
-            return await Task.FromResult(0);
+            if (this.config.WebServer.Enabled)
+            {
+                this.log?.Info("Starting web server");
+                await this.webServer.RunAsync(this.webHostToken);
+            }
         }
 
-    // Protected
+        // Protected
 
         /// <summary>
         /// Called when <see cref="commandTimer" /> tick occurs.
@@ -259,8 +269,8 @@ namespace JuvoProcess
             await Task.CompletedTask;
         }
 
-        // Private
-        // |
+    // Private
+    // |
         private static string GetDefaultConfig()
         {
             // TODO: decide if we should use a resource instead

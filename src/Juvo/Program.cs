@@ -46,8 +46,6 @@ namespace JuvoProcess
         private static readonly ILog Log;
         private static readonly ILogManager LogMgr;
         private static readonly ManualResetEvent ResetEvent;
-        private static readonly IWebHost WebServer;
-        private static readonly CancellationToken WebHostToken;
 
 /*/ Constructors /*/
         static Program()
@@ -59,13 +57,6 @@ namespace JuvoProcess
             LogMgr = new LogManagerProxy();
             Log = LogMgr.GetLogger(typeof(Program));
 
-            // block needs to move into JuvoClient
-            WebHostToken = default(CancellationToken);
-            WebServer = BuildWebHost();
-            WebServer.RunAsync(WebHostToken);
-
-            Log.Info($"current_directory :: {Environment.CurrentDirectory}");
-
             // var report = DiagnosticReport.Generate();
             // Log.Debug($"Diagnostic report:{Environment.NewLine}{report}");
             ResetEvent = new ManualResetEvent(false);
@@ -75,10 +66,11 @@ namespace JuvoProcess
                 new IrcBotFactory(LogMgr),
                 new SlackBotFactory(LogMgr),
                 LogMgr,
+                BuildWebHost(),
                 ResetEvent);
         }
 
-/*/ Methods /*/
+        /*/ Methods /*/
         private static IWebHost BuildWebHost()
         {
             var builder = new WebHostBuilder();
