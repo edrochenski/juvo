@@ -3,6 +3,9 @@
 ## `JuvoProcess`
 * Log files on __Linux__ seem to be using a back-slash instead of a forward-slash and are not being stored in a logs directory
 
+## `JuvoProcess.Configuration`
+* Move the default config from GetDefaultConfig() into a resource file
+
 ## `JuvoProcess.Modules.HackerNewsModule`
 * 'Ask/Show/Etc HN' entries display a blank url, should show link to HN
 * Log shows occasional unhandled exceptions when formatting an output string from a new story
@@ -16,6 +19,7 @@
 ## `JuvoProcess`
 * Move `WebHost` refs/code from `Program` into `JuvoClient`
 * ~~Move configuration code from `JuvoClient` into `Program` and allow it to be injected in~~
+* Accept command line arguments in the process to override behavior and config file
 
 # Planned Additions
 
