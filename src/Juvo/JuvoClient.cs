@@ -247,11 +247,11 @@ namespace JuvoProcess
 
                             var thread = procThreads[threadNumber];
                             var waitReason = thread.ThreadState == System.Diagnostics.ThreadState.Wait
-                                ? $"({thread.WaitReason})"
+                                ? $" ({thread.WaitReason})"
                                 : string.Empty;
 
                             command.ResponseText =
-                                $"[{thread.Id}] {CommonResx.State}: {thread.ThreadState} {waitReason} " +
+                                $"[{thread.Id}] {CommonResx.State}: {thread.ThreadState}{waitReason}, " +
                                 $"{CommonResx.Priority}: {thread.BasePriority}/{thread.CurrentPriority} ({thread.PriorityLevel}), " +
                                 $"{CommonResx.Started}: {thread.StartTime}, " +
                                 $"TPT: {thread.TotalProcessorTime.TotalSeconds:0.00}s, " +
