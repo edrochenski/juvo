@@ -278,7 +278,11 @@ namespace JuvoProcess.Net.Irc
         public void SendMessage(string to, string format, params object[] args)
         {
             var msg = string.Format(format, args);
-            this.Send($"PRIVMSG {to} :{msg}{CrLf}");
+
+            foreach (var segment in this.GetMessageSegments(msg))
+            {
+                this.Send($"PRIVMSG {to} :{segment}{CrLf}");
+            }
         }
 
     // Protected
@@ -498,6 +502,23 @@ namespace JuvoProcess.Net.Irc
             if (this.Network == IrcNetwork.Undernet)
             {
                 result.Add('x', IrcUserMode.HiddenHost);
+            }
+
+            return result;
+        }
+
+        private string[] GetMessageSegments(string msg)
+        {
+            var segments = msg.Length / 484; // HARDCODED
+            if (segments == 0)
+            {
+                return new string[] { msg };
+            }
+
+            var result = new string[segments + 1];
+            for (var x = 0; x < result.Length; ++x)
+            {
+                result[x] = msg.Substring(x * 484, (x < segments) ? 484 : msg.Length - (x * 484));
             }
 
             return result;
