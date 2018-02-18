@@ -1,6 +1,7 @@
 // <copyright file="Program.cs" company="https://gitlab.com/edrochenski/juvo">
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
+[assembly: System.Resources.NeutralResourcesLanguage("en")]
 
 namespace JuvoProcess
 {
@@ -14,6 +15,7 @@ namespace JuvoProcess
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
     using JuvoProcess.Logging;
+    using JuvoProcess.Resources.Logging;
     using log4net;
     using log4net.Config;
     using Microsoft.AspNetCore.Builder;
@@ -174,7 +176,7 @@ namespace JuvoProcess
 
         private static void Main(string[] args)
         {
-            Log.Info("Attempting to launch Juvo...");
+            Log.Info(InfoResx.LaunchingJuvo);
             Juvo.Run().Wait();
 
             WaitHandle.WaitAll(new[] { ResetEvent });

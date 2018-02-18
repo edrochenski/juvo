@@ -7,9 +7,9 @@ namespace JuvoProcess
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
-    using System.Net;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -20,6 +20,9 @@ namespace JuvoProcess
     using JuvoProcess.Modules.Weather;
     using JuvoProcess.Net;
     using JuvoProcess.Net.Discord;
+    using JuvoProcess.Resources;
+    using JuvoProcess.Resources.Commands;
+    using JuvoProcess.Resources.Logging;
     using Microsoft.AspNetCore.Hosting;
 
     /// <summary>
@@ -98,7 +101,8 @@ namespace JuvoProcess
             this.commands = new Dictionary<string[], Func<IBotCommand, Task>>
             {
                 { new[] { "shutdown", "die" }, this.CommandShutdown },
-                { new[] { "perf" }, this.CommandPerf },
+                { new[] { "perf", "performance" }, this.CommandPerf },
+                { new[] { "set" }, this.CommandSet },
                 { new[] { "status" }, this.CommandStatus }
             };
 
@@ -148,7 +152,7 @@ namespace JuvoProcess
             Debug.Assert(!string.IsNullOrEmpty(cmd.RequestText), "cmd.RequestText != null/empty");
 
             this.commandQueue.Enqueue(cmd);
-            this.log?.Info("Queued command");
+            this.log?.Info(DebugResx.CommandEnqueued);
         }
 
         /// <summary>
@@ -157,23 +161,23 @@ namespace JuvoProcess
         /// <returns>Result of the call.</returns>
         public async Task Run()
         {
-            this.log?.Info("Creating any missing resources");
+            this.log?.Info(InfoResx.CreatingMissingResources);
             this.CreateResources();
 
-            this.log?.Info("Loading configuration file");
+            this.log?.Info(InfoResx.LoadingConfigFile);
             this.LoadConfig();
 
-            this.log?.Info("Starting bots");
+            this.log?.Info(InfoResx.StartingBots);
             await this.StartBots();
-
-            this.log?.Info("Juvo is now running");
-            this.State = JuvoState.Running;
 
             if (this.config.WebServer.Enabled)
             {
-                this.log?.Info("Starting web server");
+                this.log?.Info(InfoResx.StartingWebServer);
                 await this.webServer.RunAsync(this.webHostToken);
             }
+
+            this.State = JuvoState.Running;
+            this.log?.Info(InfoResx.BotRunning);
         }
 
         // Protected
@@ -217,8 +221,7 @@ namespace JuvoProcess
 
             if (cmdTokens.Length == 1)
             {
-                command.ResponseText = this.lastPerf ??
-                    "No performance info collected yet, it is collected every 5min on the 0/5.";
+                command.ResponseText = this.lastPerf ?? PerfResx.NoInfoCollected;
             }
             else
             {
@@ -229,7 +232,8 @@ namespace JuvoProcess
                         {
                             if (!int.TryParse(cmdTokens[2], out int threadNumber))
                             {
-                                command.ResponseText = $"{cmdTokens[2]} is not a recognized thread #";
+                                command.ResponseText =
+                                    string.Format(PerfResx.ThreadNumNotRecognized, cmdTokens[2]);
                                 return;
                             }
 
@@ -237,7 +241,7 @@ namespace JuvoProcess
                             if (threadNumber > procThreads.Count)
                             {
                                 command.ResponseText =
-                                    $"Thread #{threadNumber} is outside the bounds of the thread collection";
+                                    string.Format(PerfResx.ThreadNumOutsideBounds, threadNumber);
                                 return;
                             }
 
@@ -247,9 +251,9 @@ namespace JuvoProcess
                                 : string.Empty;
 
                             command.ResponseText =
-                                $"[{thread.Id}] State: {thread.ThreadState} {waitReason} " +
-                                $"Priority: {thread.BasePriority}/{thread.CurrentPriority} ({thread.PriorityLevel}), " +
-                                $"StartAddr: {thread.StartAddress}, StartedOn: {thread.StartTime}, " +
+                                $"[{thread.Id}] {CommonResx.State}: {thread.ThreadState} {waitReason} " +
+                                $"{CommonResx.Priority}: {thread.BasePriority}/{thread.CurrentPriority} ({thread.PriorityLevel}), " +
+                                $"{CommonResx.Started}: {thread.StartTime}, " +
                                 $"TPT: {thread.TotalProcessorTime.TotalSeconds:0.00}s, " +
                                 $"UPT: {thread.UserProcessorTime.TotalSeconds:0.00}s";
                         }
@@ -290,9 +294,50 @@ namespace JuvoProcess
                         break;
 
                     default:
-                        command.ResponseText = $"'{cmdTokens[1]}' is not a recognized [perf] command";
+                        command.ResponseText =
+                            string.Format(PerfResx.CommandNotRecognized, cmdTokens[1]);
                         break;
                 }
+            }
+
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Commands the bot to set specific settings.
+        /// </summary>
+        /// <param name="command">Bot command.</param>
+        /// <returns>A Task object associated with the async operation.</returns>
+        protected async Task CommandSet(IBotCommand command)
+        {
+            var parts = command.RequestText.Split(' ');
+
+            if (parts.Length < 3)
+            {
+                command.ResponseText = $"{CommonResx.Usage}: set <setting> <value>";
+            }
+
+            switch (parts[1].ToLowerInvariant())
+            {
+                case "culture":
+                    try
+                    {
+                        var cultureInfo = new CultureInfo(parts[2]);
+                        Thread.CurrentThread.CurrentCulture = cultureInfo;
+                        Thread.CurrentThread.CurrentUICulture = cultureInfo;
+                        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+                        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+                        command.ResponseText = string.Format(SetResx.CultureChangedTo, cultureInfo.EnglishName);
+                    }
+                    catch (Exception exc)
+                    {
+                        var message = $"{SetResx.ErrorSettingCulture}: {exc.Message}";
+                        this.log?.Error(message, exc);
+                        command.ResponseText = message;
+                    }
+
+                    break;
             }
 
             await Task.CompletedTask;
@@ -305,8 +350,14 @@ namespace JuvoProcess
         /// <returns>A Task object associated with the async operation.</returns>
         protected async Task CommandShutdown(IBotCommand command)
         {
-            this.log?.Info($"Shutting down...");
-            await this.StopBots("Requested");
+            this.log?.Info(InfoResx.ShuttingDown);
+            await this.StopBots(CommonResx.Requested);
+            if (this.config.WebServer.Enabled)
+            {
+                this.log?.Info(InfoResx.StoppingWebServer);
+                await this.webServer.StopAsync(this.webHostToken);
+            }
+
             Environment.Exit(0);
         }
 
@@ -321,7 +372,7 @@ namespace JuvoProcess
 
             if (this.ircBots.Any())
             {
-                status.Append("[IRC] ");
+                status.Append($"[{CommonResx.Irc}] ");
                 foreach (var bot in this.ircBots)
                 {
                     status.Append($"{bot.GetHashCode()} ");
@@ -330,7 +381,7 @@ namespace JuvoProcess
 
             if (this.discordBots.Any())
             {
-                status.Append("[Discord] ");
+                status.Append($"[{CommonResx.Discord}] ");
                 foreach (var bot in this.discordBots)
                 {
                     status.Append($"{bot.GetHashCode()} ");
@@ -339,11 +390,16 @@ namespace JuvoProcess
 
             if (this.slackBots.Any())
             {
-                status.Append("[Slack] ");
+                status.Append($"[{CommonResx.Slack}] ");
                 foreach (var bot in this.slackBots)
                 {
                     status.Append($"{bot.GetHashCode()} ");
                 }
+            }
+
+            if (this.config.WebServer.Enabled)
+            {
+                status.Append($"[{CommonResx.WebServer}] {this.webServer.GetHashCode()}");
             }
 
             command.ResponseText = status.ToString();
@@ -414,7 +470,7 @@ namespace JuvoProcess
 
         private async Task ProcessCommand(IBotCommand cmd)
         {
-            this.log?.Info("Processing command");
+            this.log?.Info(InfoResx.ProcessingCommand);
             var cmdName = cmd.RequestText.Split(' ')[0].ToLowerInvariant();
 
             var command = this.commands.SingleOrDefault(c => c.Key.Contains(cmdName));
@@ -426,7 +482,7 @@ namespace JuvoProcess
                 }
                 catch (Exception exc)
                 {
-                    var message = $"Error executing command '{command.Value.Method.Name}'";
+                    var message = string.Format(InfoResx.ErrorExecCommand, command.Value.Method.Name);
                     this.log?.Error(message, exc);
                     cmd.ResponseText = message;
                 }
@@ -442,18 +498,18 @@ namespace JuvoProcess
                     }
                     catch (Exception exc)
                     {
-                        var message = $"Error executing module '{module.Value.GetType().Name}'";
+                        var message = string.Format(InfoResx.ErrorExecCommand, module.Value.GetType().Name);
                         this.log?.Error(message, exc);
                         cmd.ResponseText = message;
                     }
                 }
                 else
                 {
-                    cmd.ResponseText = "Invalid command";
+                    cmd.ResponseText = InfoResx.InvalidCommand;
                 }
             }
 
-            this.log?.Info("Queueing response on bot");
+            this.log?.Debug(DebugResx.EnqueuingResponse);
             await cmd.Bot.QueueResponse(cmd);
         }
 
@@ -490,6 +546,8 @@ namespace JuvoProcess
 
         private async Task StopBots(string quitMessage)
         {
+            this.log?.Info(InfoResx.StoppingBots);
+
             foreach (var bot in this.discordBots)
             {
                 await bot.Quit(quitMessage);

@@ -19,11 +19,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<Compile Include="**\*.cs" />-->
-    <EmbeddedResource Include="**\*.resx" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="log4net.config" />
     <None Remove="stylecop.json" />
     <None Remove="wwwroot\index.html" />
@@ -40,6 +35,40 @@
     <Content Include="wwwroot\index.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+      <Compile Update="Resources\Commands\SetResx.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>SetResx.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Resources\CommonResx.Designer.cs">
+          <DesignTime>True</DesignTime>
+          <AutoGen>True</AutoGen>
+          <DependentUpon>CommonResx.resx</DependentUpon>
+      </Compile>
+  </ItemGroup>
+  <ItemGroup>
+      <Compile Update="Resources\Commands\PerfResx.Designer.cs">
+          <DesignTime>True</DesignTime>
+          <AutoGen>True</AutoGen>
+          <DependentUpon>PerfResx.resx</DependentUpon>
+      </Compile>
+  </ItemGroup>
+  <ItemGroup>
+      <Compile Update="Resources\Logging\DebugResx.Designer.cs">
+          <DesignTime>True</DesignTime>
+          <AutoGen>True</AutoGen>
+          <DependentUpon>DebugResx.resx</DependentUpon>
+      </Compile>
+  </ItemGroup>
+  <ItemGroup>
+      <Compile Update="Resources\Logging\InfoResx.Designer.cs">
+          <DesignTime>True</DesignTime>
+          <AutoGen>True</AutoGen>
+          <DependentUpon>InfoResx.resx</DependentUpon>
+      </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -65,6 +94,13 @@
     <PackageReference Include="System.Threading.Timer">
       <Version>4.3.0</Version>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Commands\SetResx.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SetResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
