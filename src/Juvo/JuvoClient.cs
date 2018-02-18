@@ -213,7 +213,88 @@ namespace JuvoProcess
         /// <returns>A Task object associated with the async operation.</returns>
         protected async Task CommandPerf(IBotCommand command)
         {
-            command.ResponseText = this.lastPerf ?? "No performance info collected yet.";
+            var cmdTokens = command.RequestText.Split(' ');
+
+            if (cmdTokens.Length == 1)
+            {
+                command.ResponseText = this.lastPerf ??
+                    "No performance info collected yet, it is collected every 5min on the 0/5.";
+            }
+            else
+            {
+                switch (cmdTokens[1].ToLowerInvariant())
+                {
+                    case "thread":
+                        if (cmdTokens.Length > 2)
+                        {
+                            if (!int.TryParse(cmdTokens[2], out int threadNumber))
+                            {
+                                command.ResponseText = $"{cmdTokens[2]} is not a recognized thread #";
+                                return;
+                            }
+
+                            var procThreads = Process.GetCurrentProcess().Threads;
+                            if (threadNumber > procThreads.Count)
+                            {
+                                command.ResponseText =
+                                    $"Thread #{threadNumber} is outside the bounds of the thread collection";
+                                return;
+                            }
+
+                            var thread = procThreads[threadNumber];
+                            var waitReason = thread.ThreadState == System.Diagnostics.ThreadState.Wait
+                                ? $"({thread.WaitReason})"
+                                : string.Empty;
+
+                            command.ResponseText =
+                                $"[{thread.Id}] State: {thread.ThreadState} {waitReason} " +
+                                $"Priority: {thread.BasePriority}/{thread.CurrentPriority} ({thread.PriorityLevel}), " +
+                                $"StartAddr: {thread.StartAddress}, StartedOn: {thread.StartTime}, " +
+                                $"TPT: {thread.TotalProcessorTime.TotalSeconds:0.00}s, " +
+                                $"UPT: {thread.UserProcessorTime.TotalSeconds:0.00}s";
+                        }
+
+                        break;
+
+                    case "threads":
+                        var added = 0;
+                        var output = new StringBuilder();
+                        var threads = Process.GetCurrentProcess().Threads;
+
+                        for (var i = 0; i < threads.Count; ++i)
+                        {
+                            if (threads[i].TotalProcessorTime.TotalSeconds > 0d)
+                            {
+                                continue;
+                            }
+
+                            if (added > 0)
+                            {
+                                output.Append(" ");
+                            }
+
+                            output.Append(
+                                $"[{i}]{threads[i].Id}/" +
+                                $"{threads[i].TotalProcessorTime.TotalSeconds:0.00}s");
+
+                            if (threads[i].ThreadState != System.Diagnostics.ThreadState.Wait)
+                            {
+                                output.Append($" ({threads[i].ThreadState})");
+                            }
+
+                            added++;
+                        }
+
+                        command.ResponseText = output.ToString();
+
+                        break;
+
+                    default:
+                        command.ResponseText = $"'{cmdTokens[1]}' is not a recognized [perf] command";
+                        break;
+                }
+            }
+
             await Task.CompletedTask;
         }
 
