@@ -352,39 +352,6 @@ namespace JuvoProcess
 
     // Private
     // |
-        private static string GetDefaultConfig()
-        {
-            // TODO: decide if we should use a resource instead
-            var nl = Environment.NewLine;
-            return "{" + nl +
-                   "  \"irc\": {" + nl +
-                   "    \"nickname\": \"juvo\"," + nl +
-                   "    \"realName\": \"juvo\"," + nl +
-                   "    \"username\": \"juvo\"," + nl +
-                   "    \"connections\": [" + nl +
-                   "      {" + nl +
-                   "        \"name\": \"undernet\"," + nl +
-                   "        \"servers\": [" + nl +
-                   "          {" + nl +
-                   "            \"host\": \"elysium.us.ix.undernet.org\"," + nl +
-                   "            \"port\": 6667" + nl +
-                   "          }," + nl +
-                   "          {" + nl +
-                   "            \"host\": \"eu.undernet.org\"," + nl +
-                   "            \"port\": 6667" + nl +
-                   "          }" + nl +
-                   "        ]," + nl +
-                   "        \"channels\": [" + nl +
-                   "          {" + nl +
-                   "            \"name\": \"#bytedown\"" + nl +
-                   "          }," + nl +
-                   "        ]" + nl +
-                   "      }" + nl +
-                   "    ]" + nl +
-                   "  }" + nl +
-                   "}";
-        }
-
         private void CreateAppFolders()
         {
             Directory.CreateDirectory(this.config.System.AppDataPath.FullName);
