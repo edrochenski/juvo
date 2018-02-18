@@ -25,3 +25,11 @@
 
 ## `JuvoProcess.*`
 * Add unit tests for everything we can
+
+## `JuvoProcess.Net.Irc`
+* Add ability to connect with SSL
+
+# Long-Term
+
+## `JuvoProcess.Net.Discord/Irc/Slack`
+* cross-protocol communication?
