@@ -10,20 +10,20 @@ namespace JuvoProcess
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Runtime.Loader;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
-    using JuvoProcess.Modules;
-    using JuvoProcess.Modules.HackerNews;
-    using JuvoProcess.Modules.Weather;
     using JuvoProcess.Net;
     using JuvoProcess.Net.Discord;
     using JuvoProcess.Resources;
     using JuvoProcess.Resources.Commands;
     using JuvoProcess.Resources.Logging;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.CodeAnalysis;
+    using Microsoft.CodeAnalysis.CSharp;
 
     /// <summary>
     /// Juvo client.
@@ -42,7 +42,7 @@ namespace JuvoProcess
         private readonly IIrcBotFactory ircBotFactory;
         private readonly List<IIrcBot> ircBots;
         private readonly ILog log;
-        private readonly Dictionary<string[], IBotModule> modules;
+        private readonly Dictionary<string[], IBotPlugin> plugins;
         private readonly ISlackBotFactory slackBotFactory;
         private readonly List<ISlackBot> slackBots;
         private readonly ManualResetEvent resetEvent;
@@ -88,11 +88,12 @@ namespace JuvoProcess
             this.commandTimer = new Timer(this.CommandTimerTick, null, TimerTickRate, TimerTickRate);
             this.discordBots = new List<IDiscordBot>();
             this.ircBots = new List<IIrcBot>();
-            this.slackBots = new List<ISlackBot>();
+            this.lastPerfLock = new Mutex();
             this.log = logManager?.GetLogger(typeof(JuvoClient));
+            this.plugins = new Dictionary<string[], IBotPlugin>();
+            this.slackBots = new List<ISlackBot>();
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
-            this.lastPerfLock = new Mutex();
 
             // this block maps the bots internal commands to the appropriate
             // internal methods.
@@ -102,24 +103,12 @@ namespace JuvoProcess
             {
                 { new[] { "shutdown", "die" }, this.CommandShutdown },
                 { new[] { "perf", "performance" }, this.CommandPerf },
+                { new[] { "ros", "roslyn" }, this.CommandRoslyn },
                 { new[] { "set" }, this.CommandSet },
                 { new[] { "status" }, this.CommandStatus }
             };
 
-            // this block maps commands to plugins/modules.
-            // TODO: this needs to be externalized
-            this.modules = new Dictionary<string[], IBotModule>
-            {
-                // TODO: modules will need to ask for dependencies differently
-                {
-                    new[] { "gps", "sky", "weather" },
-                    new WeatherModule(this, new HttpClientProxy(new HttpClientHandlerProxy()))
-                },
-                {
-                    new[] { "hn" },
-                    new HackerNewsModule(this, new HttpClientProxy(new HttpClientHandlerProxy()))
-                }
-            };
+            this.LoadPlugins();
         }
 
 /*/ Properties /*/
@@ -304,6 +293,101 @@ namespace JuvoProcess
         }
 
         /// <summary>
+        /// Commands the bot to compile code using roslyn.
+        /// </summary>
+        /// <param name="command">Bot command.</param>
+        /// <returns>A Task object associated with the async operation.</returns>
+        protected async Task CommandRoslyn(IBotCommand command)
+        {
+            try
+            {
+                var comp = CSharpCompilation.Create("JuvoRuntime")
+                    .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                    .AddReferences(MetadataReference.CreateFromFile(typeof(object).GetType().Assembly.Location))
+                    .AddSyntaxTrees(CSharpSyntaxTree.ParseText(
+                    #pragma warning disable SA1118 // Parameter must not span multiple lines
+                    $"namespace Juvo " +
+                    $"{{ " +
+                    $"  using System;" +
+                    $"  using System.Text;" +
+                    $"  public class Program " +
+                    $"  {{ " +
+                    $"      public static string Main() " +
+                    $"      {{ " +
+                    $"          var outputBuilder = new StringBuilder();" +
+                    $"          {string.Join(' ', command.RequestText.Replace("_out_", "outputBuilder.Append").Split(' ').Skip(1).ToArray())} " +
+                    $"          return outputBuilder.ToString();" +
+                    $" return string.Empty;" +
+                    $"      }} " +
+                    $"  }} " +
+                    $"}}"));
+#pragma warning restore SA1118 // Parameter must not span multiple lines
+
+                using (var memory = new MemoryStream())
+                {
+                    var fileName = $"{DateTime.UtcNow.Ticks.ToString()}.dll";
+                    var results = comp.Emit(memory);
+                    if (results.Success)
+                    {
+                        await memory.FlushAsync();
+
+                        var domain = AppDomain.CreateDomain("Plugin");
+                        try
+                        {
+                            domain.Load(memory.ToArray());
+
+                            // var a = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(fileName));
+                            var a = AssemblyLoadContext.Default.LoadFromStream(memory);
+                            var ret = a.GetType("Juvo.Program").GetMethod("Main").Invoke(null, null);
+                            command.ResponseText = "Output:" +
+                                ret == null || ret.ToString().Length == 0 ? "<no output>" : ret.ToString();
+                        }
+                        catch (Exception exc)
+                        {
+                            var msg = $"Error: {exc.Message}";
+                            command.ResponseText = msg;
+                            this.Log?.Error(msg, exc);
+                        }
+                        finally
+                        {
+                            AppDomain.Unload(domain);
+                            GC.Collect();
+                        }
+                    }
+                    else
+                    {
+                        foreach (var diag in results.Diagnostics)
+                        {
+                            command.ResponseText += $"[{diag.Id}] {diag.GetMessage()} ({diag.Location})";
+                        }
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                var msg = $"Error: {exc.Message}";
+                command.ResponseText = msg;
+                this.Log?.Error(msg, exc);
+            }
+
+            // var cp = CodeDomProvider.CreateProvider("CSharp");
+            // var res = cp.CompileAssemblyFromSource(
+            //     new CompilerParameters { GenerateInMemory = true, MainClass = "Program" },
+            // if (res.Errors.Count > 0)
+            // {
+            //     for (var i = 0; i < res.Errors.Count; ++i)
+            //     {
+            //         command.ResponseText += $"({i}) {res.Errors[i].ErrorText} ";
+            //     }
+            // }
+            // else
+            // {
+            //     command.ResponseText = "Compiled successfully!";
+            // }
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Commands the bot to set specific settings.
         /// </summary>
         /// <param name="command">Bot command.</param>
@@ -441,6 +525,83 @@ namespace JuvoProcess
             }
         }
 
+        private void LoadPlugins()
+        {
+            var scriptPath = Path.Combine(this.config.System.AppDataPath.FullName, "scripts");
+            var binPath = Path.Combine(this.config.System.LocalAppDataPath.FullName, "bin");
+            if (Directory.Exists(scriptPath))
+            {
+                var scripts = this.config.Juvo.Scripts
+                    .Where(s => s.Enabled && File.Exists(Path.Combine(scriptPath, s.Script)));
+                if (!scripts.Any())
+                {
+                    return;
+                }
+
+                if (!Directory.Exists(binPath))
+                {
+                    Directory.CreateDirectory(binPath);
+                }
+
+                foreach (var file in Directory.GetFiles(binPath))
+                {
+                    File.Delete(file);
+                }
+
+                foreach (var script in scripts)
+                {
+                    var stopWatch = Stopwatch.StartNew();
+                    var scriptFile = new FileInfo(Path.Combine(scriptPath, script.Script));
+                    var scriptCode = File.ReadAllText(scriptFile.FullName);
+                    var scriptName = scriptFile.Name.Remove(scriptFile.Name.LastIndexOf('.'));
+                    var assemblyPath = Path.Combine(binPath, $"{scriptName}.dll");
+                    var compilation = CSharpCompilation.Create(scriptName)
+                        .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                        .AddReferences(
+                            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                            MetadataReference.CreateFromFile(@"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.0.5\System.Runtime.dll"),
+                            MetadataReference.CreateFromFile(this.GetType().Assembly.Location))
+                        .AddSyntaxTrees(CSharpSyntaxTree.ParseText(scriptCode));
+                    var result = compilation.Emit(assemblyPath);
+
+                    stopWatch.Stop();
+                    if (!result.Success)
+                    {
+                        this.Log?.Warn($"Failed to compile script '{scriptName}':");
+                        foreach (var diag in result.Diagnostics)
+                        {
+                            this.Log?.Warn($"  {diag}");
+                        }
+
+                        continue;
+                    }
+
+                    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
+                    this.Log?.Info($"[Plugin: {scriptName}] Compiled {scriptName} into assembly ({stopWatch.ElapsedMilliseconds}ms)");
+
+                    foreach (var type in assembly.GetTypes())
+                    {
+                        if (type.IsAbstract || type.GetInterface(typeof(IBotPlugin).ToString(), true) == null)
+                        {
+                            this.Log?.Debug($"[Plugin: {scriptName}] Skipping {type.FullName}");
+                            continue;
+                        }
+
+                        var instance = Activator.CreateInstance(type) as IBotPlugin;
+                        if (instance == null)
+                        {
+                            this.Log?.Warn($"Could not instantiate plugin '{scriptName}'");
+                            continue;
+                        }
+
+                        this.plugins.Add(instance.Commands.ToArray(), instance);
+                        this.Log?.Info($"[Plugin: {scriptName}] Loaded!");
+                        this.Log?.Info($"[Plugin: {scriptName}] Commands: {string.Join(", ", instance.Commands)}");
+                    }
+                }
+            }
+        }
+
         private void LogPerf()
         {
             using (var proc = Process.GetCurrentProcess())
@@ -489,12 +650,12 @@ namespace JuvoProcess
             }
             else
             {
-                var module = this.modules.SingleOrDefault(p => p.Key.Contains(cmdName));
+                var module = this.plugins.SingleOrDefault(p => p.Key.Contains(cmdName));
                 if (module.Value != null)
                 {
                     try
                     {
-                        await module.Value.Execute(cmd);
+                        await Task.Factory.StartNew(() => module.Value.Execute(cmd));
                     }
                     catch (Exception exc)
                     {
@@ -510,7 +671,10 @@ namespace JuvoProcess
             }
 
             this.log?.Debug(DebugResx.EnqueuingResponse);
-            await cmd.Bot.QueueResponse(cmd);
+            if (cmd.Bot != null)
+            {
+                await cmd.Bot.QueueResponse(cmd);
+            }
         }
 
         private async Task StartBots()
