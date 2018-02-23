@@ -19,6 +19,11 @@ namespace JuvoProcess.Configuration
         public IrcConfig Irc { get; set; }
 
         /// <summary>
+        /// Gets or sets the Juvo config.
+        /// </summary>
+        public JuvoConfig Juvo { get; set; }
+
+        /// <summary>
         /// Gets or sets the Slack config.
         /// </summary>
         public SlackConfig Slack { get; set; }

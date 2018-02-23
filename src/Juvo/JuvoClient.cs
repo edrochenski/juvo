@@ -515,9 +515,20 @@ namespace JuvoProcess
 
         private async Task StartBots()
         {
-            await this.StartDiscordBots();
-            await this.StartIrcBots();
-            await this.StartSlackBots();
+            if (this.Config.Discord.Enabled)
+            {
+                await this.StartDiscordBots();
+            }
+
+            if (this.Config.Irc.Enabled)
+            {
+                await this.StartIrcBots();
+            }
+
+            if (this.Config.Slack.Enabled)
+            {
+                await this.StartSlackBots();
+            }
         }
 
         private async Task StartDiscordBots()

@@ -15,5 +15,10 @@ namespace JuvoProcess.Configuration
         /// Gets or sets the connections.
         /// </summary>
         public IEnumerable<IrcConfigConnection> Connections { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether any IRC connections should be enabled.
+        /// </summary>
+        public bool Enabled { get; set; }
     }
 }

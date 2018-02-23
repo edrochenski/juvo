@@ -15,5 +15,10 @@ namespace JuvoProcess.Configuration
         /// Gets or sets Discord connections.
         /// </summary>
         public IEnumerable<DiscordConfigConnection> Connections { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether any Discord connections should be enabled.
+        /// </summary>
+        public bool Enabled { get; set; }
     }
 }
