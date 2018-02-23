@@ -551,11 +551,14 @@ namespace JuvoProcess
                     var scriptCode = File.ReadAllText(scriptFile.FullName);
                     var scriptName = scriptFile.Name.Remove(scriptFile.Name.LastIndexOf('.'));
                     var assemblyPath = Path.Combine(binPath, $"{scriptName}.dll");
+                    var runtimeRef = this.config.System.Os == OperatingSystem.Windows
+                        ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.0.5\System.Runtime.dll"
+                        : "/usr/share/dotnet/shared/Microsoft.NETCore.App/2.0.5/System.Runtime.dll";
                     var compilation = CSharpCompilation.Create(scriptName)
                         .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                         .AddReferences(
                             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                            MetadataReference.CreateFromFile(@"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.0.5\System.Runtime.dll"),
+                            MetadataReference.CreateFromFile(runtimeRef),
                             MetadataReference.CreateFromFile(this.GetType().Assembly.Location))
                         .AddSyntaxTrees(CSharpSyntaxTree.ParseText(scriptCode));
                     var result = compilation.Emit(assemblyPath);
