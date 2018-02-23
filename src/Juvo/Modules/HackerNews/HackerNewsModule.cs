@@ -119,6 +119,12 @@ namespace JuvoProcess.Modules.HackerNews
                                                 if (resp.StatusCode == HttpStatusCode.OK)
                                                 {
                                                     var item = JsonConvert.DeserializeObject<HackerNewsItem>(itemResponse.Content.ReadAsStringAsync().Result);
+                                                    if (item == null)
+                                                    {
+                                                        this.client.Log.Warn($"[{ModuleName}] Could not lookup news id {itemIDs[i]}");
+                                                        continue;
+                                                    }
+
                                                     var response = $"{item.By}: {item.Title} ({item.Url})";
 
                                                     foreach (var x in this.bots)
