@@ -14,7 +14,7 @@ namespace JuvoProcess.Net
     /// </summary>
     public interface IWebSocket : IDisposable
     {
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets the reason why the remote endpoint initiated the close handshake.
@@ -36,7 +36,7 @@ namespace JuvoProcess.Net
         /// </summary>
         string SubProtocol { get; }
 
-/*/ Methods /*/
+        /*/ Methods /*/
 
         /// <summary>
         /// Aborts the WebSocket connection and cancels any pending IO operations.

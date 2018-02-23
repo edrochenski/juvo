@@ -9,7 +9,7 @@ namespace JuvoProcess.Net.Irc
     /// </summary>
     public class IrcChannelModeValue
     {
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcChannelModeValue"/> class.
@@ -22,7 +22,7 @@ namespace JuvoProcess.Net.Irc
             this.Value = value;
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets or sets the channel mode.

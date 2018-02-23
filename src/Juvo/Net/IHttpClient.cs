@@ -16,7 +16,7 @@ namespace JuvoProcess.Net
     /// </summary>
     public interface IHttpClient
     {
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets or sets the base address.
@@ -38,7 +38,7 @@ namespace JuvoProcess.Net
         /// </summary>
         TimeSpan Timeout { get; set; }
 
-/*/ Methods /*/
+        /*/ Methods /*/
 
         /// <summary>
         /// Cancel any pending requests

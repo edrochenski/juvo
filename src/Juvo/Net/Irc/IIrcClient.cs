@@ -12,7 +12,7 @@ namespace JuvoProcess.Net.Irc
     /// </summary>
     public interface IIrcClient
     {
-/*/ Events /*/
+        /*/ Events /*/
 
         /// <summary>
         /// Event raised when a channel is joined.
@@ -79,7 +79,7 @@ namespace JuvoProcess.Net.Irc
         /// </summary>
         event EventHandler<UserEventArgs> UserQuit;
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets the current channels.
@@ -121,7 +121,7 @@ namespace JuvoProcess.Net.Irc
         /// </summary>
         string Username { get; set; }
 
-/*/ Methods /*/
+        /*/ Methods /*/
 
         /// <summary>
         /// Connects to the IRC server.

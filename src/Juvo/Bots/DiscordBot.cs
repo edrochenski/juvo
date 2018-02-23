@@ -16,14 +16,15 @@ namespace JuvoProcess.Bots
     /// </summary>
     public class DiscordBot : IDiscordBot
     {
-/*/ Fields /*/
+        /*/ Fields /*/
+
         private readonly IDiscordClient discordClient;
         private readonly DiscordConfigConnection discordConfig;
         private readonly IJuvoClient juvoClient;
         private bool isDisposed;
         private ReadyData discordData;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscordBot"/> class.
@@ -45,12 +46,12 @@ namespace JuvoProcess.Bots
             this.discordClient.ReadyReceived += this.DiscordClient_ReadyReceived;
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <inheritdoc/>
         public BotType Type => BotType.Discord;
 
-/*/ Methods /*/
+        /*/ Methods /*/
 
         /// <summary>
         /// Starts the bot's connection process.

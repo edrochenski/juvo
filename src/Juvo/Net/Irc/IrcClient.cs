@@ -16,9 +16,7 @@ namespace JuvoProcess.Net.Irc
     /// </summary>
     public class IrcClient : IDisposable, IIrcClient
     {
-/*/ Constants /*/
-
-    // Public
+        /*/ Constants /*/
 
         /// <summary>
         /// Characters that channels can begin with.
@@ -30,11 +28,11 @@ namespace JuvoProcess.Net.Irc
         /// </summary>
         public const string CrLf = "\r\n";
 
-    // Private
         private const int BufferSize = 4096;
         private const int DefaultPort = 6667;
 
-/*/ Fields /*/
+        /*/ Fields /*/
+
         private static readonly Dictionary<string, IrcNetwork> IrcNetworkLookup;
         private readonly Dictionary<char, Tuple<IrcChannelMode, bool, bool>> chanModeDict;
         private readonly ILog log;
@@ -47,7 +45,8 @@ namespace JuvoProcess.Net.Irc
         private string serverHost;
         private int serverPort;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
+
         static IrcClient()
         {
             IrcNetworkLookup = new Dictionary<string, IrcNetwork>
@@ -79,7 +78,7 @@ namespace JuvoProcess.Net.Irc
             this.userModeDict = this.CompileUserModeDictionary();
         }
 
-    /*/ Events /*/
+        /*/ Events /*/
 
         /// <inheritdoc/>
         public event EventHandler<ChannelUserEventArgs> ChannelJoined;
@@ -117,7 +116,7 @@ namespace JuvoProcess.Net.Irc
         /// <inheritdoc/>
         public event EventHandler<UserEventArgs> UserQuit;
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <inheritdoc/>
         public List<string> CurrentChannels { get; protected set; }
@@ -143,9 +142,7 @@ namespace JuvoProcess.Net.Irc
         /// <inheritdoc/>
         public string Username { get; set; }
 
-/*/ Methods /*/
-
-    // Public
+        /*/ Methods /*/
 
         /// <summary>
         /// Looks up IRC network.
@@ -285,8 +282,6 @@ namespace JuvoProcess.Net.Irc
             }
         }
 
-    // Protected
-
         /// <summary>
         /// Dispose of the instance's resources.
         /// </summary>
@@ -417,7 +412,6 @@ namespace JuvoProcess.Net.Irc
             this.UserQuit?.Invoke(this, e);
         }
 
-    // Private
         private void Client_ConnectCompleted(object sender, EventArgs e)
         {
             this.Send($"NICK {this.NickName}\r\nUSER {this.Username} 0 * :{this.Username}\r\n");

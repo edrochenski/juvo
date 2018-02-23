@@ -12,7 +12,7 @@ namespace JuvoProcess.Net
     /// </summary>
     public class SocketEventArgs : EventArgs
     {
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocketEventArgs"/> class.
@@ -25,7 +25,7 @@ namespace JuvoProcess.Net
             this.ErrorText = errorText;
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets or sets the Error.

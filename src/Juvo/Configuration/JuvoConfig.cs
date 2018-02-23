@@ -1,6 +1,7 @@
 ﻿// <copyright file="JuvoConfig.cs" company="https://gitlab.com/edrochenski/juvo">
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
+
 namespace JuvoProcess.Configuration
 {
     using System.Collections.Generic;

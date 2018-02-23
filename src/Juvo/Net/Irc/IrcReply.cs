@@ -4,7 +4,6 @@
 
 namespace JuvoProcess.Net.Irc
 {
-    using System;
     using System.Linq;
 
     /// <summary>
@@ -12,7 +11,7 @@ namespace JuvoProcess.Net.Irc
     /// </summary>
     public class IrcReply
     {
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcReply"/> class.
@@ -58,7 +57,7 @@ namespace JuvoProcess.Net.Irc
             }
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets or sets the command.

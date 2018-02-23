@@ -1,8 +1,8 @@
 // <copyright file="Program.cs" company="https://gitlab.com/edrochenski/juvo">
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
-[assembly: System.Resources.NeutralResourcesLanguage("en")]
 
+[assembly: System.Resources.NeutralResourcesLanguage("en")]
 namespace JuvoProcess
 {
     using System;
@@ -30,9 +30,7 @@ namespace JuvoProcess
     /// </summary>
     public class Program
     {
-/*/ Fields /*/
-
-    // PUBLIC
+        /*/ Fields /*/
 
         /// <summary>
         /// Default file name for the configuration.
@@ -44,12 +42,12 @@ namespace JuvoProcess
         /// </summary>
         public static readonly JuvoClient Juvo;
 
-    // PRIVATE
         private static readonly ILog Log;
         private static readonly ILogManager LogMgr;
         private static readonly ManualResetEvent ResetEvent;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
+
         static Program()
         {
             var logCfg = new FileInfo("log4net.config");
@@ -73,6 +71,7 @@ namespace JuvoProcess
         }
 
         /*/ Methods /*/
+
         private static IWebHost BuildWebHost()
         {
             var builder = new WebHostBuilder();
@@ -106,19 +105,6 @@ namespace JuvoProcess
                     cfg.SetMinimumLevel(LogLevel.Trace);
                 })
                 .Build();
-        }
-
-        private static void CreateConfigFile()
-        {
-            // var appData = this.config.System.AppDataPath.FullName;
-            // if (!File.Exists(Path.Combine(appData, ConfigFileName)))
-            // {
-            //     using (var file = File.CreateText(Path.Combine(appData, ConfigFileName)))
-            //     {
-            //         file.Write(GetDefaultConfig());
-            //         file.Flush();
-            //     }
-            // }
         }
 
         private static SystemInfo GetSystemInfo()

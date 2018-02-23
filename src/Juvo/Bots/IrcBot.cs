@@ -18,10 +18,12 @@ namespace JuvoProcess.Bots
     /// </summary>
     public class IrcBot : IIrcBot
     {
-/*/ Constants /*/
+        /*/ Constants /*/
+
         private const string DefaultCommandToken = ".";
 
-/*/ Fields /*/
+        /*/ Fields /*/
+
         private readonly IrcConfigConnection config;
         private readonly IJuvoClient host;
         private string commandToken;
@@ -29,7 +31,7 @@ namespace JuvoProcess.Bots
         private bool isDisposed;
         private ILog log;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcBot"/> class.
@@ -64,7 +66,7 @@ namespace JuvoProcess.Bots
             this.client.UserQuit += this.Client_UserQuit;
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <inheritdoc/>
         public string CurrentNickname => this.client.CurrentNickname;
@@ -80,9 +82,7 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public BotType Type { get => BotType.Irc; }
 
-/*/ Methods /*/
-
-    // Public
+        /*/ Methods /*/
 
         /// <summary>
         /// Starts the connection process.
@@ -118,8 +118,6 @@ namespace JuvoProcess.Bots
         {
             await Task.Run(() => this.client.Quit(message));
         }
-
-    // Protected
 
         /// <summary>
         /// Initiates the authentication process.
@@ -338,7 +336,6 @@ namespace JuvoProcess.Bots
             }
         }
 
-    // Private
         private void Client_ChannelJoined(object sender, ChannelUserEventArgs e)
         {
             this.log.Info($"{e.User.Nickname} joined {e.Channel}");

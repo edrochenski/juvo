@@ -9,7 +9,7 @@ namespace JuvoProcess.Net.Irc
     /// </summary>
     public class IrcUser
     {
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcUser"/> class.
@@ -31,7 +31,7 @@ namespace JuvoProcess.Net.Irc
             }
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets or sets the host.

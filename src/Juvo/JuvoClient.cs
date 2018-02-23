@@ -30,10 +30,12 @@ namespace JuvoProcess
     /// </summary>
     public class JuvoClient : IJuvoClient
     {
-/*/ Constants /*/
+        /*/ Constants /*/
+
         private const int TimerTickRate = 10;
 
-/*/ Fields /*/
+        /*/ Fields /*/
+
         private readonly Queue<IBotCommand> commandQueue;
         private readonly Dictionary<string[], Func<IBotCommand, Task>> commands;
         private readonly Timer commandTimer;
@@ -55,7 +57,7 @@ namespace JuvoProcess
         private Mutex lastPerfLock;
         private DateTime started;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JuvoClient"/> class.
@@ -111,7 +113,7 @@ namespace JuvoProcess
             this.LoadPlugins();
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <inheritdoc/>
         public Config Config => this.config;
@@ -127,9 +129,7 @@ namespace JuvoProcess
         /// <inheritdoc/>
         public SystemInfo SystemInfo => this.config.System;
 
-/*/ Methods /*/
-
-    // Public
+        /*/ Methods /*/
 
         /// <summary>
         /// Queues command for the bot to execute or pass on.
@@ -168,8 +168,6 @@ namespace JuvoProcess
             this.State = JuvoState.Running;
             this.log?.Info(InfoResx.BotRunning);
         }
-
-        // Protected
 
         /// <summary>
         /// Called when <see cref="commandTimer" /> tick occurs.
@@ -490,8 +488,6 @@ namespace JuvoProcess
             await Task.CompletedTask;
         }
 
-    // Private
-    // |
         private void CreateAppFolders()
         {
             Directory.CreateDirectory(this.config.System.AppDataPath.FullName);

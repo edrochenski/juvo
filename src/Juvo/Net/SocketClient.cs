@@ -16,10 +16,12 @@ namespace JuvoProcess.Net
     /// </summary>
     public class SocketClient : IDisposable
     {
-/*/ Constants /*/
+        /*/ Constants /*/
+
         private const int DefaultBufferSize = 4096;
 
-/*/ Fields /*/
+        /*/ Fields /*/
+
         private SocketAsyncEventArgs argsConnect;
         private SocketAsyncEventArgs argsReceive;
         private SocketAsyncEventArgs[] argsSend;
@@ -30,7 +32,7 @@ namespace JuvoProcess.Net
         private DnsEndPoint remoteEndPoint;
         private Socket socket;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocketClient"/> class.
@@ -64,7 +66,7 @@ namespace JuvoProcess.Net
             }
         }
 
-/*/ Events /*/
+        /*/ Events /*/
 
         /// <summary>
         /// Fires when a connection has completed successfully.
@@ -101,9 +103,7 @@ namespace JuvoProcess.Net
         /// </summary>
         public event EventHandler<SocketEventArgs> SendFailed;
 
-/*/ Methods /*/
-
-    // Public
+        /*/ Methods /*/
 
         /// <summary>
         /// Initiates the connection process to the remote endpoint.
@@ -161,8 +161,6 @@ namespace JuvoProcess.Net
             }
         }
 
-    // Protected
-
         /// <summary>
         /// Disposes of any resources being used by this instance.
         /// </summary>
@@ -182,7 +180,6 @@ namespace JuvoProcess.Net
             this.disposed = true;
         }
 
-    // Private
         private void Connect()
         {
             if (!this.socket.ConnectAsync(this.argsConnect))

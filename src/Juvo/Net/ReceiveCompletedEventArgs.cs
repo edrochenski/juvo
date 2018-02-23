@@ -11,7 +11,7 @@ namespace JuvoProcess.Net
     /// </summary>
     public class ReceiveCompletedEventArgs : EventArgs
     {
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReceiveCompletedEventArgs"/> class.
@@ -24,7 +24,7 @@ namespace JuvoProcess.Net
             this.Length = length;
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets or sets the data received.

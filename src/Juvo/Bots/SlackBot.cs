@@ -16,7 +16,8 @@ namespace JuvoProcess.Bots
     /// </summary>
     public class SlackBot : ISlackBot
     {
-/*/ Fields /*/
+        /*/ Fields /*/
+
         private readonly SlackConfigConnection config;
         private readonly string[] greetings = { "Hey there {0}!", "sup {0}! How's it goin?" };
         private readonly IJuvoClient host;
@@ -25,7 +26,7 @@ namespace JuvoProcess.Bots
         private readonly SlackClient slackClient;
         private bool isDisposed;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SlackBot"/> class.
@@ -45,14 +46,12 @@ namespace JuvoProcess.Bots
             this.slackClient.MessageReceived += this.SlackClient_MessageReceived;
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <inheritdoc/>
         public BotType Type { get => BotType.Slack; }
 
-/*/ Methods /*/
-
-    // Public
+        /*/ Methods /*/
 
         /// <summary>
         /// Starts the connection process.
@@ -87,8 +86,6 @@ namespace JuvoProcess.Bots
             await Task.CompletedTask;
         }
 
-    // Protected
-
         /// <summary>
         /// Clean up object and release resources.
         /// </summary>
@@ -107,7 +104,6 @@ namespace JuvoProcess.Bots
             }
         }
 
-        // Private
         private async Task SlackClient_MessageReceived(object sender, SlackMessage arg)
         {
             if (arg.Text.StartsWith(this.config.CommandToken))

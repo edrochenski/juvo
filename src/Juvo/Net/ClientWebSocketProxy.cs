@@ -14,10 +14,11 @@ namespace JuvoProcess.Net
     /// </summary>
     public class ClientWebSocketProxy : IClientWebSocket
     {
-/*/ Fields /*/
+        /*/ Fields /*/
+
         private readonly ClientWebSocket webSocket;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClientWebSocketProxy"/> class.
@@ -27,7 +28,7 @@ namespace JuvoProcess.Net
             this.webSocket = new ClientWebSocket();
         }
 
-/*/ Properties /*/
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets the reason the Close handshake was initiated.
@@ -54,7 +55,7 @@ namespace JuvoProcess.Net
         /// </summary>
         public string SubProtocol => this.webSocket.SubProtocol;
 
-/*/ Methods /*/
+        /*/ Methods /*/
 
         /// <summary>
         /// Aborts the connection and aborts any pending IO operations.

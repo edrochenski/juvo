@@ -6,8 +6,6 @@ namespace JuvoProcess
 {
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
-    using JuvoProcess.Net;
-    using log4net;
 
     /// <summary>
     /// Representation of a Juvo Client object.

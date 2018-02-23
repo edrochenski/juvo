@@ -15,7 +15,7 @@ namespace JuvoProcess.Net.Discord
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
-/*/ Delegates /*/
+    /*/ Delegates /*/
 
     /// <summary>
     /// Function to handle the <see cref="DiscordClient.HelloResponseReceived"/> event.
@@ -43,7 +43,7 @@ namespace JuvoProcess.Net.Discord
     /// </summary>
     public class DiscordClient : IDiscordClient, IDisposable
     {
-/*/ Constants /*/
+        /*/ Constants /*/
 
         /// <summary>
         /// Default amount of time between heartbeats.
@@ -60,7 +60,8 @@ namespace JuvoProcess.Net.Discord
         /// </summary>
         public const string SndInd = "<<";
 
-/*/ Fields /*/
+        /*/ Fields /*/
+
         private readonly CancellationToken cancelToken;
         private readonly Timer heartbeatTimer;
         private readonly IHttpClient httpClient;
@@ -69,7 +70,7 @@ namespace JuvoProcess.Net.Discord
         private bool isConnected;
         private int? lastSequence;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscordClient"/> class.
@@ -107,7 +108,7 @@ namespace JuvoProcess.Net.Discord
             this.httpClient.DefaultRequestHeaders.Add("Authorization", authToken);
         }
 
-/*/ Events /*/
+        /*/ Events /*/
 
         /// <summary>
         /// Fires when a hello response is received.
@@ -124,9 +125,7 @@ namespace JuvoProcess.Net.Discord
         /// </summary>
         public event ReadyReceivedEventHandler ReadyReceived;
 
-/*/ Properties /*/
-
-    // Public
+        /*/ Properties /*/
 
         /// <summary>
         /// Gets the interval at which this client needs to send a heartbeat/ping.
@@ -138,9 +137,7 @@ namespace JuvoProcess.Net.Discord
         /// </summary>
         public DiscordClientOptions Options { get; private set; }
 
-/*/ Methods /*/
-
-    // Public
+        /*/ Methods /*/
 
         /// <inheritdoc/>
         public async Task Connect()
@@ -192,8 +189,6 @@ namespace JuvoProcess.Net.Discord
             // TODO: properly implement dispose() and dispose(bool)
             this.socket?.Dispose();
         }
-
-    // Protected
 
         /// <summary>
         /// Called when the heartbeat interval is reached.
@@ -279,8 +274,6 @@ namespace JuvoProcess.Net.Discord
             this.ReadyReceived?.Invoke(this, data);
         }
 
-    // Private
-        // |
         private string BuildWssUrl()
         {
             return $"{this.Options.GatewayUri}/?v={this.Options.ApiVersion}&" +
