@@ -5,7 +5,7 @@
 * Build fails on __Linux__ when running from root source folder due to case-sensitivity issues
 
 ## `JuvoClient`
-* `LoadPlugins()` is using a hard-coded reference to get load `System.Runtime.dll`
+* `LoadPlugins()` is using a hard-coded path to get/load `System.Runtime.dll` reference
 * `LoadPlugins()` should verify a plugin's command list doesn't override a built-in
 * `set culture` using an invalid language tag causes an __expected__ error, but seems to send strange commands to IRC 
 * Discord bots connect even when Discord is marked as disabled in the config
