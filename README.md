@@ -1,6 +1,4 @@
 # Juvo
-
-# About
 Juvo is meant to be a multi-protocol/client chat bot designed to be extensible and _eventually_ *fully*-testable.
 
 # Goals
