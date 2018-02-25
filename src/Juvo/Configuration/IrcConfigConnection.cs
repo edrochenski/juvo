@@ -32,6 +32,12 @@ namespace JuvoProcess.Configuration
         public string Ident { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the bot should wait until its host is masked
+        /// to join channels.
+        /// </summary>
+        public bool JoinOnHostMasked { get; set; }
+
+        /// <summary>
         /// Gets or sets the name.
         /// </summary>
         public string Name { get; set; }

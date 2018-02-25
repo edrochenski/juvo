@@ -429,12 +429,12 @@ namespace JuvoProcess.Bots
             }
 
             if (!string.IsNullOrEmpty(this.config.User)
-                && !string.IsNullOrEmpty(this.config.Pass)
-                && !string.IsNullOrEmpty(this.config.Network))
+                && !string.IsNullOrEmpty(this.config.Pass))
             {
                 this.Authenticate();
             }
-            else
+
+            if (!this.config.JoinOnHostMasked)
             {
                 this.JoinAllChannels();
             }
@@ -447,10 +447,11 @@ namespace JuvoProcess.Bots
 
         private void Client_HostHidden(object sender, HostHiddenEventArgs e)
         {
+            this.IsAuthenticated = true;
             this.log.Info($"Real host hidden using '{e.Host}'");
-            if (this.config.Network.ToLowerInvariant() == "undernet")
+
+            if (this.config.JoinOnHostMasked)
             {
-                this.IsAuthenticated = true;
                 this.JoinAllChannels();
             }
         }
