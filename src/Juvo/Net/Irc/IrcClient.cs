@@ -24,6 +24,11 @@ namespace JuvoProcess.Net.Irc
         public const string ChannelIdents = "&#+!";
 
         /// <summary>
+        /// Size limit of a single message in IRC.
+        /// </summary>
+        public const int MessageSizeLimit = 484;
+
+        /// <summary>
         /// Line ending for IRC commands (\r\n)
         /// </summary>
         public const string CrLf = "\r\n";
@@ -503,7 +508,7 @@ namespace JuvoProcess.Net.Irc
 
         private string[] GetMessageSegments(string msg)
         {
-            var segments = msg.Length / 484; // HARDCODED
+            var segments = msg.Length / MessageSizeLimit;
             if (segments == 0)
             {
                 return new string[] { msg };
