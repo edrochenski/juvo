@@ -432,8 +432,16 @@ namespace JuvoProcess
         /// <returns>A Task object associated with the async operation.</returns>
         protected async Task CommandShutdown(IBotCommand command)
         {
+            var quitMsg = CommonResx.Requested;
+            var cmdTokens = command.RequestText.Split(' ');
+
+            if (cmdTokens.Length > 1)
+            {
+                quitMsg = string.Join(' ', cmdTokens, 1, cmdTokens.Length - 1);
+            }
+
             this.log?.Info(InfoResx.ShuttingDown);
-            await this.StopBots(CommonResx.Requested);
+            await this.StopBots(quitMsg);
             if (this.config.WebServer.Enabled)
             {
                 this.log?.Info(InfoResx.StoppingWebServer);
