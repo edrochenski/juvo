@@ -1,5 +1,5 @@
 # Juvo
-Juvo is meant to be a multi-protocol/client chat bot designed to be extensible and _eventually_ *fully*-testable.
+Juvo is a multi-protocol/client chat bot designed to be extensible and _eventually_ *fully*-testable.
 
 # Goals
  1. __Multi-protocol/client__: one bot to rule them all? I am tired of running many different processes that are essentially providing the same functionality.
