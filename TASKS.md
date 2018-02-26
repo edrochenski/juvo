@@ -1,34 +1,22 @@
 # Issues/Bugs
 
 ## `JuvoProcess`
-* Log files on __Linux__ seem to be using a back-slash instead of a forward-slash and are not being stored in a logs directory
-* Build fails on __Linux__ when running from root source folder due to case-sensitivity issues
-* `Program.GetSystemInfo()`:
-  * replace hardcoded paths
-  * set paths for OSX
+* `Program`:
+  * replace hardcoded paths in `GetSystemInfo()`
+  * set paths for OSX in `GetSystemInfo()`
+* `JuvoClient`:
+  * `LoadPlugins()` is using a hard-coded path to get/load `System.Runtime.dll` reference
+  * `LoadPlugins()` should verify a plugin's command list doesn't override a built-in
+  * `set culture` using an invalid language tag causes an __expected__ error, but seems to send strange commands to IRC 
+  * Discord bots connect even when Discord is marked as disabled in the config
+* ~~Log files on __Linux__ seem to be using a back-slash instead of a forward-slash and are not being stored in a logs directory~~
+* ~~Build fails on __Linux__ when running from root source folder due to case-sensitivity issues~~
 
-## `JuvoProcess.Bots.DiscordBot`
-* Shutdown properly when `Quit()` is called
 
-## `JuvoProcess.Bots.DiscordBotFactory`
-* `Create()` is using concrete classes in the `DiscordBot` constructor
-
-## `JuvoProcess.Bots.SlackBot`
-* Shutdown properly when `Quit()` is called
-
-## `JuvoProcess.JuvoClient`
-* `LoadPlugins()` is using a hard-coded path to get/load `System.Runtime.dll` reference
-* `LoadPlugins()` should verify a plugin's command list doesn't override a built-in
-* `set culture` using an invalid language tag causes an __expected__ error, but seems to send strange commands to IRC 
-* Discord bots connect even when Discord is marked as disabled in the config
-
-## `JuvoProcess.Modules.HackerNewsModule`
-* 'Ask/Show/Etc. HN' entries display a blank URL, should show link to HN
-* Log shows occasional unhandled exceptions when formatting an output string from a new story
-* Output sometimes shows a blank story title AND URL
-
-## `JuvoProcess.Modules.WeatherModule`
-* commands not working if culture is `eo-001`
+## `JuvoProcess.Bots`
+* `DiscordBot`: Shutdown properly when `Quit()` is called
+* `DiscordBotFactory`: `Create()` is using concrete classes in the `DiscordBot` constructor
+* `SlackBot`: Shutdown properly when `Quit()` is called
 
 ## `JuvoProcess.Net.Discord`
 * `DiscordClient`
@@ -45,12 +33,12 @@
 # Planned Changes
 
 ## `JuvoProcess`
-* Accept command line arguments in the process to override behavior and config file
+* `Program`: Accept command line arguments in the process to override behavior and config file
 * ~~Move `WebHost` refs/code from `Program` into `JuvoClient`~~
 * ~~Move configuration code from `JuvoClient` into `Program` and allow it to be injected in~~
 
 ## `JuvoProcess.Configuration`
-* Move the default config from GetDefaultConfig() into a resource file
+* Generate a config file if one doesn't exist (from embedded resource?)
 
 ## `JuvoProcess.Bots`
 * Move classes to protocol-specific directories (even if not namespaced)
@@ -61,12 +49,12 @@
 * Add unit tests for everything we can
 
 ## `JuvoClient`
-* All configurable option to summon the but with 'nick[ ,.:-]'
+* Allow configurable option to summon the but with 'bot-nick[ ,.:-] \<command\>'
 
 ## `JuvoProcess.Net.Irc`
 * Add ability to connect with SSL
 
 # Long-Term
 
-## `JuvoProcess.Net.Discord/Irc/Slack`
+## `JuvoProcess.Bots.*`
 * cross-protocol communication?
