@@ -11,15 +11,15 @@
 * Discord bots connect even when Discord is marked as disabled in the config
 
 ## `JuvoProcess.Modules.HackerNewsModule`
-* 'Ask/Show/Etc HN' entries display a blank url, should show link to HN
+* 'Ask/Show/Etc. HN' entries display a blank URL, should show link to HN
 * Log shows occasional unhandled exceptions when formatting an output string from a new story
-* Ouput sometimes shows a blank story title AND url
+* Output sometimes shows a blank story title AND URL
 
 ## `JuvoClient.Modules.WeatherModule`
-* commands not working if culure is `eo-001`
+* commands not working if culture is `eo-001`
 
 ## `JuvoProcess.Net.Discord`
-* `DiscordClient`: Occassional disconnection(?) occurs and recovery/reconnection fails causing an unhandled exception with `Listen()`
+* `DiscordClient`: Occasional disconnection(?) occurs and recovery/reconnection fails causing an unhandled exception with `Listen()`
 
 ## `JuvoProcess.Net.Irc`
 * Messages are being truncated when they exceed the 484 limit and have to be broken up
@@ -41,7 +41,7 @@
 * Add unit tests for everything we can
 
 ## `JuvoClient`
-* All configurable option to summon the but with 'botnick[ ,.:-]'
+* All configurable option to summon the but with 'nick[ ,.:-]'
 
 ## `JuvoProcess.Net.Irc`
 * Add ability to connect with SSL
