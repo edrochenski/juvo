@@ -25,7 +25,7 @@ I am currently keeping track of my tasks/ideas/bugs/features [here](TASKS.md)
         - [Twitter](https://twitter.com/edrochenski)
 
 - __Chat__
-    - IRC: [freenode](irc://chat.freenode.net/juvo) | [undernet](irc://irc.undernet.org/juvo)
+    - IRC: [freenode](irc://chat.freenode.net/juvo) | [efnet](irc://irc.choopa.net/juvo) | [undernet](irc://irc.undernet.org/juvo)
     - Discord: [#juvo on CodeCompileRun](https://discord.gg/WczMAFM)
     - Slack: [#juvo on CodeCompileRun](https://join.slack.com/t/codecompilerun/shared_invite/enQtMzIwMDA2MDAyNDMzLTNkOGEwOTAyN2I1MzE1ODczMTZhZWMxYTYzYjQ4MjM1YzdhOGIzZmIzOTdiMmQxNTk4N2U3MzJiNzAyMDAwZTI)
 
