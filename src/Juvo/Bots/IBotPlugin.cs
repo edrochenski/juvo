@@ -4,6 +4,7 @@
 namespace JuvoProcess.Bots
 {
     using System.Collections.Generic;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Represents a bot plugin.
@@ -20,6 +21,6 @@ namespace JuvoProcess.Bots
         /// </summary>
         /// <param name="cmd">Command to execute.</param>
         /// <returns>Updated command object.</returns>
-        IBotCommand Execute(IBotCommand cmd);
+        Task<IBotCommand> Execute(IBotCommand cmd);
     }
 }
