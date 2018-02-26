@@ -325,7 +325,6 @@ namespace JuvoProcess.Modules.Weather
                     {
                         var skyMessage = new StringBuilder();
 
-                        // TODO(er): extract into a method
                         if (resp.SunData != null && resp.SunData.Length > 0)
                         {
                             skyMessage.Append("(Sun) ");

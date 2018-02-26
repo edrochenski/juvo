@@ -82,7 +82,6 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public async Task Quit(string message)
         {
-            // TODO: SlackBot.Quit();
             await Task.CompletedTask;
         }
 

@@ -111,7 +111,6 @@ namespace JuvoProcess
         {
             var result = new SystemInfo { AppDataPath = null, Os = OperatingSystem.Unknown };
 
-            // TODO: extract constant path/dir name
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%APPDATA%/juvo"));
@@ -126,7 +125,6 @@ namespace JuvoProcess
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                // TODO: Set AppDataPath on OSX
                 result.Os = OperatingSystem.Osx;
             }
 

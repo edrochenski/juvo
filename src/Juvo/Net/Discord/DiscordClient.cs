@@ -162,7 +162,6 @@ namespace JuvoProcess.Net.Discord
                 var result = await this.CloseSocket();
                 if (result != WebSocketState.Closed && result != WebSocketState.None)
                 {
-                    // TODO: probably move this into CloseSocket() with guards
                     this.log?.Warn("Unable to close the web socket before reconnecting.");
                 }
             }
@@ -186,7 +185,6 @@ namespace JuvoProcess.Net.Discord
         /// </summary>
         public void Dispose()
         {
-            // TODO: properly implement dispose() and dispose(bool)
             this.socket?.Dispose();
         }
 
@@ -419,13 +417,11 @@ namespace JuvoProcess.Net.Discord
                 }
                 catch (Exception exc)
                 {
-                    // TODO: what should we do here?
                     this.log?.Error("SendText()", exc);
                 }
             }
             else
             {
-                // TODO: what should we do here?
                 this.log?.Warn($"Socket in '{this.socket.State}' state. Could not send message.");
             }
         }

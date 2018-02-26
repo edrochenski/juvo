@@ -150,14 +150,6 @@ namespace JuvoProcess.Net.Irc
         /// <param name="channelKeys">Keys for channels.</param>
         void Join(string[] channels, string[] channelKeys = null);
 
-        //// <summary>
-        //// Looks up a channel mode.
-        //// </summary>
-        //// <param name="mode">Resolved mode.</param>
-        //// <returns>A tuple with the channel mode, has add parameter, and has remove parameter.</returns>
-        // (IrcChannelMode Mode, bool HasAddParam, bool HasRemParam) LookupChannelMode(char mode);
-        // TODO: stylecop can't handle tuple return type?
-
         /// <summary>
         /// Looks up a user mode.
         /// </summary>

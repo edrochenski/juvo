@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-// TODO: add Connect()
 namespace JuvoProcess.Bots
 {
     using System;

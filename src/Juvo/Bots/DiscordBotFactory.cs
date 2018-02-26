@@ -31,7 +31,6 @@ namespace JuvoProcess.Bots
             IDiscordClient discordClient,
             IJuvoClient juvoClient)
         {
-            // TODO: this should NOT be using concrete classes
             return new DiscordBot(
                 config,
                 discordClient,

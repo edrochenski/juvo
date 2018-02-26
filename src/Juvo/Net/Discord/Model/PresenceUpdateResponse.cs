@@ -53,8 +53,6 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the user.
             /// </summary>
             public User User { get; set; }
-
-            // TODO: add game property
         }
     }
 }

@@ -77,7 +77,7 @@ namespace JuvoProcess.Net.Irc
 
             this.dataBuffer = new StringBuilder();
             this.currentChannels = new List<string>(0);
-            this.log = LogManager.GetLogger(typeof(IrcClient)); // TODO: should be using proxy
+            this.log = LogManager.GetLogger(typeof(IrcClient));
             this.Network = network;
             this.chanModeDict = this.CompileChannelModeDictionary();
             this.userModeDict = this.CompileUserModeDictionary();
@@ -341,7 +341,7 @@ namespace JuvoProcess.Net.Irc
         /// <param name="e">Data associated with the event.</param>
         protected virtual void OnConnected(EventArgs e)
         {
-            this.currentNickname = this.NickName; // TODO: don't assume the first nick worked
+            this.currentNickname = this.NickName;
             this.Connected?.Invoke(this, e);
         }
 

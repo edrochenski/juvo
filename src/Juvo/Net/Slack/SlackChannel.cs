@@ -6,8 +6,6 @@ namespace JuvoProcess.Net.Slack
 {
     using System.Collections.Generic;
 
-    // TODO: more descriptive xmldocs
-
     /// <summary>
     /// Slack channel.
     /// </summary>
