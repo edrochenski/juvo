@@ -59,6 +59,12 @@ namespace JuvoProcess.Bots
         /// <returns>A Task object associated with the async operation.</returns>
         public async Task Connect()
         {
+            if (!this.discordConfig.Enabled)
+            {
+                this.juvoClient?.Log.Warn("Connect() called on a disabled bot!");
+                return;
+            }
+
             await this.discordClient.Connect();
         }
 
