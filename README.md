@@ -23,6 +23,7 @@ I am currently keeping track of my tasks/ideas/bugs/features [here](TASKS.md)
     - Ed Rochenski (@edrochenski)
         - edrochenski [ at ] bytedown [dot] com
         - [Twitter](https://twitter.com/edrochenski)
+        - [Twitch](https://twitch.tv/edroche78)
 
 - __Chat__
     - IRC: [freenode](irc://chat.freenode.net/juvo) | [efnet](irc://irc.choopa.net/juvo) | [undernet](irc://irc.undernet.org/juvo)
