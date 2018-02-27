@@ -391,7 +391,6 @@ namespace JuvoProcess.Net.Discord
             catch (Exception exc)
             {
                 this.log?.Error("Listen()", exc);
-                await this.CloseSocket();
             }
         }
 
