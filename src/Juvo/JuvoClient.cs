@@ -460,19 +460,19 @@ namespace JuvoProcess
         {
             var status = new StringBuilder();
 
-            if (this.ircBots.Any())
+            if (this.discordBots.Any())
             {
-                status.Append($"[{CommonResx.Irc}] ");
-                foreach (var bot in this.ircBots)
+                status.Append($"[{CommonResx.Discord}] ");
+                foreach (var bot in this.discordBots)
                 {
                     status.Append($"{bot.GetHashCode()} ");
                 }
             }
 
-            if (this.discordBots.Any())
+            if (this.ircBots.Any())
             {
-                status.Append($"[{CommonResx.Discord}] ");
-                foreach (var bot in this.discordBots)
+                status.Append($"[{CommonResx.Irc}] ");
+                foreach (var bot in this.ircBots)
                 {
                     status.Append($"{bot.GetHashCode()} ");
                 }
