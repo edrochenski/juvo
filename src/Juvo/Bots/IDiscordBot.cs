@@ -4,10 +4,16 @@
 
 namespace JuvoProcess.Bots
 {
+    using JuvoProcess.Configuration;
+
     /// <summary>
     /// Represents a discord bot.
     /// </summary>
     public interface IDiscordBot : IBot
     {
+        /// <summary>
+        /// Gets the bot's configuration.
+        /// </summary>
+        DiscordConfigConnection Configuration { get; }
     }
 }

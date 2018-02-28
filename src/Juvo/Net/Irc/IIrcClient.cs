@@ -128,7 +128,8 @@ namespace JuvoProcess.Net.Irc
         /// </summary>
         /// <param name="serverHost">Host to connect to.</param>
         /// <param name="serverPort">Port to connect to.</param>
-        void Connect(string serverHost, int serverPort);
+        /// <param name="serverPassword">Password for server/network.</param>
+        void Connect(string serverHost, int serverPort, string serverPassword);
 
         /// <summary>
         /// Joins a channel.

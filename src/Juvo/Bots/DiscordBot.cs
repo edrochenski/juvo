@@ -49,6 +49,9 @@ namespace JuvoProcess.Bots
         /*/ Properties /*/
 
         /// <inheritdoc/>
+        public DiscordConfigConnection Configuration => this.discordConfig;
+
+        /// <inheritdoc/>
         public BotType Type => BotType.Discord;
 
         /*/ Methods /*/

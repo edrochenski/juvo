@@ -48,6 +48,11 @@ namespace JuvoProcess.Configuration
         public string Network { get; set; }
 
         /// <summary>
+        /// Gets or sets the password/token used when connecting to the network.
+        /// </summary>
+        public string NetworkToken { get; set; }
+
+        /// <summary>
         /// Gets or sets the nickname.
         /// </summary>
         public string Nickname { get; set; }

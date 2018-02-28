@@ -48,6 +48,7 @@ namespace JuvoProcess.Net.Irc
         private string currentNickname;
         private StringBuilder dataBuffer;
         private string serverHost;
+        private string serverPassword;
         private int serverPort;
 
         /*/ Constructors /*/
@@ -164,12 +165,13 @@ namespace JuvoProcess.Net.Irc
         }
 
         /// <inheritdoc/>
-        public void Connect(string serverHost, int serverPort = DefaultPort)
+        public void Connect(string serverHost, int serverPort = DefaultPort, string serverPassword = null)
         {
             Debug.Assert(!string.IsNullOrEmpty(serverHost), "serverHost == null||empty");
             Debug.Assert(serverPort > 1024, "serverPort <= 1024");
 
             this.serverHost = serverHost;
+            this.serverPassword = serverPassword;
             this.serverPort = serverPort;
 
             this.log.Info($"Attempting to connect to {serverHost} on port {serverPort}");
@@ -419,7 +421,12 @@ namespace JuvoProcess.Net.Irc
 
         private void Client_ConnectCompleted(object sender, EventArgs e)
         {
-            this.Send($"NICK {this.NickName}\r\nUSER {this.Username} 0 * :{this.Username}\r\n");
+            if (!string.IsNullOrEmpty(this.serverPassword))
+            {
+                this.Send($"PASS {this.serverPassword}{CrLf}");
+            }
+
+            this.Send($"NICK {this.NickName}{CrLf}USER {this.Username} 0 * :{this.Username}{CrLf}");
         }
 
         private void Client_ConnectFailed(object sender, EventArgs e)
