@@ -24,14 +24,14 @@ namespace JuvoProcess.Net.Irc
         public const string ChannelIdents = "&#+!";
 
         /// <summary>
-        /// Size limit of a single message in IRC.
-        /// </summary>
-        public const int MessageSizeLimit = 484;
-
-        /// <summary>
         /// Line ending for IRC commands (\r\n)
         /// </summary>
         public const string CrLf = "\r\n";
+
+        /// <summary>
+        /// Size limit of a single message in IRC.
+        /// </summary>
+        public const int MessageSizeLimit = 484;
 
         private const int BufferSize = 4096;
         private const int DefaultPort = 6667;
@@ -528,10 +528,10 @@ namespace JuvoProcess.Net.Irc
             var incoming = Encoding.UTF8.GetString(data);
             this.dataBuffer.Append(incoming);
 
-            while (this.dataBuffer.ToString().Contains("\r\n"))
+            while (this.dataBuffer.ToString().Contains(CrLf))
             {
                 var temp = this.dataBuffer.ToString();
-                var rnIndex = temp.IndexOf("\r\n");
+                var rnIndex = temp.IndexOf(CrLf);
                 var length = temp.Length - (temp.Length - rnIndex);
                 var message = temp.Substring(0, length);
 
@@ -561,7 +561,7 @@ namespace JuvoProcess.Net.Irc
                 case "PING":
                     this.log.Info(">> PING");
                     var pingSource = msgParts[1].Replace(":", string.Empty);
-                    this.Send("PONG {0}\r\n", pingSource);
+                    this.Send($"PONG {pingSource}{CrLf}");
                     this.log.Info("<< PONG");
                     break;
             }
