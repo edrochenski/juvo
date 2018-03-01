@@ -12,10 +12,10 @@
 * ~~Log files on __Linux__ seem to be using a back-slash instead of a forward-slash and are not being stored in a logs directory~~
 * ~~Build fails on __Linux__ when running from root source folder due to case-sensitivity issues~~
 
-
 ## `JuvoProcess.Bots`
 * `DiscordBot`: Shutdown properly when `Quit()` is called
 * `DiscordBotFactory`: `Create()` is using concrete classes in the `DiscordBot` constructor
+* `IrcBot`: `Connect()` only uses the first server/port in the config
 * `SlackBot`: Shutdown properly when `Quit()` is called
 
 ## `JuvoProcess.Net.Discord`
@@ -27,7 +27,6 @@
 * Messages are being truncated when they exceed the 484 limit and have to be broken up
 * `IIrcClient`: reimplement method `(IrcChannelMode Mode, bool HasAddParam, bool HasRemParam) LookupChannelMode(char mode);`
 * `IrcClient`: assumes configured nick worked in `OnConnected`
-
 
 
 # Planned Changes
@@ -42,6 +41,7 @@
 
 ## `JuvoProcess.Bots`
 * Move classes to protocol-specific directories (even if not namespaced)
+
 
 # Planned Additions
 
