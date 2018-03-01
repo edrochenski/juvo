@@ -95,7 +95,18 @@ namespace JuvoProcess.Resources {
                 return ResourceManager.GetString("Requested", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Running.
+        /// </summary>
+        internal static string Running
+        {
+            get
+            {
+                return ResourceManager.GetString("Running", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Slack.
         /// </summary>
@@ -120,6 +131,17 @@ namespace JuvoProcess.Resources {
         internal static string State {
             get {
                 return ResourceManager.GetString("State", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Stopped.
+        /// </summary>
+        internal static string Stopped
+        {
+            get
+            {
+                return ResourceManager.GetString("Stopped", resourceCulture);
             }
         }
 

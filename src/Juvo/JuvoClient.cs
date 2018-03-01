@@ -36,17 +36,15 @@ namespace JuvoProcess
 
         /*/ Fields /*/
 
+        private readonly List<IBot> bots;
         private readonly Queue<IBotCommand> commandQueue;
         private readonly Dictionary<string[], Func<IBotCommand, Task>> commands;
         private readonly Timer commandTimer;
         private readonly IDiscordBotFactory discordBotFactory;
-        private readonly List<IDiscordBot> discordBots;
         private readonly IIrcBotFactory ircBotFactory;
-        private readonly List<IIrcBot> ircBots;
         private readonly ILog log;
         private readonly Dictionary<string[], IBotPlugin> plugins;
         private readonly ISlackBotFactory slackBotFactory;
-        private readonly List<ISlackBot> slackBots;
         private readonly ManualResetEvent resetEvent;
         private readonly IWebHost webServer;
         private readonly CancellationToken webHostToken;
@@ -56,6 +54,7 @@ namespace JuvoProcess
         private DateTime lastPerfTime;
         private Mutex lastPerfLock;
         private DateTime started;
+        private bool webServerRunning;
 
         /*/ Constructors /*/
 
@@ -86,16 +85,15 @@ namespace JuvoProcess
             this.webHostToken = default(CancellationToken);
             this.webServer = webServer;
 
+            this.bots = new List<IBot>();
             this.commandQueue = new Queue<IBotCommand>();
             this.commandTimer = new Timer(this.CommandTimerTick, null, TimerTickRate, TimerTickRate);
-            this.discordBots = new List<IDiscordBot>();
-            this.ircBots = new List<IIrcBot>();
             this.lastPerfLock = new Mutex();
             this.log = logManager?.GetLogger(typeof(JuvoClient));
             this.plugins = new Dictionary<string[], IBotPlugin>();
-            this.slackBots = new List<ISlackBot>();
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
+            this.webServerRunning = false;
 
             // this block maps the bots internal commands to the appropriate
             // internal methods.
@@ -163,6 +161,7 @@ namespace JuvoProcess
             {
                 this.log?.Info(InfoResx.StartingWebServer);
                 await this.webServer.RunAsync(this.webHostToken);
+                this.webServerRunning = true;
             }
 
             this.State = JuvoState.Running;
@@ -459,40 +458,26 @@ namespace JuvoProcess
         protected async Task CommandStatus(IBotCommand command)
         {
             var status = new StringBuilder();
+            var lastType = BotType.Unknown;
 
-            if (this.discordBots.Any())
+            // bots
+            foreach (var bot in this.bots.OrderBy(b => b.Type))
             {
-                status.Append($"[{CommonResx.Discord}] ");
-                foreach (var bot in this.discordBots)
+                if (bot.Type != lastType)
                 {
-                    status.Append($"{bot.GetHashCode()} ");
+                    status.Append($"[{bot.Type}] ");
+                    lastType = bot.Type;
                 }
+
+                status.Append($"{bot.GetHashCode()} ");
             }
 
-            if (this.ircBots.Any())
-            {
-                status.Append($"[{CommonResx.Irc}] ");
-                foreach (var bot in this.ircBots)
-                {
-                    status.Append($"{bot.GetHashCode()} ");
-                }
-            }
-
-            if (this.slackBots.Any())
-            {
-                status.Append($"[{CommonResx.Slack}] ");
-                foreach (var bot in this.slackBots)
-                {
-                    status.Append($"{bot.GetHashCode()} ");
-                }
-            }
-
-            if (this.config.WebServer.Enabled)
-            {
-                status.Append($"[{CommonResx.WebServer}] {this.webServer.GetHashCode()}");
-            }
+            // web server
+            var webState = this.webServerRunning ? CommonResx.Running : CommonResx.Stopped;
+            status.Append($"[{CommonResx.WebServer}] {webState}");
 
             command.ResponseText = status.ToString();
+
             await Task.CompletedTask;
         }
 
@@ -515,17 +500,17 @@ namespace JuvoProcess
                     new ClientWebSocketProxy(),
                     new HttpClientProxy(new HttpClientHandlerProxy()),
                     new DiscordClientOptions { AuthToken = disc.AuthToken, IsBot = true });
-                this.discordBots.Add(this.discordBotFactory.Create(disc, dc, this));
+                this.bots.Add(this.discordBotFactory.Create(disc, dc, this));
             }
 
             foreach (var irc in this.config?.Irc?.Connections?.Where(x => x.Enabled))
             {
-                this.ircBots.Add(this.ircBotFactory.Create(irc, this));
+                this.bots.Add(this.ircBotFactory.Create(irc, this));
             }
 
             foreach (var slack in this.config?.Slack?.Connections?.Where(x => x.Enabled))
             {
-                this.slackBots.Add(this.slackBotFactory.Create(slack, this));
+                this.bots.Add(this.slackBotFactory.Create(slack, this));
             }
         }
 
@@ -688,41 +673,26 @@ namespace JuvoProcess
         {
             if (this.Config.Discord.Enabled)
             {
-                await this.StartDiscordBots();
+                foreach (var bot in this.bots.Where(b => b.Type == BotType.Discord))
+                {
+                    await bot.Connect();
+                }
             }
 
             if (this.Config.Irc.Enabled)
             {
-                await this.StartIrcBots();
+                foreach (var bot in this.bots.Where(b => b.Type == BotType.Irc))
+                {
+                    await bot.Connect();
+                }
             }
 
             if (this.Config.Slack.Enabled)
             {
-                await this.StartSlackBots();
-            }
-        }
-
-        private async Task StartDiscordBots()
-        {
-            foreach (var bot in this.discordBots)
-            {
-                await bot.Connect();
-            }
-        }
-
-        private async Task StartIrcBots()
-        {
-            foreach (var bot in this.ircBots)
-            {
-                await bot.Connect();
-            }
-        }
-
-        private async Task StartSlackBots()
-        {
-            foreach (var bot in this.slackBots)
-            {
-                await bot.Connect();
+                foreach (var bot in this.bots.Where(b => b.Type == BotType.Slack))
+                {
+                    await bot.Connect();
+                }
             }
         }
 
@@ -730,17 +700,7 @@ namespace JuvoProcess
         {
             this.log?.Info(InfoResx.StoppingBots);
 
-            foreach (var bot in this.discordBots)
-            {
-                await bot.Quit(quitMessage);
-            }
-
-            foreach (var bot in this.ircBots)
-            {
-                await bot.Quit(quitMessage);
-            }
-
-            foreach (var bot in this.slackBots)
+            foreach (var bot in this.bots)
             {
                 await bot.Quit(quitMessage);
             }

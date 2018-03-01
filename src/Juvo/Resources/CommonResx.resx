@@ -129,6 +129,9 @@
   <data name="Requested" xml:space="preserve">
     <value>Requested</value>
   </data>
+  <data name="Running" xml:space="preserve">
+    <value>Running</value>
+  </data>
   <data name="Slack" xml:space="preserve">
     <value>Slack</value>
   </data>
@@ -137,6 +140,9 @@
   </data>
   <data name="State" xml:space="preserve">
     <value>State</value>
+  </data>
+  <data name="Stopped" xml:space="preserve">
+    <value>Stopped</value>
   </data>
   <data name="Usage" xml:space="preserve">
     <value>Usage</value>
