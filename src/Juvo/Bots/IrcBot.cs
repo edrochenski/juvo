@@ -91,11 +91,11 @@ namespace JuvoProcess.Bots
         public async Task Connect()
         {
             this.log.Debug("Connecting");
-            this.client.Connect(
-                this.config.Servers.First().Host,
-                this.config.Servers.First().Port,
-                this.config.NetworkToken);
-            await Task.CompletedTask;
+            await Task.Run(() =>
+                this.client.Connect(
+                    this.config.Servers.First().Host,
+                    this.config.Servers.First().Port,
+                    this.config.NetworkToken));
         }
 
         /// <inheritdoc/>
