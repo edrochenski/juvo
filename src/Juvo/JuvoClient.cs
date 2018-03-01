@@ -32,7 +32,7 @@ namespace JuvoProcess
     {
         /*/ Constants /*/
 
-        private const int TimerTickRate = 10;
+        private const int TimerTickRate = 100;
 
         /*/ Fields /*/
 
