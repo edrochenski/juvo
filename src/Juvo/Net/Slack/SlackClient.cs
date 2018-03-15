@@ -255,6 +255,13 @@ namespace JuvoProcess.Net.Slack
 
                     do
                     {
+                        if (this.webSocket.State != WebSocketState.Open)
+                        {
+                            this.log?.Warn($"WebSocket state changed during receive! (state: {this.webSocket.State})");
+                            await this.Connect();
+                            break;
+                        }
+
                         result = await this.webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                         message.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
                     }
