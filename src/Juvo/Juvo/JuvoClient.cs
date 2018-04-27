@@ -216,7 +216,7 @@ namespace JuvoProcess
                     case "thread":
                         if (cmdTokens.Length > 2)
                         {
-                            if (!int.TryParse(cmdTokens[2], out int threadNumber))
+                            if (!int.TryParse(cmdTokens[2], out var threadNumber))
                             {
                                 command.ResponseText =
                                     string.Format(PerfResx.ThreadNumNotRecognized, cmdTokens[2]);
