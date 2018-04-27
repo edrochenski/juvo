@@ -13,15 +13,30 @@ namespace JuvoProcess.Net.Discord
     /// <returns>A Task associated with the async operation.</returns>
     public interface IDiscordClient : IDisposable
     {
+        /*/ Events /*/
+
+        /// <summary>
+        /// Fires when a disconnect event is received.
+        /// </summary>
+        event DisconnectedEventHandler Disconnected;
+
         /// <summary>
         /// Fires when a ready event is received.
         /// </summary>
         event ReadyReceivedEventHandler ReadyReceived;
+
+        /*/ Methods /*/
 
         /// <summary>
         /// Connects to discord.
         /// </summary>
         /// <returns>A task.</returns>
         Task Connect();
+
+        /// <summary>
+        /// Disconnect the client from the server.
+        /// </summary>
+        /// <returns>A task.</returns>
+        Task Disconnect();
     }
 }

@@ -43,6 +43,7 @@ namespace JuvoProcess.Bots
             this.discordClient = discordClient
                 ?? throw new ArgumentNullException(nameof(discordClient));
 
+            this.discordClient.Disconnected += this.DiscordClient_Disconnected;
             this.discordClient.ReadyReceived += this.DiscordClient_ReadyReceived;
         }
 
@@ -106,6 +107,15 @@ namespace JuvoProcess.Bots
             finally
             {
                 this.isDisposed = true;
+            }
+        }
+
+        private void DiscordClient_Disconnected(object sender, DisconnectedEventArgs arg)
+        {
+            if (!arg.UserInitiated)
+            {
+                this.juvoClient?.Log.Warn("Disconnected, trying to reconnect...");
+                this.discordClient.Connect();
             }
         }
 

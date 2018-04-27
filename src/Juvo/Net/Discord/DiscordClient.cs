@@ -18,6 +18,13 @@ namespace JuvoProcess.Net.Discord
     /*/ Delegates /*/
 
     /// <summary>
+    /// Function to handle the <see cref="DiscordClient.Disconnected"/> event.
+    /// </summary>
+    /// <param name="sender">Origin of the event.</param>
+    /// <param name="arg">Contents of the event.</param>
+    public delegate void DisconnectedEventHandler(object sender, DisconnectedEventArgs arg);
+
+    /// <summary>
     /// Function to handle the <see cref="DiscordClient.HelloResponseReceived"/> event.
     /// </summary>
     /// <param name="sender">Origin of event.</param>
@@ -110,6 +117,9 @@ namespace JuvoProcess.Net.Discord
 
         /*/ Events /*/
 
+        /// <inheritdoc/>
+        public event DisconnectedEventHandler Disconnected;
+
         /// <summary>
         /// Fires when a hello response is received.
         /// </summary>
@@ -120,9 +130,7 @@ namespace JuvoProcess.Net.Discord
         /// </summary>
         public event PresenceUpdatedEventHandler PresenceUpdated;
 
-        /// <summary>
-        /// Fires when a ready event is received.
-        /// </summary>
+        /// <inheritdoc/>
         public event ReadyReceivedEventHandler ReadyReceived;
 
         /*/ Properties /*/
@@ -180,12 +188,27 @@ namespace JuvoProcess.Net.Discord
             }
         }
 
+        /// <inheritdoc/>
+        public async Task Disconnect()
+        {
+            await this.Disconnect(userInitiated: true);
+        }
+
         /// <summary>
         /// Disposes of any resources.
         /// </summary>
         public void Dispose()
         {
             this.socket?.Dispose();
+        }
+
+        /// <summary>
+        /// Called when the client is disconnected.
+        /// </summary>
+        /// <param name="data">Data associated with the disconnection.</param>
+        protected virtual void OnDisconnected(DisconnectedEventArgs data)
+        {
+            this.Disconnected?.Invoke(this, data);
         }
 
         /// <summary>
@@ -200,10 +223,6 @@ namespace JuvoProcess.Net.Discord
 
                 this.log?.Info($"{SndInd} Heartbeat");
                 await this.SendText($"{{ \"op\": 1, \"d\": {d} }}");
-            }
-            else
-            {
-                await this.Connect();
             }
         }
 
@@ -282,9 +301,26 @@ namespace JuvoProcess.Net.Discord
         {
             await this.socket.CloseAsync(
                 WebSocketCloseStatus.EndpointUnavailable, string.Empty, this.cancelToken);
+            await this.socket.CloseOutputAsync(
+                WebSocketCloseStatus.Empty, string.Empty, this.cancelToken);
+
             this.isConnected = false;
             this.log?.Info("Connection closed!");
+
             return this.socket.State;
+        }
+
+        private async Task Disconnect(bool userInitiated)
+        {
+            try
+            {
+                await this.CloseSocket();
+                this.OnDisconnected(new DisconnectedEventArgs { UserInitiated = userInitiated });
+            }
+            catch (Exception exc)
+            {
+                this.log?.Error("in Disconnect()", exc);
+            }
         }
 
         private async Task GetGateway()
@@ -384,9 +420,14 @@ namespace JuvoProcess.Net.Discord
                         if (this.socket.State == WebSocketState.CloseReceived)
                         {
                             this.log?.Debug("Close request received");
+                            await this.Disconnect(userInitiated: false);
                         }
                     }
                 }
+            }
+            catch (WebSocketException)
+            {
+                await this.Disconnect(false);
             }
             catch (Exception exc)
             {
