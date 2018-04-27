@@ -22,6 +22,9 @@
 * `DiscordClient`
   * Occasional disconnection(?) occurs and recovery/reconnection fails causing an unhandled exception with `Listen()`
   * Implement `IDisposable` properly
+  * GUILD_CREATE unhandled
+  * GUILD_DELETE unhandled: {"t":"GUILD_DELETE","s":21,"op":0,"d":{"unavailable":true,"id":"376517576907292675"}}
+
 
 ## `JuvoProcess.Net.Irc`
 * Messages are being truncated when they exceed the 484 limit and have to be broken up
