@@ -57,7 +57,14 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return base.GetHashCode();
+            unchecked
+            {
+                var hash = (int)2166136261;
+                hash = (hash * 16777619) ^ this.Identifier.GetHashCode();
+                hash = (hash * 16777619) ^ this.SourceType.GetHashCode();
+
+                return hash;
+            }
         }
     }
 }
