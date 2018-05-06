@@ -1,0 +1,17 @@
+﻿{
+    "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+    "settings": {
+        "indentation": {
+            "indentationSize": 4,
+            "tabSize": 4,
+            "useTabs": false
+        },
+        "documentationRules": {
+            "companyName": "https://gitlab.com/edrochenski/juvo",
+            "copyrightText": "Licensed under the MIT License. See LICENSE in the project root for license information.",
+            "documentationCulture": "en-us",
+            "fileNamingConvention": "stylecop",
+            "xmlHeader": true
+        }
+    }
+}
