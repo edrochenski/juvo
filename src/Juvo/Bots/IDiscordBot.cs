@@ -15,5 +15,12 @@ namespace JuvoProcess.Bots
         /// Gets the bot's configuration.
         /// </summary>
         DiscordConfigConnection Configuration { get; }
+
+        /// <summary>
+        /// Initiales the bot.
+        /// </summary>
+        /// <param name="config">Configuration to use during initialization.</param>
+        /// <param name="juvoClient">Host.</param>
+        void Initialize(DiscordConfigConnection config, IJuvoClient juvoClient);
     }
 }

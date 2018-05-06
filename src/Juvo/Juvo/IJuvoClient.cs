@@ -4,6 +4,7 @@
 
 namespace JuvoProcess
 {
+    using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
 
@@ -32,5 +33,11 @@ namespace JuvoProcess
         /// </summary>
         /// <param name="cmd">Command to execute.</param>
         void QueueCommand(IBotCommand cmd);
+
+        /// <summary>
+        /// Starts the bot.
+        /// </summary>
+        /// <returns>Result of the call.</returns>
+        Task Run();
     }
 }

@@ -16,8 +16,6 @@ namespace JuvoProcess
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
-    using JuvoProcess.Net;
-    using JuvoProcess.Net.Discord;
     using JuvoProcess.Resources;
     using JuvoProcess.Resources.Commands;
     using JuvoProcess.Resources.Logging;
@@ -75,7 +73,7 @@ namespace JuvoProcess
             ISlackBotFactory slackBotFactory,
             ILogManager logManager,
             IWebHost webServer,
-            ManualResetEvent resetEvent = null)
+            ManualResetEvent resetEvent)
         {
             this.config = configuration ?? throw new ArgumentException(nameof(configuration));
             this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
@@ -142,10 +140,7 @@ namespace JuvoProcess
             this.log?.Info(DebugResx.CommandEnqueued);
         }
 
-        /// <summary>
-        /// Starts the bot.
-        /// </summary>
-        /// <returns>Result of the call.</returns>
+        /// <inheritdoc/>
         public async Task Run()
         {
             this.log?.Info(InfoResx.CreatingMissingResources);
@@ -494,23 +489,33 @@ namespace JuvoProcess
 
         private void LoadConfig()
         {
-            foreach (var disc in this.config?.Discord?.Connections?.Where(x => x.Enabled))
+            if (this.config == null)
             {
-                var dc = new DiscordClient(
-                    new ClientWebSocketProxy(),
-                    new HttpClientProxy(new HttpClientHandlerProxy()),
-                    new DiscordClientOptions { AuthToken = disc.AuthToken, IsBot = true });
-                this.bots.Add(this.discordBotFactory.Create(disc, dc, this));
+                return;
             }
 
-            foreach (var irc in this.config?.Irc?.Connections?.Where(x => x.Enabled))
+            if (this.config.Discord != null && this.config.Discord.Enabled)
             {
-                this.bots.Add(this.ircBotFactory.Create(irc, this));
+                foreach (var disc in this.config.Discord.Connections?.Where(x => x.Enabled))
+                {
+                    this.bots.Add(this.discordBotFactory.Create(disc, this));
+                }
             }
 
-            foreach (var slack in this.config?.Slack?.Connections?.Where(x => x.Enabled))
+            if (this.config.Irc != null && this.config.Irc.Enabled)
             {
-                this.bots.Add(this.slackBotFactory.Create(slack, this));
+                foreach (var irc in this.config.Irc.Connections?.Where(x => x.Enabled))
+                {
+                    this.bots.Add(this.ircBotFactory.Create(irc, this));
+                }
+            }
+
+            if (this.config.Slack != null && this.config.Slack.Enabled)
+            {
+                foreach (var slack in this.config.Slack.Connections?.Where(x => x.Enabled))
+                {
+                    this.bots.Add(this.slackBotFactory.Create(slack, this));
+                }
             }
         }
 

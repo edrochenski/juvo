@@ -92,9 +92,9 @@ namespace JuvoProcess.Net.Irc
         string CurrentNickname { get; }
 
         /// <summary>
-        /// Gets the network.
+        /// Gets or sets the network.
         /// </summary>
-        IrcNetwork Network { get; }
+        IrcNetwork Network { get; set; }
 
         /// <summary>
         /// Gets or sets the nickname.

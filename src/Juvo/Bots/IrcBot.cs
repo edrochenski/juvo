@@ -11,7 +11,6 @@ namespace JuvoProcess.Bots
     using System.Threading.Tasks;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net.Irc;
-    using log4net;
 
     /// <summary>
     /// IRC bot.
@@ -24,10 +23,12 @@ namespace JuvoProcess.Bots
 
         /*/ Fields /*/
 
-        private readonly IrcConfigConnection config;
-        private readonly IJuvoClient host;
+        private readonly IIrcClient client;
+        private readonly ILogManager logManager;
+
         private string commandToken;
-        private IrcClient client;
+        private IrcConfigConnection config;
+        private IJuvoClient host;
         private bool isDisposed;
         private ILog log;
 
@@ -36,34 +37,14 @@ namespace JuvoProcess.Bots
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcBot"/> class.
         /// </summary>
-        /// <param name="host">Host of the juvo client.</param>
-        /// <param name="config">IRC configuration.</param>
-        public IrcBot(IrcConfigConnection config, IJuvoClient host)
+        /// <param name="logManager">Log manager.</param>
+        /// <param name="ircClient">IRC client.</param>
+        public IrcBot(ILogManager logManager, IIrcClient ircClient)
         {
-            this.commandToken = config.CommandToken ?? DefaultCommandToken;
-            this.config = config;
-            this.host = host;
-            this.log = LogManager.GetLogger(typeof(IrcBot));
+            this.logManager = logManager;
+            this.client = ircClient;
 
-            this.client = new IrcClient(IrcClient.LookupNetwork(this.config.Network))
-            {
-                NickName = config.Nickname ?? throw new Exception("Nickname is missing from configuration"),
-                NickNameAlt = config.NicknameAlt ?? $"{config.Nickname}-",
-                RealName = config.RealName ?? string.Empty,
-                Username = config.Ident ?? config.Nickname.ToLowerInvariant()
-            };
-
-            this.client.ChannelJoined += this.Client_ChannelJoined;
-            this.client.ChannelMessage += this.Client_ChannelMessage;
-            this.client.ChannelModeChanged += this.Client_ChannelModeChanged;
-            this.client.ChannelParted += this.Client_ChannelParted;
-            this.client.Connected += this.Client_Connected;
-            this.client.Disconnected += this.Client_Disconnected;
-            this.client.HostHidden += this.Client_HostHidden;
-            this.client.MessageReceived += this.Client_MessageReceived;
-            this.client.PrivateMessage += this.Client_PrivateMessage;
-            this.client.UserModeChanged += this.Client_UserModeChanged;
-            this.client.UserQuit += this.Client_UserQuit;
+            this.log = logManager?.GetLogger(typeof(IrcBot));
         }
 
         /*/ Properties /*/
@@ -122,6 +103,32 @@ namespace JuvoProcess.Bots
             await Task.Run(() => this.client.Quit(message));
         }
 
+        /// <inheritdoc/>
+        public void Initialize(IrcConfigConnection config, IJuvoClient juvoClient)
+        {
+            this.config = config;
+            this.host = juvoClient;
+
+            this.client.Network = IrcClient.LookupNetwork(this.config.Network);
+            this.client.NickName = config.Nickname ?? throw new Exception("Nickname is missing from configuration");
+            this.client.NickNameAlt = config.NicknameAlt ?? $"{config.Nickname}-";
+            this.client.RealName = config.RealName ?? string.Empty;
+            this.client.Username = config.Ident ?? config.Nickname.ToLowerInvariant();
+
+            this.client.ChannelJoined += this.Client_ChannelJoined;
+            this.client.ChannelMessage += this.Client_ChannelMessage;
+            this.client.ChannelModeChanged += this.Client_ChannelModeChanged;
+            this.client.ChannelParted += this.Client_ChannelParted;
+            this.client.Connected += this.Client_Connected;
+            this.client.Disconnected += this.Client_Disconnected;
+            this.client.HostHidden += this.Client_HostHidden;
+            this.client.MessageReceived += this.Client_MessageReceived;
+            this.client.PrivateMessage += this.Client_PrivateMessage;
+            this.client.UserModeChanged += this.Client_UserModeChanged;
+            this.client.UserQuit += this.Client_UserQuit;
+            this.commandToken = config.CommandToken ?? DefaultCommandToken;
+        }
+
         /// <summary>
         /// Initiates the authentication process.
         /// </summary>
@@ -176,8 +183,8 @@ namespace JuvoProcess.Bots
             }
             else
             {
-                string[] chans = cmdArgs[1].Split(',');
-                string[] keys = (cmdArgs.Length > 2) ? cmdArgs[2].Split(',') : null;
+                var chans = cmdArgs[1].Split(',');
+                var keys = (cmdArgs.Length > 2) ? cmdArgs[2].Split(',') : null;
 
                 if (keys == null || chans.Length == keys.Length)
                 {

@@ -4,10 +4,9 @@
 
 namespace JuvoProcess.Bots
 {
-    using System.Net.Http;
     using JuvoProcess.Configuration;
-    using JuvoProcess.Net;
     using JuvoProcess.Net.Discord;
+    using Microsoft.Extensions.DependencyInjection;
 
     /// <summary>
     /// Default Discord Bot factory.
@@ -26,15 +25,14 @@ namespace JuvoProcess.Bots
         }
 
         /// <inheritdoc />
-        public IDiscordBot Create(
-            DiscordConfigConnection config,
-            IDiscordClient discordClient,
-            IJuvoClient juvoClient)
+        public IDiscordBot Create(DiscordConfigConnection config, IJuvoClient juvoClient)
         {
-            return new DiscordBot(
-                config,
-                discordClient,
-                juvoClient);
+            var bot = new DiscordBot(
+                Program.Instance.Services.GetService<IDiscordClient>(),
+                Program.Instance.Services.GetService<ILogManager>());
+            bot.Initialize(config, juvoClient);
+
+            return bot;
         }
     }
 }

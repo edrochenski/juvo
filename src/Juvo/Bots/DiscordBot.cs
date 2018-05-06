@@ -19,8 +19,10 @@ namespace JuvoProcess.Bots
         /*/ Fields /*/
 
         private readonly IDiscordClient discordClient;
-        private readonly DiscordConfigConnection discordConfig;
-        private readonly IJuvoClient juvoClient;
+        private readonly ILog log;
+        private readonly ILogManager logManager;
+        private DiscordConfigConnection config;
+        private IJuvoClient host;
         private bool isDisposed;
         private ReadyData discordData;
 
@@ -29,19 +31,13 @@ namespace JuvoProcess.Bots
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscordBot"/> class.
         /// </summary>
-        /// <param name="config">Discord config file.</param>
         /// <param name="discordClient">Discord client.</param>
-        /// <param name="juvoClient">Juvo client.</param>
-        public DiscordBot(
-            DiscordConfigConnection config,
-            IDiscordClient discordClient,
-            IJuvoClient juvoClient)
+        /// <param name="logManager">Log manager.</param>
+        public DiscordBot(IDiscordClient discordClient, ILogManager logManager)
         {
-            this.discordConfig = config;
-            this.juvoClient = juvoClient
-                ?? throw new ArgumentNullException(nameof(juvoClient));
-            this.discordClient = discordClient
-                ?? throw new ArgumentNullException(nameof(discordClient));
+            this.discordClient = discordClient ?? throw new ArgumentNullException(nameof(discordClient));
+            this.logManager = logManager ?? throw new ArgumentNullException(nameof(logManager));
+            this.log = logManager?.GetLogger(typeof(DiscordBot));
 
             this.discordClient.Disconnected += this.DiscordClient_Disconnected;
             this.discordClient.ReadyReceived += this.DiscordClient_ReadyReceived;
@@ -50,7 +46,7 @@ namespace JuvoProcess.Bots
         /*/ Properties /*/
 
         /// <inheritdoc/>
-        public DiscordConfigConnection Configuration => this.discordConfig;
+        public DiscordConfigConnection Configuration => this.config;
 
         /// <inheritdoc/>
         public BotType Type => BotType.Discord;
@@ -63,9 +59,9 @@ namespace JuvoProcess.Bots
         /// <returns>A Task object associated with the async operation.</returns>
         public async Task Connect()
         {
-            if (!this.discordConfig.Enabled)
+            if (!this.config.Enabled)
             {
-                this.juvoClient?.Log.Warn("Connect() called on a disabled bot!");
+                this.log.Warn("Connect() called on a disabled bot!");
                 return;
             }
 
@@ -77,6 +73,19 @@ namespace JuvoProcess.Bots
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <inheritdoc/>
+        public void Initialize(DiscordConfigConnection config, IJuvoClient juvoClient)
+        {
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
+            this.host = juvoClient;
+
+            this.discordClient.Initialize(new DiscordClientOptions
+            {
+                AuthToken = config.AuthToken,
+                IsBot = true
+            });
         }
 
         /// <inheritdoc/>
@@ -114,7 +123,7 @@ namespace JuvoProcess.Bots
         {
             if (!arg.UserInitiated)
             {
-                this.juvoClient?.Log.Warn("Disconnected, trying to reconnect...");
+                this.log.Warn("Disconnected, trying to reconnect...");
                 this.discordClient.Connect();
             }
         }

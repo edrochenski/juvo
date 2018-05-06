@@ -15,8 +15,8 @@ namespace JuvoProcess.Bots
         /// Creates a new irc bot instance.
         /// </summary>
         /// <param name="config">Bot's configuration.</param>
-        /// <param name="client">Juvo client hosting the bot.</param>
+        /// <param name="host">Host reference.</param>
         /// <returns>Instance of an <see cref="IIrcBot"/>.</returns>
-        IIrcBot Create(IrcConfigConnection config, IJuvoClient client);
+        IIrcBot Create(IrcConfigConnection config, IJuvoClient host);
     }
 }

@@ -5,11 +5,9 @@
 namespace JuvoProcess.Bots
 {
     using System;
-    using System.Diagnostics;
     using System.Threading.Tasks;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net.Slack;
-    using log4net;
 
     /// <summary>
     /// Slack bot.
@@ -18,12 +16,14 @@ namespace JuvoProcess.Bots
     {
         /*/ Fields /*/
 
-        private readonly SlackConfigConnection config;
         private readonly string[] greetings = { "Hey there {0}!", "sup {0}! How's it goin?" };
-        private readonly IJuvoClient host;
         private readonly ILog log;
+        private readonly ILogManager logManager;
         private readonly Random random;
-        private readonly SlackClient slackClient;
+        private readonly ISlackClient slackClient;
+
+        private SlackConfigConnection config;
+        private IJuvoClient host;
         private bool isDisposed;
 
         /*/ Constructors /*/
@@ -31,18 +31,14 @@ namespace JuvoProcess.Bots
         /// <summary>
         /// Initializes a new instance of the <see cref="SlackBot"/> class.
         /// </summary>
-        /// <param name="config">Slack configuration.</param>
-        /// <param name="host">Host client.</param>
-        public SlackBot(SlackConfigConnection config, IJuvoClient host)
+        /// <param name="slackClient">Slack client.</param>
+        /// <param name="logManager">Log manager.</param>
+        public SlackBot(ISlackClient slackClient, ILogManager logManager)
         {
-            Debug.Assert(config != null, "config == null");
-
-            this.config = config;
-            this.host = host;
-            this.log = LogManager.GetLogger(typeof(SlackBot));
-
+            this.slackClient = slackClient ?? throw new ArgumentNullException(nameof(slackClient));
+            this.logManager = logManager;
+            this.log = this.logManager.GetLogger(typeof(SlackBot));
             this.random = new Random(DateTime.Now.Millisecond * DateTime.Now.Second);
-            this.slackClient = new SlackClient(config.Token);
             this.slackClient.MessageReceived += this.SlackClient_MessageReceived;
         }
 
@@ -67,6 +63,15 @@ namespace JuvoProcess.Bots
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <inheritdoc/>
+        public void Initialize(SlackConfigConnection config, IJuvoClient host)
+        {
+            this.config = config;
+            this.host = host;
+
+            this.slackClient.Initialize(config.Token);
         }
 
         /// <inheritdoc/>

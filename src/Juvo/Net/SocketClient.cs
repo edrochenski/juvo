@@ -14,7 +14,7 @@ namespace JuvoProcess.Net
     /// <summary>
     /// Socket client.
     /// </summary>
-    public class SocketClient : IDisposable
+    public class SocketClient : ISocketClient, IDisposable
     {
         /*/ Constants /*/
 
@@ -30,27 +30,19 @@ namespace JuvoProcess.Net
         private string host;
         private int port;
         private DnsEndPoint remoteEndPoint;
-        private Socket socket;
+        private ISocket socket;
 
         /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocketClient"/> class.
         /// </summary>
-        public SocketClient()
-            : this(DefaultBufferSize)
+        /// <param name="socket">Socket</param>
+        public SocketClient(ISocket socket)
         {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SocketClient"/> class.
-        /// </summary>
-        /// <param name="bufferSize">Size of buffer.</param>
-        public SocketClient(int bufferSize)
-        {
+            this.socket = socket ?? throw new ArgumentNullException(nameof(socket));
             this.disposed = false;
-            this.dataBuffer = new byte[bufferSize];
-            this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            this.dataBuffer = new byte[DefaultBufferSize];
 
             this.argsConnect = new SocketAsyncEventArgs();
             this.argsConnect.Completed += this.SocketConnect_Completed;
@@ -59,7 +51,7 @@ namespace JuvoProcess.Net
             this.argsReceive.SetBuffer(this.dataBuffer, 0, this.dataBuffer.Length);
 
             this.argsSend = new SocketAsyncEventArgs[5];
-            for (int i = 0; i < this.argsSend.Length; ++i)
+            for (var i = 0; i < this.argsSend.Length; ++i)
             {
                 this.argsSend[i] = new SocketAsyncEventArgs();
                 this.argsSend[i].Completed += this.SocketSend_Completed;
@@ -68,48 +60,30 @@ namespace JuvoProcess.Net
 
         /*/ Events /*/
 
-        /// <summary>
-        /// Fires when a connection has completed successfully.
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<EventArgs> ConnectCompleted;
 
-        /// <summary>
-        /// Fires when a connection attempt has failed.
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<EventArgs> ConnectFailed;
 
-        /// <summary>
-        /// Fires when the client is disconnected.
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<EventArgs> Disconnected;
 
-        /// <summary>
-        /// Fires when the current receive process is completed.
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ReceiveCompletedEventArgs> ReceiveCompleted;
 
-        /// <summary>
-        /// Fires when the current receive process fails.
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<SocketEventArgs> ReceiveFailed;
 
-        /// <summary>
-        /// Fires when a send is completed successfully.
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<EventArgs> SendCompleted;
 
-        /// <summary>
-        /// Fires when a send fails to start or complete.
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<SocketEventArgs> SendFailed;
 
         /*/ Methods /*/
 
-        /// <summary>
-        /// Initiates the connection process to the remote endpoint.
-        /// </summary>
-        /// <param name="host">Host to connect to.</param>
-        /// <param name="port">Port to connect to.</param>
+        /// <inheritdoc/>
         public void Connect(string host, int port)
         {
             this.host = host;
@@ -127,19 +101,14 @@ namespace JuvoProcess.Net
             this.Connect();
         }
 
-        /// <summary>
-        /// Disposes of any resources being used by this instance.
-        /// </summary>
+        /// <inheritdoc/>
         public void Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(true);
         }
 
-        /// <summary>
-        /// Send text to the remote endpoint.
-        /// </summary>
-        /// <param name="text">Text to send.</param>
+        /// <inheritdoc/>
         public void Send(string text)
         {
             this.Send(Encoding.UTF8.GetBytes(text));

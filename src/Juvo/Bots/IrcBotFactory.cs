@@ -5,6 +5,8 @@
 namespace JuvoProcess.Bots
 {
     using JuvoProcess.Configuration;
+    using JuvoProcess.Net.Irc;
+    using Microsoft.Extensions.DependencyInjection;
 
     /// <summary>
     /// Default IRC Bot factory.
@@ -25,7 +27,11 @@ namespace JuvoProcess.Bots
         /// <inheritdoc />
         public IIrcBot Create(IrcConfigConnection config, IJuvoClient host)
         {
-            return new IrcBot(config, host);
+            var bot = new IrcBot(
+                Program.Instance.Services.GetService<ILogManager>(),
+                Program.Instance.Services.GetService<IIrcClient>());
+            bot.Initialize(config, host);
+            return bot;
         }
     }
 }

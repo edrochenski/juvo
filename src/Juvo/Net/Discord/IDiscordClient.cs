@@ -38,5 +38,11 @@ namespace JuvoProcess.Net.Discord
         /// </summary>
         /// <returns>A task.</returns>
         Task Disconnect();
+
+        /// <summary>
+        /// Initializes the client.
+        /// </summary>
+        /// <param name="options">Options to use.</param>
+        void Initialize(DiscordClientOptions options);
     }
 }

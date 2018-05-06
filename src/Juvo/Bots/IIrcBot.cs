@@ -4,6 +4,7 @@
 
 namespace JuvoProcess.Bots
 {
+    using JuvoProcess.Configuration;
     using JuvoProcess.Net.Irc;
 
     /// <summary>
@@ -20,5 +21,12 @@ namespace JuvoProcess.Bots
         /// Gets the bot's network.
         /// </summary>
         IrcNetwork Network { get; }
+
+        /// <summary>
+        /// Initializes the bot.
+        /// </summary>
+        /// <param name="config">IRC configuration.</param>
+        /// <param name="juvoClient">Host.</param>
+        void Initialize(IrcConfigConnection config, IJuvoClient juvoClient);
     }
 }

@@ -11,7 +11,6 @@ namespace JuvoProcess.Net.Discord
     using System.Threading;
     using System.Threading.Tasks;
     using JuvoProcess.Net.Discord.Model;
-    using log4net;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -73,6 +72,7 @@ namespace JuvoProcess.Net.Discord
         private readonly Timer heartbeatTimer;
         private readonly IHttpClient httpClient;
         private readonly ILog log;
+        private readonly ILogManager logManager;
         private readonly IClientWebSocket socket;
         private bool isConnected;
         private int? lastSequence;
@@ -82,37 +82,22 @@ namespace JuvoProcess.Net.Discord
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscordClient"/> class.
         /// </summary>
-        /// <param name="clientWebSocket">Client web socket to use.</param>
-        /// <param name="httpClient">Http client to use.</param>
-        /// <param name="options">Options for the discord client.</param>
-        public DiscordClient(
-            IClientWebSocket clientWebSocket,
-            IHttpClient httpClient,
-            DiscordClientOptions options = null)
+        /// <param name="clientWebSocket">Client web socket.</param>
+        /// <param name="httpClient">Http client.</param>
+        /// <param name="logManager">Log Manager.</param>
+        public DiscordClient(IClientWebSocket clientWebSocket, IHttpClient httpClient, ILogManager logManager)
         {
+            this.httpClient = httpClient;
+            this.socket = clientWebSocket;
+            this.logManager = logManager;
+
             this.cancelToken = new CancellationToken(false);
             this.heartbeatTimer = new Timer(
                 this.OnHeartbeatInterval,
                 null,
                 HeartbeatIntervalDefault,
                 HeartbeatIntervalDefault);
-            this.httpClient = httpClient;
-            this.log = LogManager.GetLogger(typeof(DiscordClient));
-            this.socket = clientWebSocket;
-            this.Options = options ?? new DiscordClientOptions();
-
-            if (this.Options.ApiUri == null)
-            {
-                this.Options.ApiUri = new Uri(Discord.DefaultApiUrl);
-                this.Options.ApiVersion = Discord.DefaultApiVersion;
-            }
-
-            this.httpClient.BaseAddress =
-                new Uri($"{this.Options.ApiUri}/v{this.Options.ApiVersion}/");
-
-            var authToken = string.Format(
-                "{0}{1}", this.Options.IsBot ? "Bot " : string.Empty, this.Options.AuthToken);
-            this.httpClient.DefaultRequestHeaders.Add("Authorization", authToken);
+            this.log = this.logManager?.GetLogger(typeof(DiscordClient));
         }
 
         /*/ Events /*/
@@ -200,6 +185,25 @@ namespace JuvoProcess.Net.Discord
         public void Dispose()
         {
             this.socket?.Dispose();
+        }
+
+        /// <inheritdoc />
+        public void Initialize(DiscordClientOptions options)
+        {
+            this.Options = options ?? new DiscordClientOptions();
+
+            if (this.Options.ApiUri == null)
+            {
+                this.Options.ApiUri = new Uri(Discord.DefaultApiUrl);
+                this.Options.ApiVersion = Discord.DefaultApiVersion;
+            }
+
+            this.httpClient.BaseAddress =
+                new Uri($"{this.Options.ApiUri}/v{this.Options.ApiVersion}/");
+
+            var isBot = this.Options.IsBot ? "Bot " : string.Empty;
+            var authToken = $"{isBot}{this.Options.AuthToken}";
+            this.httpClient.DefaultRequestHeaders.Add("Authorization", authToken);
         }
 
         /// <summary>

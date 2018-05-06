@@ -9,7 +9,6 @@ namespace JuvoProcess.Net.Irc
     using System.Diagnostics;
     using System.Linq;
     using System.Text;
-    using log4net;
 
     /// <summary>
     /// IRC client.
@@ -40,10 +39,11 @@ namespace JuvoProcess.Net.Irc
 
         private static readonly Dictionary<string, IrcNetwork> IrcNetworkLookup;
         private readonly Dictionary<char, Tuple<IrcChannelMode, bool, bool>> chanModeDict;
+        private readonly ISocketClient client;
         private readonly ILog log;
+        private readonly ILogManager logManager;
         private readonly Dictionary<char, IrcUserMode> userModeDict;
 
-        private SocketClient client;
         private List<string> currentChannels;
         private string currentNickname;
         private StringBuilder dataBuffer;
@@ -64,10 +64,13 @@ namespace JuvoProcess.Net.Irc
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcClient"/> class.
         /// </summary>
-        /// <param name="network">Network to connect to.</param>
-        public IrcClient(IrcNetwork network = IrcNetwork.Unknown)
+        /// <param name="logManager">Log manager.</param>
+        /// <param name="socketClient">Socket client.</param>
+        public IrcClient(ILogManager logManager, ISocketClient socketClient)
         {
-            this.client = new SocketClient();
+            this.logManager = logManager;
+            this.client = socketClient;
+
             this.client.ConnectCompleted += this.Client_ConnectCompleted;
             this.client.ConnectFailed += this.Client_ConnectFailed;
             this.client.Disconnected += this.Client_Disconnected;
@@ -78,8 +81,7 @@ namespace JuvoProcess.Net.Irc
 
             this.dataBuffer = new StringBuilder();
             this.currentChannels = new List<string>(0);
-            this.log = LogManager.GetLogger(typeof(IrcClient));
-            this.Network = network;
+            this.log = this.logManager?.GetLogger(typeof(IrcClient));
             this.chanModeDict = this.CompileChannelModeDictionary();
             this.userModeDict = this.CompileUserModeDictionary();
         }
@@ -137,7 +139,7 @@ namespace JuvoProcess.Net.Irc
         public string NickNameAlt { get; set; }
 
         /// <inheritdoc/>
-        public IrcNetwork Network { get; protected set; }
+        public IrcNetwork Network { get; set; }
 
         /// <inheritdoc/>
         public string RealName { get; set; }
@@ -560,7 +562,7 @@ namespace JuvoProcess.Net.Irc
                 return;
             }
 
-            string[] msgParts = message.Split(' ');
+            var msgParts = message.Split(' ');
             switch (msgParts[0].Trim().ToUpperInvariant())
             {
                 case "NOTICE":

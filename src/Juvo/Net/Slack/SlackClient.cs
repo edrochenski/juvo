@@ -6,14 +6,12 @@ namespace JuvoProcess.Net.Slack
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Net.Http;
     using System.Net.WebSockets;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using log4net;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -44,65 +42,58 @@ namespace JuvoProcess.Net.Slack
     /// <summary>
     /// Slack client.
     /// </summary>
-    public class SlackClient
+    public class SlackClient : ISlackClient
     {
 /*/ Constants /*/
         private const string SlackParams = "simple_latest=1&no_unreads=1&pretty=1";
         private const string SlackUrl = "https://slack.com/api/";
 
 /*/ Fields /*/
-        private readonly string apiToken;
         private readonly StringContent emptyStringContent;
         private readonly ILog log;
+        private readonly ILogManager logManager;
+        private readonly IClientWebSocket webSocket;
 
+        private string apiToken;
         private List<SlackChannel> channels;
         private string myId;
         private string myName;
         private List<SlackUser> users;
-        private ClientWebSocket webSocket;
         private CancellationToken webSocketCancelToken;
         private string wsUrl;
 
-/*/ Constructors /*/
+        /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SlackClient"/> class.
         /// </summary>
-        /// <param name="token">Token to use to auth the connection.</param>
-        public SlackClient(string token)
+        /// <param name="clientWebSocket">Client web socket.</param>
+        /// <param name="logManager">Log manager.</param>
+        public SlackClient(IClientWebSocket clientWebSocket, ILogManager logManager)
         {
-            Debug.Assert(!string.IsNullOrEmpty(token), "token == null|empty");
+            this.webSocket = clientWebSocket ?? throw new ArgumentNullException(nameof(clientWebSocket));
+            this.logManager = logManager;
+            this.log = this.logManager?.GetLogger(typeof(SlackClient));
 
-            this.apiToken = token;
             this.emptyStringContent = new StringContent(string.Empty);
-            this.log = LogManager.GetLogger(typeof(SlackClient));
         }
 
-/*/ Events /*/
+        /*/ Events /*/
 
-        /// <summary>
-        /// Event raised when a message is received from the server.
-        /// </summary>
+        /// <inheritdoc/>
         public event MessageReceivedEventHandler MessageReceived;
 
-        /// <summary>
-        /// Event raised when a user's presence changes.
-        /// </summary>
+        /// <inheritdoc/>
         public event PresenceChangedEventHandler PresenceChanged;
 
-        /// <summary>
-        /// Event raised when a user types.
-        /// </summary>
+        /// <inheritdoc/>
         public event UserTypingEventHandler UserTyping;
 
 /*/ Methods /*/
 
     // Public
 
-        /// <summary>
-        /// Connects to the remote server aynchronously.
-        /// </summary>
-        /// <returns>The task object representing the asynchronous operation.</returns>
+        /// <inheritdoc/>
         public async Task Connect()
         {
             var result = string.Empty;
@@ -127,20 +118,20 @@ namespace JuvoProcess.Net.Slack
             this.users = JsonConvert.DeserializeObject<List<SlackUser>>(tempJson);
 
             this.webSocketCancelToken = new CancellationToken(false);
-            this.webSocket = new ClientWebSocket();
             await this.webSocket.ConnectAsync(new Uri(this.wsUrl), this.webSocketCancelToken);
 
-            this.log.Info($"Connected to slack as {this.myName}");
+            this.log?.Info($"Connected to slack as {this.myName}");
 
             this.Listen();
         }
 
-        /// <summary>
-        /// Sends a message asynchronously.
-        /// </summary>
-        /// <param name="channel">Channel to post the message to.</param>
-        /// <param name="text">Text of the message.</param>
-        /// <returns>The task object representing the asynchronous operation.</returns>
+        /// <inheritdoc/>
+        public void Initialize(string token)
+        {
+            this.apiToken = token;
+        }
+
+        /// <inheritdoc/>
         public async Task SendMessage(string channel, string text)
         {
             var sendChannel = channel;
@@ -150,7 +141,7 @@ namespace JuvoProcess.Net.Slack
                 var chan = this.channels.FirstOrDefault(x => x.Name == channel.Remove(0, 1));
                 if (chan.Equals(default(SlackChannel)))
                 {
-                    this.log.Warn($"Could not resolve channel '{channel}'");
+                    this.log?.Warn($"Could not resolve channel '{channel}'");
                     throw new Exception($"Invalid channel specified: {channel}");
                 }
 
@@ -185,7 +176,7 @@ namespace JuvoProcess.Net.Slack
         protected virtual void OnMessageReceived(SlackMessage arg)
         {
             this.MessageReceived?.Invoke(this, arg);
-            this.log.Debug($"MSG: {arg.Text}");
+            this.log?.Debug($"MSG: {arg.Text}");
         }
 
         /// <summary>

@@ -16,12 +16,8 @@ namespace JuvoProcess.Bots
         /// Creates a new discord bot instance.
         /// </summary>
         /// <param name="config">Bot's configuration.</param>
-        /// <param name="discordClient">Discord client.</param>
-        /// <param name="juvoClient">Juvo client hosting the bot.</param>
+        /// <param name="juvoClient">Host.</param>
         /// <returns>Instance of an <see cref="IDiscordBot"/>.</returns>
-        IDiscordBot Create(
-            DiscordConfigConnection config,
-            IDiscordClient discordClient,
-            IJuvoClient juvoClient);
+        IDiscordBot Create(DiscordConfigConnection config, IJuvoClient juvoClient);
     }
 }

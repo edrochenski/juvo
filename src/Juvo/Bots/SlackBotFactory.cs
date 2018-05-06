@@ -5,6 +5,8 @@
 namespace JuvoProcess.Bots
 {
     using JuvoProcess.Configuration;
+    using JuvoProcess.Net.Slack;
+    using Microsoft.Extensions.DependencyInjection;
 
     /// <summary>
     /// Default Slack Bot factory.
@@ -25,7 +27,12 @@ namespace JuvoProcess.Bots
         /// <inheritdoc />
         public ISlackBot Create(SlackConfigConnection config, IJuvoClient host)
         {
-            return new SlackBot(config, host);
+            var bot = new SlackBot(
+                Program.Instance.Services.GetService<ISlackClient>(),
+                Program.Instance.Services.GetService<ILogManager>());
+            bot.Initialize(config, host);
+
+            return bot;
         }
     }
 }
