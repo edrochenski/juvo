@@ -13,15 +13,11 @@ namespace JuvoProcess.Bots
     /// </summary>
     public class IrcBotFactory : IIrcBotFactory
     {
-        private readonly ILogManager logManager;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcBotFactory"/> class.
         /// </summary>
-        /// <param name="logManager">Log manager.</param>
-        public IrcBotFactory(ILogManager logManager)
+        public IrcBotFactory()
         {
-            this.logManager = logManager;
         }
 
         /// <inheritdoc />

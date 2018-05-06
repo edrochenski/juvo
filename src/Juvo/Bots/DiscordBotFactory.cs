@@ -13,15 +13,11 @@ namespace JuvoProcess.Bots
     /// </summary>
     public class DiscordBotFactory : IDiscordBotFactory
     {
-        private readonly ILogManager logManager;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DiscordBotFactory"/> class.
         /// </summary>
-        /// <param name="logManager">Log manager.</param>
-        public DiscordBotFactory(ILogManager logManager)
+        public DiscordBotFactory()
         {
-            this.logManager = logManager;
         }
 
         /// <inheritdoc />

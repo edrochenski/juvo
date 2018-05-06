@@ -13,15 +13,11 @@ namespace JuvoProcess.Bots
     /// </summary>
     public class SlackBotFactory : ISlackBotFactory
     {
-        private readonly ILogManager logManager;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SlackBotFactory"/> class.
         /// </summary>
-        /// <param name="logManager">Log mananger.</param>
-        public SlackBotFactory(ILogManager logManager)
+        public SlackBotFactory()
         {
-            this.logManager = logManager;
         }
 
         /// <inheritdoc />
