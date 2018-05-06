@@ -1,5 +1,5 @@
-﻿// <copyright file="JuvoClientTests.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿// <copyright file="JuvoClientTests.cs" company="https://gitlab.com/edrochenski/juvo">
+// Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
 namespace Juvo.Tests.Juvo
