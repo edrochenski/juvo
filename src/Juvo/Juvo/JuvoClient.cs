@@ -16,6 +16,7 @@ namespace JuvoProcess
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
+    using JuvoProcess.IO;
     using JuvoProcess.Resources;
     using JuvoProcess.Resources.Commands;
     using JuvoProcess.Resources.Logging;
@@ -43,6 +44,7 @@ namespace JuvoProcess
         private readonly ILog log;
         private readonly Dictionary<string[], IBotPlugin> plugins;
         private readonly ISlackBotFactory slackBotFactory;
+        private readonly IStorageHandler storageHandler;
         private readonly ManualResetEvent resetEvent;
         private readonly IWebHost webServer;
         private readonly CancellationToken webHostToken;
@@ -63,8 +65,9 @@ namespace JuvoProcess
         /// <param name="discordBotFactory">Factory object for Discord bots.</param>
         /// <param name="ircBotFactory">Factory object for IRC bots.</param>
         /// <param name="slackBotFactory">Factory object for Slack bots.</param>
-        /// <param name="webServer">Web server for managing the bot.</param>
         /// <param name="logManager">Log manager.</param>
+        /// <param name="webServer">Web server for managing the bot.</param>
+        /// <param name="storageHandler">Storage handler for working with files/dirs.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
         public JuvoClient(
             Config configuration,
@@ -73,6 +76,7 @@ namespace JuvoProcess
             ISlackBotFactory slackBotFactory,
             ILogManager logManager,
             IWebHost webServer,
+            IStorageHandler storageHandler,
             ManualResetEvent resetEvent)
         {
             this.config = configuration ?? throw new ArgumentException(nameof(configuration));
@@ -80,6 +84,7 @@ namespace JuvoProcess
             this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
             this.resetEvent = resetEvent;
             this.slackBotFactory = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
+            this.storageHandler = storageHandler ?? throw new ArgumentNullException(nameof(storageHandler));
             this.webHostToken = default(CancellationToken);
             this.webServer = webServer;
 
@@ -478,8 +483,8 @@ namespace JuvoProcess
 
         private void CreateAppFolders()
         {
-            Directory.CreateDirectory(this.config.System.AppDataPath.FullName);
-            Directory.CreateDirectory(this.config.System.LocalAppDataPath.FullName);
+            this.storageHandler.DirectoryCreate(this.config.System.AppDataPath.FullName);
+            this.storageHandler.DirectoryCreate(this.config.System.LocalAppDataPath.FullName);
         }
 
         private void CreateResources()
@@ -523,30 +528,30 @@ namespace JuvoProcess
         {
             var scriptPath = Path.Combine(this.config.System.AppDataPath.FullName, "scripts");
             var binPath = Path.Combine(this.config.System.LocalAppDataPath.FullName, "bin");
-            if (Directory.Exists(scriptPath))
+            if (this.storageHandler.DirectoryExists(scriptPath))
             {
                 var scripts = this.config.Juvo.Scripts
-                    .Where(s => s.Enabled && File.Exists(Path.Combine(scriptPath, s.Script)));
+                    .Where(s => s.Enabled && this.storageHandler.FileExists(Path.Combine(scriptPath, s.Script)));
                 if (!scripts.Any())
                 {
                     return;
                 }
 
-                if (!Directory.Exists(binPath))
+                if (!this.storageHandler.DirectoryExists(binPath))
                 {
-                    Directory.CreateDirectory(binPath);
+                    this.storageHandler.DirectoryCreate(binPath);
                 }
 
-                foreach (var file in Directory.GetFiles(binPath))
+                foreach (var file in this.storageHandler.DirectoryGetFiles(binPath))
                 {
-                    File.Delete(file);
+                    this.storageHandler.FileDelete(file);
                 }
 
                 foreach (var script in scripts)
                 {
                     var stopWatch = Stopwatch.StartNew();
                     var scriptFile = new FileInfo(Path.Combine(scriptPath, script.Script));
-                    var scriptCode = File.ReadAllText(scriptFile.FullName);
+                    var scriptCode = this.storageHandler.FileReadAllText(scriptFile.FullName);
                     var scriptName = scriptFile.Name.Remove(scriptFile.Name.LastIndexOf('.'));
                     var assemblyPath = Path.Combine(binPath, $"{scriptName}.dll");
                     var runtimeRef = this.config.System.Os == OperatingSystem.Windows

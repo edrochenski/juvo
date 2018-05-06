@@ -16,6 +16,7 @@ namespace JuvoProcess
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
+    using JuvoProcess.IO;
     using JuvoProcess.Net;
     using JuvoProcess.Net.Discord;
     using JuvoProcess.Net.Irc;
@@ -196,6 +197,7 @@ namespace JuvoProcess
                 return new LogManagerProxy();
             });
             ServiceCollection.AddSingleton(ResetEvent);
+            ServiceCollection.AddSingleton<IStorageHandler, StorageHandler>();
             ServiceCollection.AddSingleton<IJuvoClient, JuvoClient>();
             ServiceCollection.AddSingleton<IDiscordBotFactory, DiscordBotFactory>();
             ServiceCollection.AddSingleton<IIrcBotFactory, IrcBotFactory>();
