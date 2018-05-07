@@ -122,7 +122,18 @@ namespace JuvoProcess.Resources.Logging {
                 return ResourceManager.GetString("LoadingConfigFile", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Loading plugins....
+        /// </summary>
+        internal static string LoadingPlugins
+        {
+            get
+            {
+                return ResourceManager.GetString("LoadingPlugins", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Processing command....
         /// </summary>

@@ -138,6 +138,9 @@
   <data name="LoadingConfigFile" xml:space="preserve">
     <value>Loading configuration file...</value>
   </data>
+  <data name="LoadingPlugins" xml:space="preserve">
+    <value>Loading plugins...</value>
+  </data>
   <data name="ProcessingCommand" xml:space="preserve">
     <value>Processing command...</value>
   </data>

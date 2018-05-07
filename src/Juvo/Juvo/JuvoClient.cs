@@ -110,8 +110,6 @@ namespace JuvoProcess
                 { new[] { "set" }, this.CommandSet },
                 { new[] { "status" }, this.CommandStatus }
             };
-
-            this.LoadPlugins();
         }
 
         /*/ Properties /*/
@@ -148,6 +146,9 @@ namespace JuvoProcess
         /// <inheritdoc/>
         public async Task Run()
         {
+            this.log?.Info(InfoResx.LoadingPlugins);
+            this.LoadPlugins();
+
             this.log?.Info(InfoResx.CreatingMissingResources);
             this.CreateResources();
 
