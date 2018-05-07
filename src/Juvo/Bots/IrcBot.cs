@@ -100,6 +100,7 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public async Task Quit(string message)
         {
+            this.log?.Info($"Quitting: {message ?? "(null)"}");
             await Task.Run(() => this.client.Quit(message));
         }
 

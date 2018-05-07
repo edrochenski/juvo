@@ -34,6 +34,12 @@ namespace JuvoProcess.Net.Slack
         Task Connect();
 
         /// <summary>
+        /// Disconnects from the remote server.
+        /// </summary>
+        /// <returns>The task object representing the asynchronous operation.</returns>
+        Task Disconnect();
+
+        /// <summary>
         /// Intializes the client.
         /// </summary>
         /// <param name="token">Token.</param>

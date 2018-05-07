@@ -126,6 +126,18 @@ namespace JuvoProcess.Net.Slack
         }
 
         /// <inheritdoc/>
+        public async Task Disconnect()
+        {
+            if (this.webSocket.State == WebSocketState.Closed)
+            {
+                await Task.CompletedTask;
+            }
+
+            await this.webSocket.CloseOutputAsync(WebSocketCloseStatus.Empty, null, this.webSocketCancelToken);
+            await this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, null, this.webSocketCancelToken);
+        }
+
+        /// <inheritdoc/>
         public void Initialize(string token)
         {
             this.apiToken = token;
@@ -263,6 +275,10 @@ namespace JuvoProcess.Net.Slack
                         this.HandleMessage(message.ToString());
                     }
                 }
+            }
+            catch (TaskCanceledException)
+            {
+                this.log?.Debug("TaskCanceledException suppressed.");
             }
             catch (Exception exc)
             {

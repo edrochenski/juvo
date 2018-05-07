@@ -303,10 +303,13 @@ namespace JuvoProcess.Net.Discord
 
         private async Task<WebSocketState> CloseSocket()
         {
-            await this.socket.CloseAsync(
-                WebSocketCloseStatus.EndpointUnavailable, string.Empty, this.cancelToken);
-            await this.socket.CloseOutputAsync(
-                WebSocketCloseStatus.Empty, string.Empty, this.cancelToken);
+            if (this.IsValidOpenState(this.socket.State))
+            {
+                await this.socket.CloseOutputAsync(
+                    WebSocketCloseStatus.Empty, string.Empty, this.cancelToken);
+                await this.socket.CloseAsync(
+                    WebSocketCloseStatus.EndpointUnavailable, string.Empty, this.cancelToken);
+            }
 
             this.isConnected = false;
             this.log?.Info("Connection closed!");
@@ -393,6 +396,11 @@ namespace JuvoProcess.Net.Discord
             }
         }
 
+        private bool IsValidOpenState(WebSocketState state)
+        {
+            return state == WebSocketState.Open || state == WebSocketState.CloseReceived;
+        }
+
         private async void Listen()
         {
             try
@@ -432,6 +440,10 @@ namespace JuvoProcess.Net.Discord
             catch (WebSocketException)
             {
                 await this.Disconnect(false);
+            }
+            catch (TaskCanceledException)
+            {
+                this.log?.Debug("TaskCanceledException suppressed.");
             }
             catch (Exception exc)
             {
