@@ -163,6 +163,11 @@ namespace JuvoProcess
                 await this.webServer.RunAsync(this.webHostToken);
                 this.webServerRunning = true;
             }
+            else
+            {
+                this.log?.Warn(WarnResx.WebServerDisabled);
+                this.webServerRunning = false;
+            }
 
             this.State = JuvoState.Running;
             this.log?.Info(InfoResx.BotRunning);

@@ -69,6 +69,11 @@
           <AutoGen>True</AutoGen>
           <DependentUpon>InfoResx.resx</DependentUpon>
       </Compile>
+      <Compile Update="Resources\Logging\WarnResx.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>WarnResx.resx</DependentUpon>
+      </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -103,6 +108,10 @@
     <EmbeddedResource Update="Resources\Commands\SetResx.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>SetResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Logging\WarnResx.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>WarnResx.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
 
