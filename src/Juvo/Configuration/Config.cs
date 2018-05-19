@@ -10,24 +10,29 @@ namespace JuvoProcess.Configuration
     public class Config
     {
         /// <summary>
-        /// Gets or sets the Discord config.
+        /// Gets or sets the Discord configuration.
         /// </summary>
         public DiscordConfig Discord { get; set; }
 
         /// <summary>
-        /// Gets or sets the IRC config.
+        /// Gets or sets the IRC configuration.
         /// </summary>
         public IrcConfig Irc { get; set; }
 
         /// <summary>
-        /// Gets or sets the Juvo config.
+        /// Gets or sets the Juvo configuration.
         /// </summary>
         public JuvoConfig Juvo { get; set; }
 
         /// <summary>
-        /// Gets or sets the Slack config.
+        /// Gets or sets the Slack configuration.
         /// </summary>
         public SlackConfig Slack { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Stride configuration.
+        /// </summary>
+        public StrideConfig Stride { get; set; }
 
         /// <summary>
         /// Gets or sets the system information.
@@ -35,7 +40,7 @@ namespace JuvoProcess.Configuration
         public SystemInfo System { get; set; }
 
         /// <summary>
-        /// Gets or sets the WebServer config.
+        /// Gets or sets the WebServer configuration.
         /// </summary>
         public WebServerConfig WebServer { get; set; }
     }
