@@ -4,6 +4,7 @@
 
 namespace Juvo.Tests.Juvo
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Threading;
@@ -22,6 +23,7 @@ namespace Juvo.Tests.Juvo
         {
             var instance = new JuvoClient(
                 this.GetWindowsConfiguration(),
+                new Mock<IServiceProvider>().Object,
                 new Mock<IDiscordBotFactory>().Object,
                 new Mock<IIrcBotFactory>().Object,
                 new Mock<SlackBotFactory>().Object,
@@ -57,7 +59,7 @@ namespace Juvo.Tests.Juvo
                 {
                     AppDataPath = new DirectoryInfo(@"z:\some\fake\path\app"),
                     LocalAppDataPath = new DirectoryInfo(@"z:\some\fake\path\app\local"),
-                    Os = OperatingSystem.Windows
+                    Os = JuvoProcess.OperatingSystem.Windows
                 },
                 WebServer = new WebServerConfig
                 {

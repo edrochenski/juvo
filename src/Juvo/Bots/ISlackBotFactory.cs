@@ -4,6 +4,7 @@
 
 namespace JuvoProcess.Bots
 {
+    using System;
     using JuvoProcess.Configuration;
 
     /// <summary>
@@ -15,8 +16,9 @@ namespace JuvoProcess.Bots
         /// Creates a new slack bot instance.
         /// </summary>
         /// <param name="config">Bot's configuration.</param>
+        /// <param name="services">Service provider.</param>
         /// <param name="client">Juvo client hosting the bot.</param>
         /// <returns>Instance of an <see cref="ISlackBot"/>.</returns>
-        ISlackBot Create(SlackConfigConnection config, IJuvoClient client);
+        ISlackBot Create(SlackConfigConnection config, IServiceProvider services, IJuvoClient client);
     }
 }

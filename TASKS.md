@@ -11,7 +11,6 @@
   * Discord bots connect even when Discord is marked as disabled in the config
 
 ## `JuvoProcess.Bots`
-* `DiscordBotFactory`: `Create()` is using concrete class in the `DiscordBot` constructor
 * `IrcBot`: `Connect()` only uses the first server/port in the config
 
 ## `JuvoProcess.Net.Discord`

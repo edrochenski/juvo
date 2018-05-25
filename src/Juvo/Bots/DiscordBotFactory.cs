@@ -4,6 +4,7 @@
 
 namespace JuvoProcess.Bots
 {
+    using System;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net.Discord;
     using Microsoft.Extensions.DependencyInjection;
@@ -21,11 +22,11 @@ namespace JuvoProcess.Bots
         }
 
         /// <inheritdoc />
-        public IDiscordBot Create(DiscordConfigConnection config, IJuvoClient juvoClient)
+        public IDiscordBot Create(DiscordConfigConnection config, IServiceProvider services, IJuvoClient juvoClient)
         {
             var bot = new DiscordBot(
-                Program.Instance.Services.GetService<IDiscordClient>(),
-                Program.Instance.Services.GetService<ILogManager>());
+                services.GetService<IDiscordClient>(),
+                services.GetService<ILogManager>());
             bot.Initialize(config, juvoClient);
 
             return bot;

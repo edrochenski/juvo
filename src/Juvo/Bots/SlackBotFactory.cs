@@ -4,6 +4,7 @@
 
 namespace JuvoProcess.Bots
 {
+    using System;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net.Slack;
     using Microsoft.Extensions.DependencyInjection;
@@ -21,11 +22,11 @@ namespace JuvoProcess.Bots
         }
 
         /// <inheritdoc />
-        public ISlackBot Create(SlackConfigConnection config, IJuvoClient host)
+        public ISlackBot Create(SlackConfigConnection config, IServiceProvider services, IJuvoClient host)
         {
             var bot = new SlackBot(
-                Program.Instance.Services.GetService<ISlackClient>(),
-                Program.Instance.Services.GetService<ILogManager>());
+                services.GetService<ISlackClient>(),
+                services.GetService<ILogManager>());
             bot.Initialize(config, host);
 
             return bot;

@@ -4,6 +4,7 @@
 
 namespace JuvoProcess.Bots
 {
+    using System;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net.Irc;
     using Microsoft.Extensions.DependencyInjection;
@@ -21,11 +22,11 @@ namespace JuvoProcess.Bots
         }
 
         /// <inheritdoc />
-        public IIrcBot Create(IrcConfigConnection config, IJuvoClient host)
+        public IIrcBot Create(IrcConfigConnection config, IServiceProvider services, IJuvoClient host)
         {
             var bot = new IrcBot(
-                Program.Instance.Services.GetService<ILogManager>(),
-                Program.Instance.Services.GetService<IIrcClient>());
+                services.GetService<ILogManager>(),
+                services.GetService<IIrcClient>());
             bot.Initialize(config, host);
             return bot;
         }

@@ -4,8 +4,8 @@
 
 namespace JuvoProcess.Bots
 {
+    using System;
     using JuvoProcess.Configuration;
-    using JuvoProcess.Net.Discord;
 
     /// <summary>
     /// Represents a Discord Bot Factory.
@@ -16,8 +16,9 @@ namespace JuvoProcess.Bots
         /// Creates a new discord bot instance.
         /// </summary>
         /// <param name="config">Bot's configuration.</param>
+        /// <param name="services">Service provide.</param>
         /// <param name="juvoClient">Host.</param>
         /// <returns>Instance of an <see cref="IDiscordBot"/>.</returns>
-        IDiscordBot Create(DiscordConfigConnection config, IJuvoClient juvoClient);
+        IDiscordBot Create(DiscordConfigConnection config, IServiceProvider services, IJuvoClient juvoClient);
     }
 }

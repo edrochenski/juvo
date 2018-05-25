@@ -4,6 +4,7 @@
 
 namespace JuvoProcess.Bots
 {
+    using System;
     using JuvoProcess.Configuration;
 
     /// <summary>
@@ -15,8 +16,9 @@ namespace JuvoProcess.Bots
         /// Creates a new irc bot instance.
         /// </summary>
         /// <param name="config">Bot's configuration.</param>
+        /// <param name="services">Service provider.</param>
         /// <param name="host">Host reference.</param>
         /// <returns>Instance of an <see cref="IIrcBot"/>.</returns>
-        IIrcBot Create(IrcConfigConnection config, IJuvoClient host);
+        IIrcBot Create(IrcConfigConnection config, IServiceProvider services, IJuvoClient host);
     }
 }

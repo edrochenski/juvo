@@ -37,23 +37,24 @@ namespace JuvoProcess
 
         private readonly List<IBot> bots;
         private readonly Queue<IBotCommand> commandQueue;
+        private readonly Config config;
         private readonly Dictionary<string[], Func<IBotCommand, Task>> commands;
         private readonly Timer commandTimer;
         private readonly IDiscordBotFactory discordBotFactory;
         private readonly IIrcBotFactory ircBotFactory;
+        private readonly Mutex lastPerfLock;
         private readonly ILog log;
         private readonly Dictionary<string[], IBotPlugin> plugins;
+        private readonly IServiceProvider serviceProvider;
         private readonly ISlackBotFactory slackBotFactory;
+        private readonly DateTime started;
         private readonly IStorageHandler storageHandler;
         private readonly ManualResetEvent resetEvent;
         private readonly IWebHost webServer;
         private readonly CancellationToken webHostToken;
 
-        private Config config;
         private string lastPerf;
         private DateTime lastPerfTime;
-        private Mutex lastPerfLock;
-        private DateTime started;
         private bool webServerRunning;
 
         /*/ Constructors /*/
@@ -62,6 +63,7 @@ namespace JuvoProcess
         /// Initializes a new instance of the <see cref="JuvoClient"/> class.
         /// </summary>
         /// <param name="configuration">Bot's configuration.</param>
+        /// <param name="serviceProvider">Service provider.</param>
         /// <param name="discordBotFactory">Factory object for Discord bots.</param>
         /// <param name="ircBotFactory">Factory object for IRC bots.</param>
         /// <param name="slackBotFactory">Factory object for Slack bots.</param>
@@ -71,6 +73,7 @@ namespace JuvoProcess
         /// <param name="resetEvent">Manual reset object for thread.</param>
         public JuvoClient(
             Config configuration,
+            IServiceProvider serviceProvider,
             IDiscordBotFactory discordBotFactory,
             IIrcBotFactory ircBotFactory,
             ISlackBotFactory slackBotFactory,
@@ -83,6 +86,7 @@ namespace JuvoProcess
             this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
             this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
             this.resetEvent = resetEvent;
+            this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             this.slackBotFactory = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
             this.storageHandler = storageHandler ?? throw new ArgumentNullException(nameof(storageHandler));
             this.webHostToken = default(CancellationToken);
@@ -509,7 +513,7 @@ namespace JuvoProcess
             {
                 foreach (var disc in this.config.Discord.Connections?.Where(x => x.Enabled))
                 {
-                    this.bots.Add(this.discordBotFactory.Create(disc, this));
+                    this.bots.Add(this.discordBotFactory.Create(disc, this.serviceProvider, this));
                 }
             }
 
@@ -517,7 +521,7 @@ namespace JuvoProcess
             {
                 foreach (var irc in this.config.Irc.Connections?.Where(x => x.Enabled))
                 {
-                    this.bots.Add(this.ircBotFactory.Create(irc, this));
+                    this.bots.Add(this.ircBotFactory.Create(irc, this.serviceProvider, this));
                 }
             }
 
@@ -525,7 +529,7 @@ namespace JuvoProcess
             {
                 foreach (var slack in this.config.Slack.Connections?.Where(x => x.Enabled))
                 {
-                    this.bots.Add(this.slackBotFactory.Create(slack, this));
+                    this.bots.Add(this.slackBotFactory.Create(slack, this.serviceProvider, this));
                 }
             }
         }
