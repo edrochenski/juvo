@@ -691,11 +691,13 @@ namespace JuvoProcess
 
         private async Task StartBots()
         {
+            var startTasks = new List<Task>();
+
             if (this.Config.Discord.Enabled)
             {
                 foreach (var bot in this.bots.Where(b => b.Type == BotType.Discord))
                 {
-                    await bot.Connect();
+                    startTasks.Add(bot.Connect());
                 }
             }
 
@@ -703,7 +705,7 @@ namespace JuvoProcess
             {
                 foreach (var bot in this.bots.Where(b => b.Type == BotType.Irc))
                 {
-                    await bot.Connect();
+                    startTasks.Add(bot.Connect());
                 }
             }
 
@@ -711,19 +713,24 @@ namespace JuvoProcess
             {
                 foreach (var bot in this.bots.Where(b => b.Type == BotType.Slack))
                 {
-                    await bot.Connect();
+                    startTasks.Add(bot.Connect());
                 }
             }
+
+            await Task.WhenAll(startTasks);
         }
 
         private async Task StopBots(string quitMessage)
         {
             this.log?.Info(InfoResx.StoppingBots);
 
+            var stopTasks = new List<Task>();
             foreach (var bot in this.bots)
             {
-                await bot.Quit(quitMessage);
+                stopTasks.Add(bot.Quit(quitMessage));
             }
+
+            await Task.WhenAll(stopTasks);
         }
 
         private double ToMb(long bytes)
