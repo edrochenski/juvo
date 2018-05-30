@@ -311,9 +311,7 @@ namespace JuvoProcess.Net.Discord
                     WebSocketCloseStatus.EndpointUnavailable, string.Empty, this.cancelToken);
             }
 
-            this.isConnected = false;
             this.log?.Info("Connection closed!");
-
             return this.socket.State;
         }
 
@@ -321,6 +319,7 @@ namespace JuvoProcess.Net.Discord
         {
             try
             {
+                this.isConnected = false;
                 await this.CloseSocket();
                 this.OnDisconnected(new DisconnectedEventArgs { UserInitiated = userInitiated });
             }
@@ -443,11 +442,13 @@ namespace JuvoProcess.Net.Discord
             }
             catch (TaskCanceledException)
             {
-                this.log?.Debug("TaskCanceledException suppressed.");
+                this.log?.Debug("Listen(): TaskCanceledException suppressed.");
+                await this.Disconnect(false);
             }
             catch (Exception exc)
             {
                 this.log?.Error("Listen()", exc);
+                await this.Disconnect(false);
             }
         }
 
