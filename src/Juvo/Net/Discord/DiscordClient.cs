@@ -87,8 +87,8 @@ namespace JuvoProcess.Net.Discord
         /// <param name="logManager">Log Manager.</param>
         public DiscordClient(IClientWebSocket clientWebSocket, IHttpClient httpClient, ILogManager logManager)
         {
-            this.httpClient = httpClient;
-            this.socket = clientWebSocket;
+            this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            this.socket = clientWebSocket ?? throw new ArgumentNullException(nameof(clientWebSocket));
             this.logManager = logManager;
 
             this.cancelToken = new CancellationToken(false);
