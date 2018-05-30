@@ -31,6 +31,13 @@ namespace JuvoProcess.Net.Discord
     public delegate void HelloResponseReceivedEventHandler(object sender, HelloResponse response);
 
     /// <summary>
+    /// Function to handle the <see cref="DiscordClient.MessageReceived"/> event.
+    /// </summary>
+    /// <param name="sender">Origin of event.</param>
+    /// <param name="response">Contents of event.</param>
+    public delegate void MessageReceivedEventHandler(object sender, MessageCreateResponse response);
+
+    /// <summary>
     /// Function to handle the <see cref="DiscordClient.PresenceUpdated"/>  event.
     /// </summary>
     /// <param name="sender">Origin of event.</param>
@@ -109,6 +116,11 @@ namespace JuvoProcess.Net.Discord
         /// Fires when a hello response is received.
         /// </summary>
         public event HelloResponseReceivedEventHandler HelloResponseReceived;
+
+        /// <summary>
+        /// Fires when a message is received.
+        /// </summary>
+        public event MessageReceivedEventHandler MessageReceived;
 
         /// <summary>
         /// Fires when a presence updated response is received.
@@ -275,6 +287,18 @@ namespace JuvoProcess.Net.Discord
         }
 
         /// <summary>
+        /// Called when a message response is received.
+        /// </summary>
+        /// <param name="response">Data associated with the response.</param>
+        protected virtual void OnMessageReceived(MessageCreateResponse response)
+        {
+            this.log?.Info(
+                $"{RecInd} [{response.Data.GuildId}/{response.Data.ChannelId}/{response.Data.Author.Id}]" +
+                $"{response.Data.Content}");
+            this.MessageReceived?.Invoke(this, response);
+        }
+
+        /// <summary>
         /// Called when the Presence Updated response is received.
         /// </summary>
         /// <param name="response">Data associated with the response.</param>
@@ -358,6 +382,9 @@ namespace JuvoProcess.Net.Discord
                 case 0: // Dispatch
                     switch (msg["t"].ToString())
                     {
+                        case "MESSAGE_CREATE":
+                            this.OnMessageReceived(msg.ToObject<MessageCreateResponse>());
+                            break;
                         case "PRESENCE_UPDATE":
                             this.OnPresenceUpdatedReceived(msg.ToObject<PresenceUpdateResponse>());
                             break;
