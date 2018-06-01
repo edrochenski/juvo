@@ -25,22 +25,15 @@
 # Planned Changes
 
 ## `JuvoProcess`
+* `JuvoClient`: Allow configurable option to summon the but with `bot-nick[ ,.:-] \<command\>`
 * `Program`: Accept command line arguments in the process to override behavior and config file
+* Add unit tests for everything we can
 
 ## `JuvoProcess.Configuration`
 * Generate a config file if one doesn't exist (from embedded resource?)
 
 ## `JuvoProcess.Bots`
 * Move classes to protocol-specific directories (even if not namespaced)
-
-
-# Planned Additions
-
-## `JuvoProcess.*`
-* Add unit tests for everything we can
-
-## `JuvoClient`
-* Allow configurable option to summon the but with 'bot-nick[ ,.:-] \<command\>'
 
 ## `JuvoProcess.Net.Irc`
 * Add ability to connect with SSL
