@@ -135,6 +135,10 @@ namespace JuvoProcess
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
+                result.AppDataPath =
+                    new DirectoryInfo(Environment.ExpandEnvironmentVariables("~/Library/Preferences/juvo"));
+                result.LocalAppDataPath =
+                    new DirectoryInfo(Environment.ExpandEnvironmentVariables("~/Library/Application Support/"));
                 result.Os = OperatingSystem.Osx;
             }
 
