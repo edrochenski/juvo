@@ -114,16 +114,6 @@ namespace JuvoProcess
                         RequestPath = string.Empty
                     });
                 })
-
-                // .ConfigureServices(cfg =>
-                // {
-                //     cfg.AddLogging();
-                // })
-                // .ConfigureLogging(cfg =>
-                // {
-                //     cfg.AddProvider(new Log4NetLoggerProvider(null));
-                //     cfg.SetMinimumLevel(LogLevel.Trace);
-                // })
                 .Build();
         }
 
