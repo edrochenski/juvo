@@ -129,8 +129,8 @@ namespace JuvoProcess
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.juvo"));
-                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.juvo"));
+                result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("~/.config/.juvo"));
+                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("~/.config/.juvo"));
                 result.Os = OperatingSystem.Linux;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
