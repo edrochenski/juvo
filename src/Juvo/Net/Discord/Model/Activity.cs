@@ -1,4 +1,4 @@
-﻿// <copyright file="Game.cs" company="https://gitlab.com/edrochenski/juvo">
+﻿// <copyright file="Activity.cs" company="https://gitlab.com/edrochenski/juvo">
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
@@ -7,7 +7,7 @@ namespace JuvoProcess.Net.Discord.Model
     /// <summary>
     /// Represents a Game.
     /// </summary>
-    public class Game
+    public class Activity
     {
         /// <summary>
         /// Gets or sets Name.

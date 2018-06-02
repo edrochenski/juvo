@@ -24,6 +24,13 @@ namespace JuvoProcess.Net.Discord
     public delegate void DisconnectedEventHandler(object sender, DisconnectedEventArgs arg);
 
     /// <summary>
+    /// Function to handle the <see cref="DiscordClient.GuildCreated"/> event.
+    /// </summary>
+    /// <param name="sender">Origin of event.</param>
+    /// <param name="response">Contents of event.</param>
+    public delegate void GuildCreatedEventHandler(object sender, GuildCreateResponse response);
+
+    /// <summary>
     /// Function to handle the <see cref="DiscordClient.HelloResponseReceived"/> event.
     /// </summary>
     /// <param name="sender">Origin of event.</param>
@@ -111,6 +118,11 @@ namespace JuvoProcess.Net.Discord
 
         /// <inheritdoc/>
         public event DisconnectedEventHandler Disconnected;
+
+        /// <summary>
+        /// Fires when a GUILD_CREATE response is received.
+        /// </summary>
+        public event GuildCreatedEventHandler GuildCreated;
 
         /// <summary>
         /// Fires when a hello response is received.
@@ -225,6 +237,16 @@ namespace JuvoProcess.Net.Discord
         protected virtual void OnDisconnected(DisconnectedEventArgs data)
         {
             this.Disconnected?.Invoke(this, data);
+        }
+
+        /// <summary>
+        /// Called when a new guild is "created."
+        /// </summary>
+        /// <param name="response">Data associated with the response.</param>
+        protected virtual void OnGuildCreated(GuildCreateResponse response)
+        {
+            this.log?.Info($"{RecInd} Created Guild: {response.Data.Name}");
+            this.GuildCreated?.Invoke(this, response);
         }
 
         /// <summary>
@@ -382,6 +404,9 @@ namespace JuvoProcess.Net.Discord
                 case 0: // Dispatch
                     switch (msg["t"].ToString())
                     {
+                        case "GUILD_CREATE":
+                            this.OnGuildCreated(msg.ToObject<GuildCreateResponse>());
+                            break;
                         case "MESSAGE_CREATE":
                             this.OnMessageReceived(msg.ToObject<MessageCreateResponse>());
                             break;

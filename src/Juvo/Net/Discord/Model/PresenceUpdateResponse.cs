@@ -21,38 +21,8 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Represents the data in a Presence Update response.
         /// </summary>
-        public class PresenceUpdateData
+        public class PresenceUpdateData : PresenceUpdate
         {
-            /// <summary>
-            /// Gets or sets the Game.
-            /// </summary>
-            public Game Game { get; set; }
-
-            /// <summary>
-            /// Gets or sets the guild ID.
-            /// </summary>
-            [JsonProperty(PropertyName = "guild_id")]
-            public string GuildId { get; set; }
-
-            /// <summary>
-            /// Gets or sets nick, if any.
-            /// </summary>
-            public string Nick { get; set; }
-
-            /// <summary>
-            /// Gets or sets nick, if any.
-            /// </summary>
-            public string Status { get; set; }
-
-            /// <summary>
-            /// Gets or sets roles.
-            /// </summary>
-            public IEnumerable<string> Roles { get; set; }
-
-            /// <summary>
-            /// Gets or sets the user.
-            /// </summary>
-            public User User { get; set; }
         }
     }
 }

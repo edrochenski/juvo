@@ -14,8 +14,9 @@
 * `IrcBot`: `Connect()` only uses the first server/port in the config
 
 ## `JuvoProcess.Net.Discord`
+* Move all enums to Enums.cs
 * `DiscordClient`
-  * GUILD_CREATE unhandled
+  * Receiving `The WebSocket has already been started.` when trying to reconnect
   * GUILD_DELETE unhandled: {"t":"GUILD_DELETE","s":21,"op":0,"d":{"unavailable":true,"id":"376517576907292675"}}
 
 ## `JuvoProcess.Net.Irc`
