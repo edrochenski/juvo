@@ -1,14 +1,10 @@
 # Issues/Bugs
 
 ## `JuvoProcess`
-* `Program`:
-  * replace hardcoded paths in `GetSystemInfo()`
-  * set paths for OSX in `GetSystemInfo()`
 * `JuvoClient`:
   * `LoadPlugins()` is using a hard-coded path to get/load `System.Runtime.dll` reference
   * `LoadPlugins()` should verify a plugin's command list doesn't override a built-in
   * `set culture` using an invalid language tag causes an __expected__ error, but seems to send strange commands to IRC 
-  * Discord bots connect even when Discord is marked as disabled in the config
 
 ## `JuvoProcess.Bots`
 * `IrcBot`: `Connect()` only uses the first server/port in the config
@@ -22,6 +18,8 @@
 ## `JuvoProcess.Net.Irc`
 * `IrcClient`: assumes configured nick worked in `OnConnected`
 
+## `JuvoProcess.Net.Slack`
+* Calling `die` command will cause several exceptions before the bot terminates
 
 # Planned Changes
 
