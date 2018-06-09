@@ -153,6 +153,7 @@ namespace JuvoProcess
 
             if (!File.Exists(file))
             {
+                Console.WriteLine($"Unable to find config '{file}'");
                 Environment.Exit(-1);
             }
 
@@ -162,6 +163,7 @@ namespace JuvoProcess
 
             if (config == null)
             {
+                Console.WriteLine($"Unable to load config '{file}'");
                 Environment.Exit(-1);
             }
 
