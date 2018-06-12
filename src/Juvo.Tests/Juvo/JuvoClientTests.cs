@@ -28,7 +28,7 @@ namespace Juvo.Tests.Juvo
                 new Mock<IIrcBotFactory>().Object,
                 new Mock<SlackBotFactory>().Object,
                 new Mock<ILogManager>().Object,
-                new Mock<IWebHost>().Object,
+                new Mock<IWebHostBuilder>().Object,
                 new Mock<IStorageHandler>().Object,
                 new ManualResetEvent(false));
             Assert.NotNull(instance);

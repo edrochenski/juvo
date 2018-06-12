@@ -10,6 +10,7 @@ namespace JuvoProcess
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Runtime.Loader;
     using System.Text;
     using System.Threading;
@@ -20,9 +21,11 @@ namespace JuvoProcess
     using JuvoProcess.Resources;
     using JuvoProcess.Resources.Commands;
     using JuvoProcess.Resources.Logging;
+    using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
+    using Microsoft.Extensions.FileProviders;
 
     /// <summary>
     /// Juvo client.
@@ -50,11 +53,12 @@ namespace JuvoProcess
         private readonly DateTime started;
         private readonly IStorageHandler storageHandler;
         private readonly ManualResetEvent resetEvent;
-        private readonly IWebHost webServer;
+        private readonly IWebHostBuilder webHostBuilder;
         private readonly CancellationToken webHostToken;
 
         private string lastPerf;
         private DateTime lastPerfTime;
+        private IWebHost webHost;
         private bool webServerRunning;
 
         /*/ Constructors /*/
@@ -68,7 +72,7 @@ namespace JuvoProcess
         /// <param name="ircBotFactory">Factory object for IRC bots.</param>
         /// <param name="slackBotFactory">Factory object for Slack bots.</param>
         /// <param name="logManager">Log manager.</param>
-        /// <param name="webServer">Web server for managing the bot.</param>
+        /// <param name="webHostBuilder">Webhost builder object for creating a web server.</param>
         /// <param name="storageHandler">Storage handler for working with files/dirs.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
         public JuvoClient(
@@ -78,19 +82,19 @@ namespace JuvoProcess
             IIrcBotFactory ircBotFactory,
             ISlackBotFactory slackBotFactory,
             ILogManager logManager,
-            IWebHost webServer,
+            IWebHostBuilder webHostBuilder,
             IStorageHandler storageHandler,
-            ManualResetEvent resetEvent)
+            ManualResetEvent resetEvent = null)
         {
             this.config = configuration ?? throw new ArgumentException(nameof(configuration));
             this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
             this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
-            this.resetEvent = resetEvent;
+            this.resetEvent = resetEvent ?? new ManualResetEvent(false);
             this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             this.slackBotFactory = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
             this.storageHandler = storageHandler ?? throw new ArgumentNullException(nameof(storageHandler));
             this.webHostToken = default(CancellationToken);
-            this.webServer = webServer;
+            this.webHostBuilder = webHostBuilder;
 
             this.bots = new List<IBot>();
             this.commandQueue = new Queue<IBotCommand>();
@@ -165,13 +169,11 @@ namespace JuvoProcess
             if (this.config.WebServer.Enabled)
             {
                 this.log?.Info(InfoResx.StartingWebServer);
-                await this.webServer.RunAsync(this.webHostToken);
-                this.webServerRunning = true;
+                await this.StartWebServer();
             }
             else
             {
                 this.log?.Warn(WarnResx.WebServerDisabled);
-                this.webServerRunning = false;
             }
 
             this.State = JuvoState.Running;
@@ -451,11 +453,7 @@ namespace JuvoProcess
 
             this.log?.Info(InfoResx.ShuttingDown);
             await this.StopBots(quitMsg);
-            if (this.config.WebServer.Enabled)
-            {
-                this.log?.Info(InfoResx.StoppingWebServer);
-                await this.webServer.StopAsync(this.webHostToken);
-            }
+            await this.StopWebServer();
 
             Environment.Exit(0);
         }
@@ -489,6 +487,32 @@ namespace JuvoProcess
             command.ResponseText = status.ToString();
 
             await Task.CompletedTask;
+        }
+
+        private IWebHost BuildWebHost()
+        {
+            var builder = new WebHostBuilder();
+            return builder
+                .UseContentRoot(Path.Combine(Environment.CurrentDirectory, "wwwroot"))
+                .UseKestrel(options =>
+                {
+                    options.Listen(IPAddress.Any, 5000); // TODO: config for ip/ports
+                })
+                .Configure(cfg =>
+                {
+                    cfg.UseDefaultFiles(new DefaultFilesOptions
+                    {
+                        DefaultFileNames = new List<string> { "index.html" },
+                        FileProvider = new PhysicalFileProvider(Path.Combine(Environment.CurrentDirectory, "wwwroot")),
+                        RequestPath = string.Empty
+                    });
+                    cfg.UseStaticFiles(new StaticFileOptions
+                    {
+                        FileProvider = new PhysicalFileProvider(Path.Combine(Environment.CurrentDirectory, "wwwroot")),
+                        RequestPath = string.Empty
+                    });
+                })
+                .Build();
         }
 
         private void CreateAppFolders()
@@ -720,6 +744,18 @@ namespace JuvoProcess
             await Task.WhenAll(startTasks);
         }
 
+        private async Task StartWebServer()
+        {
+            if (this.webServerRunning)
+            {
+                return;
+            }
+
+            this.webHost = this.BuildWebHost();
+            await this.webHost?.RunAsync(this.webHostToken);
+            this.webServerRunning = true;
+        }
+
         private async Task StopBots(string quitMessage)
         {
             this.log?.Info(InfoResx.StoppingBots);
@@ -731,6 +767,17 @@ namespace JuvoProcess
             }
 
             await Task.WhenAll(stopTasks);
+        }
+
+        private async Task StopWebServer()
+        {
+            if (!this.webServerRunning)
+            {
+                return;
+            }
+
+            this.log?.Info(InfoResx.StoppingWebServer);
+            await this.webHost.StopAsync(this.webHostToken);
         }
 
         private double ToMb(long bytes)

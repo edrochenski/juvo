@@ -6,9 +6,7 @@
 namespace JuvoProcess
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Net;
     using System.Net.Http;
     using System.Reflection;
     using System.Runtime.InteropServices;
@@ -23,14 +21,13 @@ namespace JuvoProcess
     using JuvoProcess.Net.Slack;
     using log4net;
     using log4net.Config;
-    using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.FileProviders;
     using Newtonsoft.Json;
 
     /// <summary>
-    /// Main class for the assembly, contains entry point.
+    /// Main "executing" class for the assembly, contains entry point and handles
+    /// passing options and dependencies to <see cref="JuvoClient"/> instance.
     /// </summary>
     public class Program
     {
@@ -89,32 +86,6 @@ namespace JuvoProcess
         public async Task Run()
         {
             await this?.juvoClient.Run();
-        }
-
-        private static IWebHost BuildWebHost()
-        {
-            var builder = new WebHostBuilder();
-            return builder
-                .UseContentRoot(Path.Combine(Environment.CurrentDirectory, "wwwroot"))
-                .UseKestrel(options =>
-                {
-                    options.Listen(IPAddress.Any, 5000);
-                })
-                .Configure(cfg =>
-                {
-                    cfg.UseDefaultFiles(new DefaultFilesOptions
-                    {
-                        DefaultFileNames = new List<string> { "index.html" },
-                        FileProvider = new PhysicalFileProvider(Path.Combine(Environment.CurrentDirectory, "wwwroot")),
-                        RequestPath = string.Empty
-                    });
-                    cfg.UseStaticFiles(new StaticFileOptions
-                    {
-                        FileProvider = new PhysicalFileProvider(Path.Combine(Environment.CurrentDirectory, "wwwroot")),
-                        RequestPath = string.Empty
-                    });
-                })
-                .Build();
         }
 
         private static SystemInfo GetSystemInfo()
@@ -205,9 +176,9 @@ namespace JuvoProcess
             ServiceCollection.AddTransient<ISocket, SocketProxy>();
             ServiceCollection.AddTransient<IClientWebSocket, ClientWebSocketProxy>();
             ServiceCollection.AddTransient<IHttpClient, HttpClientProxy>();
+            ServiceCollection.AddTransient<IWebHostBuilder, WebHostBuilder>();
             ServiceCollection.AddTransient<HttpMessageHandler, HttpClientHandlerProxy>();
             ServiceCollection.AddTransient(sp => LoadConfiguration());
-            ServiceCollection.AddTransient(sp => BuildWebHost());
 
             serviceProvider = ServiceCollection.BuildServiceProvider();
         }
