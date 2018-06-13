@@ -24,11 +24,6 @@ namespace JuvoProcess
         ILog Log { get; }
 
         /// <summary>
-        /// Gets the System Information.
-        /// </summary>
-        SystemInfo SystemInfo { get; }
-
-        /// <summary>
         /// Queues a command for the bot to execute.
         /// </summary>
         /// <param name="cmd">Command to execute.</param>

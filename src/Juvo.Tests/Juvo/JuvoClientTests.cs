@@ -40,6 +40,11 @@ namespace Juvo.Tests.Juvo
         {
             return new Config
             {
+                Juvo = new JuvoConfig
+                {
+                    BasePath = "/just/can't/be/null",
+                    DataPath = "/just/can't/be/null"
+                },
                 Discord = new DiscordConfig
                 {
                     Connections = new List<DiscordConfigConnection>(0),
@@ -54,12 +59,6 @@ namespace Juvo.Tests.Juvo
                 {
                     Connections = new List<SlackConfigConnection>(0),
                     Enabled = false
-                },
-                System = new SystemInfo
-                {
-                    AppDataPath = new DirectoryInfo(@"z:\some\fake\path\app"),
-                    LocalAppDataPath = new DirectoryInfo(@"z:\some\fake\path\app\local"),
-                    Os = JuvoProcess.OperatingSystem.Windows
                 },
                 WebServer = new WebServerConfig
                 {

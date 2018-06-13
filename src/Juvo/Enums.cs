@@ -55,30 +55,4 @@ namespace JuvoProcess
         /// </summary>
         Stopped = 3
     }
-
-    /// <summary>
-    /// Operating systems.
-    /// </summary>
-    public enum OperatingSystem
-    {
-        /// <summary>
-        /// Unknown OS.
-        /// </summary>
-        Unknown = 0,
-
-        /// <summary>
-        /// Windows OS.
-        /// </summary>
-        Windows = 1,
-
-        /// <summary>
-        /// Linux OS.
-        /// </summary>
-        Linux = 2,
-
-        /// <summary>
-        /// OSX.
-        /// </summary>
-        Osx = 3
-    }
 }

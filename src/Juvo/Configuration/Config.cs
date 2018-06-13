@@ -35,11 +35,6 @@ namespace JuvoProcess.Configuration
         public StrideConfig Stride { get; set; }
 
         /// <summary>
-        /// Gets or sets the system information.
-        /// </summary>
-        public SystemInfo System { get; set; }
-
-        /// <summary>
         /// Gets or sets the WebServer configuration.
         /// </summary>
         public WebServerConfig WebServer { get; set; }

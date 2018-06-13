@@ -75,7 +75,7 @@ namespace JuvoProcess
         /// <summary>
         /// Gets the instances service provider.
         /// </summary>
-        public IServiceProvider Services => Program.serviceProvider;
+        public IServiceProvider Services => serviceProvider;
 
         /*/ Methods /*/
 
@@ -88,39 +88,34 @@ namespace JuvoProcess
             await this?.juvoClient.Run();
         }
 
-        private static SystemInfo GetSystemInfo()
+        private static string GetDefaultConfigFile()
         {
-            var result = new SystemInfo { AppDataPath = null, Os = OperatingSystem.Unknown };
-
+            string path = null;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%APPDATA%/juvo"));
-                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%/juvo"));
-                result.Os = OperatingSystem.Windows;
+                path = Environment.ExpandEnvironmentVariables("%APPDATA%/juvo");
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                result.AppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.config/juvo"));
-                result.LocalAppDataPath = new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/.config/juvo"));
-                result.Os = OperatingSystem.Linux;
+                path = Environment.ExpandEnvironmentVariables("%HOME%/.config/juvo");
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                result.AppDataPath =
-                    new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/Library/Preferences/juvo"));
-                result.LocalAppDataPath =
-                    new DirectoryInfo(Environment.ExpandEnvironmentVariables("%HOME%/Library/Application Support/juvo"));
-                result.Os = OperatingSystem.Osx;
+                path = Environment.ExpandEnvironmentVariables("%HOME%/Library/Preferences/juvo");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Unknown OS: Could not determine default configuration path");
+                Environment.Exit(-1);
             }
 
-            return result;
+            return Path.Combine(path, DefaultConfigFileName);
         }
 
         private static Config LoadConfiguration()
         {
-            var sysInfo = GetSystemInfo();
-
-            var file = Path.Combine(sysInfo.AppDataPath.FullName, DefaultConfigFileName);
+            var file = GetDefaultConfigFile();
 
             if (!File.Exists(file))
             {
@@ -130,7 +125,6 @@ namespace JuvoProcess
 
             var json = File.ReadAllText(file);
             var config = JsonConvert.DeserializeObject<Config>(json);
-            config.System = sysInfo;
 
             if (config == null)
             {

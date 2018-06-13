@@ -11,6 +11,7 @@ namespace JuvoProcess
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Runtime.InteropServices;
     using System.Runtime.Loader;
     using System.Text;
     using System.Threading;
@@ -40,7 +41,6 @@ namespace JuvoProcess
 
         private readonly List<IBot> bots;
         private readonly Queue<IBotCommand> commandQueue;
-        private readonly Config config;
         private readonly Dictionary<string[], Func<IBotCommand, Task>> commands;
         private readonly Timer commandTimer;
         private readonly IDiscordBotFactory discordBotFactory;
@@ -86,7 +86,7 @@ namespace JuvoProcess
             IStorageHandler storageHandler,
             ManualResetEvent resetEvent = null)
         {
-            this.config = configuration ?? throw new ArgumentException(nameof(configuration));
+            this.Config = configuration ?? throw new ArgumentException(nameof(configuration));
             this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
             this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
             this.resetEvent = resetEvent ?? new ManualResetEvent(false);
@@ -123,7 +123,7 @@ namespace JuvoProcess
         /*/ Properties /*/
 
         /// <inheritdoc/>
-        public Config Config => this.config;
+        public Config Config { get; }
 
         /// <inheritdoc/>
         public ILog Log => this.log;
@@ -132,9 +132,6 @@ namespace JuvoProcess
         /// Gets or sets the bot's current state.
         /// </summary>
         public JuvoState State { get; protected set; }
-
-        /// <inheritdoc/>
-        public SystemInfo SystemInfo => this.config.System;
 
         /*/ Methods /*/
 
@@ -154,11 +151,11 @@ namespace JuvoProcess
         /// <inheritdoc/>
         public async Task Run()
         {
-            this.log?.Info(InfoResx.LoadingPlugins);
-            this.LoadPlugins();
-
             this.log?.Info(InfoResx.CreatingMissingResources);
             this.CreateResources();
+
+            this.log?.Info(InfoResx.LoadingPlugins);
+            this.LoadPlugins();
 
             this.log?.Info(InfoResx.LoadingConfigFile);
             this.LoadConfig();
@@ -166,7 +163,7 @@ namespace JuvoProcess
             this.log?.Info(InfoResx.StartingBots);
             await this.StartBots();
 
-            if (this.config.WebServer.Enabled)
+            if (this.Config.WebServer.Enabled)
             {
                 this.log?.Info(InfoResx.StartingWebServer);
                 await this.StartWebServer();
@@ -517,8 +514,8 @@ namespace JuvoProcess
 
         private void CreateAppFolders()
         {
-            this.storageHandler.DirectoryCreate(this.config.System.AppDataPath.FullName);
-            this.storageHandler.DirectoryCreate(this.config.System.LocalAppDataPath.FullName);
+            this.storageHandler.DirectoryCreate(this.Config.Juvo.BasePath);
+            this.storageHandler.DirectoryCreate(this.Config.Juvo.DataPath);
         }
 
         private void CreateResources()
@@ -528,30 +525,30 @@ namespace JuvoProcess
 
         private void LoadConfig()
         {
-            if (this.config == null)
+            if (this.Config == null)
             {
                 return;
             }
 
-            if (this.config.Discord != null && this.config.Discord.Enabled)
+            if (this.Config.Discord != null && this.Config.Discord.Enabled)
             {
-                foreach (var disc in this.config.Discord.Connections?.Where(x => x.Enabled))
+                foreach (var disc in this.Config.Discord.Connections?.Where(x => x.Enabled))
                 {
                     this.bots.Add(this.discordBotFactory.Create(disc, this.serviceProvider, this));
                 }
             }
 
-            if (this.config.Irc != null && this.config.Irc.Enabled)
+            if (this.Config.Irc != null && this.Config.Irc.Enabled)
             {
-                foreach (var irc in this.config.Irc.Connections?.Where(x => x.Enabled))
+                foreach (var irc in this.Config.Irc.Connections?.Where(x => x.Enabled))
                 {
                     this.bots.Add(this.ircBotFactory.Create(irc, this.serviceProvider, this));
                 }
             }
 
-            if (this.config.Slack != null && this.config.Slack.Enabled)
+            if (this.Config.Slack != null && this.Config.Slack.Enabled)
             {
-                foreach (var slack in this.config.Slack.Connections?.Where(x => x.Enabled))
+                foreach (var slack in this.Config.Slack.Connections?.Where(x => x.Enabled))
                 {
                     this.bots.Add(this.slackBotFactory.Create(slack, this.serviceProvider, this));
                 }
@@ -560,11 +557,11 @@ namespace JuvoProcess
 
         private void LoadPlugins()
         {
-            var scriptPath = Path.Combine(this.config.System.AppDataPath.FullName, "scripts");
-            var binPath = Path.Combine(this.config.System.LocalAppDataPath.FullName, "bin");
+            var scriptPath = Path.Combine(this.Config.Juvo.BasePath, "scripts");
+            var binPath = Path.Combine(this.Config.Juvo.DataPath, "bin");
             if (this.storageHandler.DirectoryExists(scriptPath))
             {
-                var scripts = this.config.Juvo.Scripts
+                var scripts = this.Config.Juvo.Scripts
                     .Where(s => s.Enabled && this.storageHandler.FileExists(Path.Combine(scriptPath, s.Script)));
                 if (!scripts.Any())
                 {
@@ -588,7 +585,7 @@ namespace JuvoProcess
                     var scriptCode = this.storageHandler.FileReadAllText(scriptFile.FullName);
                     var scriptName = scriptFile.Name.Remove(scriptFile.Name.LastIndexOf('.'));
                     var assemblyPath = Path.Combine(binPath, $"{scriptName}.dll");
-                    var runtimeRef = this.config.System.Os == OperatingSystem.Windows
+                    var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                         ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.0.5\System.Runtime.dll"
                         : "/usr/share/dotnet/shared/Microsoft.NETCore.App/2.0.5/System.Runtime.dll";
                     var compilation = CSharpCompilation.Create(scriptName)
