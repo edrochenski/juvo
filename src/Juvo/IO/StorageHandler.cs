@@ -46,5 +46,11 @@ namespace JuvoProcess.IO
         {
             return File.ReadAllText(path);
         }
+
+        /// <inheritdoc/>
+        public void FileWriteAllText(string path, string contents)
+        {
+            File.WriteAllText(path, contents);
+        }
     }
 }
