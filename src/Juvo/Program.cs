@@ -1,7 +1,6 @@
 // <copyright file="Program.cs" company="https://gitlab.com/edrochenski/juvo">
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
-
 [assembly: System.Resources.NeutralResourcesLanguage("en")]
 namespace JuvoProcess
 {
@@ -36,8 +35,6 @@ namespace JuvoProcess
         private static readonly string DefaultConfigFileName = "config.json";
         private static readonly ManualResetEvent ResetEvent;
         private static readonly IServiceCollection ServiceCollection;
-
-        private static Program instance;
         private static IServiceProvider serviceProvider;
 
         private readonly IJuvoClient juvoClient;
@@ -70,7 +67,7 @@ namespace JuvoProcess
         /// <summary>
         /// Gets the running instance of the process.
         /// </summary>
-        public static Program Instance => instance;
+        public static Program Instance { get; private set; }
 
         /// <summary>
         /// Gets the instances service provider.
@@ -78,15 +75,6 @@ namespace JuvoProcess
         public IServiceProvider Services => serviceProvider;
 
         /*/ Methods /*/
-
-        /// <summary>
-        /// Runs the Juvo process.
-        /// </summary>
-        /// <returns>A Task object associated with the async operation.</returns>
-        public async Task Run()
-        {
-            await this?.juvoClient.Run();
-        }
 
         private static string GetDefaultConfigFile()
         {
@@ -139,42 +127,42 @@ namespace JuvoProcess
         {
             SetupDependencies();
 
-            instance = new Program(
+            Instance = new Program(
                 serviceProvider.GetService<IJuvoClient>(),
                 serviceProvider.GetService<ILogManager>());
 
-            instance.juvoClient.Run().Wait();
+            Instance.juvoClient.Run().Wait();
             WaitHandle.WaitAll(new[] { ResetEvent });
         }
 
         private static void SetupDependencies()
         {
-            ServiceCollection.AddSingleton<ILogManager>(sp =>
-            {
-                var logCfg = new FileInfo("log4net.config");
-                var logMgr = LogManager.GetRepository(Assembly.GetEntryAssembly());
+            serviceProvider = ServiceCollection
+                .AddSingleton<ILogManager>(sp =>
+                {
+                    var logCfg = new FileInfo("log4net.config");
+                    var logMgr = LogManager.GetRepository(Assembly.GetEntryAssembly());
 
-                XmlConfigurator.ConfigureAndWatch(logMgr, logCfg);
-                return new LogManagerProxy();
-            });
-            ServiceCollection.AddSingleton(ResetEvent);
-            ServiceCollection.AddSingleton<IStorageHandler, StorageHandler>();
-            ServiceCollection.AddSingleton<IJuvoClient, JuvoClient>();
-            ServiceCollection.AddSingleton<IDiscordBotFactory, DiscordBotFactory>();
-            ServiceCollection.AddSingleton<IIrcBotFactory, IrcBotFactory>();
-            ServiceCollection.AddSingleton<ISlackBotFactory, SlackBotFactory>();
-            ServiceCollection.AddTransient<IDiscordClient, DiscordClient>();
-            ServiceCollection.AddTransient<IIrcClient, IrcClient>();
-            ServiceCollection.AddTransient<ISlackClient, SlackClient>();
-            ServiceCollection.AddTransient<ISocketClient, SocketClient>();
-            ServiceCollection.AddTransient<ISocket, SocketProxy>();
-            ServiceCollection.AddTransient<IClientWebSocket, ClientWebSocketProxy>();
-            ServiceCollection.AddTransient<IHttpClient, HttpClientProxy>();
-            ServiceCollection.AddTransient<IWebHostBuilder, WebHostBuilder>();
-            ServiceCollection.AddTransient<HttpMessageHandler, HttpClientHandlerProxy>();
-            ServiceCollection.AddTransient(sp => LoadConfiguration());
-
-            serviceProvider = ServiceCollection.BuildServiceProvider();
+                    XmlConfigurator.ConfigureAndWatch(logMgr, logCfg);
+                    return new LogManagerProxy();
+                })
+                .AddSingleton(ResetEvent)
+                .AddSingleton<IStorageHandler, StorageHandler>()
+                .AddSingleton<IJuvoClient, JuvoClient>()
+                .AddSingleton<IDiscordBotFactory, DiscordBotFactory>()
+                .AddSingleton<IIrcBotFactory, IrcBotFactory>()
+                .AddSingleton<ISlackBotFactory, SlackBotFactory>()
+                .AddTransient<IDiscordClient, DiscordClient>()
+                .AddTransient<IIrcClient, IrcClient>()
+                .AddTransient<ISlackClient, SlackClient>()
+                .AddTransient<ISocketClient, SocketClient>()
+                .AddTransient<ISocket, SocketProxy>()
+                .AddTransient<IClientWebSocket, ClientWebSocketProxy>()
+                .AddTransient<IHttpClient, HttpClientProxy>()
+                .AddTransient<IWebHostBuilder, WebHostBuilder>()
+                .AddTransient<HttpMessageHandler, HttpClientHandlerProxy>()
+                .AddTransient(sp => LoadConfiguration())
+                .BuildServiceProvider();
         }
     }
 }

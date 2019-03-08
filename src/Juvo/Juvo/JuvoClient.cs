@@ -19,6 +19,7 @@ namespace JuvoProcess
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
     using JuvoProcess.IO;
+    using JuvoProcess.Juvo;
     using JuvoProcess.Resources;
     using JuvoProcess.Resources.Commands;
     using JuvoProcess.Resources.Logging;
@@ -512,15 +513,25 @@ namespace JuvoProcess
                 .Build();
         }
 
-        private void CreateAppFolders()
+        private void CreateResources()
         {
             this.storageHandler.DirectoryCreate(this.Config.Juvo.BasePath);
             this.storageHandler.DirectoryCreate(this.Config.Juvo.DataPath);
-        }
 
-        private void CreateResources()
-        {
-            this.CreateAppFolders();
+            var userFile = Environment.ExpandEnvironmentVariables(this.Config.Juvo.BasePath);
+            userFile = Path.Combine(userFile, UserFileName);
+            if (!this.storageHandler.FileExists(userFile))
+            {
+                var guid = Guid.NewGuid();
+                var adminUser = new JuvoUser
+                {
+                    Id = guid.ToString(),
+                    Username = "admin",
+                    Password = "password".GenerateSaltedHash(guid.ToString()).ToBase64()
+                };
+                var data = JsonConvert.SerializeObject(new List<JuvoUser> { adminUser });
+                this.storageHandler.FileWriteAllText(userFile, data);
+            }
         }
 
         private void LoadConfig()
