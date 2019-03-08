@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <OutputType>Exe</OutputType>
     <RootNamespace>JuvoProcess</RootNamespace>
     <ApplicationIcon />
@@ -12,10 +12,13 @@
     <DocumentationFile>bin\Debug\netcoreapp2.0\juvo.xml</DocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
+    <NoWarn>1701;1702;IDE0008</NoWarn>
+    <CodeAnalysisRuleSet>Juvo.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DocumentationFile>bin\Release\netcoreapp2.0\juvo.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>Juvo.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <ItemGroup>
@@ -108,6 +111,10 @@
     <EmbeddedResource Update="Resources\Commands\SetResx.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>SetResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Logging\InfoResx.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>InfoResx.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Update="Resources\Logging\WarnResx.resx">
       <Generator>ResXFileCodeGenerator</Generator>

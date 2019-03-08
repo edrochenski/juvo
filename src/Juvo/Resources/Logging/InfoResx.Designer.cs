@@ -22,7 +22,7 @@ namespace JuvoProcess.Resources.Logging {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class InfoResx {
+    public class InfoResx {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace JuvoProcess.Resources.Logging {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("JuvoProcess.Resources.Logging.InfoResx", typeof(InfoResx).Assembly);
@@ -51,7 +51,7 @@ namespace JuvoProcess.Resources.Logging {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Juvo is now running.
         /// </summary>
-        internal static string BotRunning {
+        public static string BotRunning {
             get {
                 return ResourceManager.GetString("BotRunning", resourceCulture);
             }
@@ -72,7 +72,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Creating any missing resources....
         /// </summary>
-        internal static string CreatingMissingResources {
+        public static string CreatingMissingResources {
             get {
                 return ResourceManager.GetString("CreatingMissingResources", resourceCulture);
             }
@@ -81,7 +81,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Error executing command &apos;{0}&apos;.
         /// </summary>
-        internal static string ErrorExecCommand {
+        public static string ErrorExecCommand {
             get {
                 return ResourceManager.GetString("ErrorExecCommand", resourceCulture);
             }
@@ -90,7 +90,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Error executing module &apos;{0}&apos;.
         /// </summary>
-        internal static string ErrorExecModule {
+        public static string ErrorExecModule {
             get {
                 return ResourceManager.GetString("ErrorExecModule", resourceCulture);
             }
@@ -99,7 +99,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Invalid command.
         /// </summary>
-        internal static string InvalidCommand {
+        public static string InvalidCommand {
             get {
                 return ResourceManager.GetString("InvalidCommand", resourceCulture);
             }
@@ -108,7 +108,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Launching the juvo process....
         /// </summary>
-        internal static string LaunchingJuvo {
+        public static string LaunchingJuvo {
             get {
                 return ResourceManager.GetString("LaunchingJuvo", resourceCulture);
             }
@@ -117,27 +117,34 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Loading configuration file....
         /// </summary>
-        internal static string LoadingConfigFile {
+        public static string LoadingConfigFile {
             get {
                 return ResourceManager.GetString("LoadingConfigFile", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Loading plugins....
         /// </summary>
-        internal static string LoadingPlugins
-        {
-            get
-            {
+        public static string LoadingPlugins {
+            get {
                 return ResourceManager.GetString("LoadingPlugins", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loading users.
+        /// </summary>
+        public static string LoadingUsers {
+            get {
+                return ResourceManager.GetString("LoadingUsers", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Processing command....
         /// </summary>
-        internal static string ProcessingCommand {
+        public static string ProcessingCommand {
             get {
                 return ResourceManager.GetString("ProcessingCommand", resourceCulture);
             }
@@ -146,7 +153,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Shutting down....
         /// </summary>
-        internal static string ShuttingDown {
+        public static string ShuttingDown {
             get {
                 return ResourceManager.GetString("ShuttingDown", resourceCulture);
             }
@@ -155,7 +162,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Starting bots....
         /// </summary>
-        internal static string StartingBots {
+        public static string StartingBots {
             get {
                 return ResourceManager.GetString("StartingBots", resourceCulture);
             }
@@ -164,7 +171,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Starting the web server....
         /// </summary>
-        internal static string StartingWebServer {
+        public static string StartingWebServer {
             get {
                 return ResourceManager.GetString("StartingWebServer", resourceCulture);
             }
@@ -173,7 +180,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Stopping bots....
         /// </summary>
-        internal static string StoppingBots {
+        public static string StoppingBots {
             get {
                 return ResourceManager.GetString("StoppingBots", resourceCulture);
             }
@@ -182,7 +189,7 @@ namespace JuvoProcess.Resources.Logging {
         /// <summary>
         ///   Looks up a localized string similar to Stopping web server....
         /// </summary>
-        internal static string StoppingWebServer {
+        public static string StoppingWebServer {
             get {
                 return ResourceManager.GetString("StoppingWebServer", resourceCulture);
             }
