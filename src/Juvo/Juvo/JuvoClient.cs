@@ -28,6 +28,7 @@ namespace JuvoProcess
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
     using Microsoft.Extensions.FileProviders;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Juvo client.
@@ -37,6 +38,7 @@ namespace JuvoProcess
         /*/ Constants /*/
 
         private const int TimerTickRate = 100;
+        private const string UserFileName = "users.json";
 
         /*/ Fields /*/
 
@@ -59,6 +61,7 @@ namespace JuvoProcess
 
         private string lastPerf;
         private DateTime lastPerfTime;
+        private List<JuvoUser> users;
         private IWebHost webHost;
         private bool webServerRunning;
 
@@ -154,6 +157,9 @@ namespace JuvoProcess
         {
             this.log?.Info(InfoResx.CreatingMissingResources);
             this.CreateResources();
+
+            this.log?.Info($"{InfoResx.LoadingUsers}...");
+            this.LoadUsers();
 
             this.log?.Info(InfoResx.LoadingPlugins);
             this.LoadPlugins();
@@ -643,6 +649,17 @@ namespace JuvoProcess
                         this.Log?.Info($"[Plugin: {scriptName}] Commands: {string.Join(", ", instance.Commands)}");
                     }
                 }
+            }
+        }
+
+        private void LoadUsers()
+        {
+            var userFile = Environment.ExpandEnvironmentVariables(this.Config.Juvo.BasePath);
+            userFile = Path.Combine(userFile, UserFileName);
+            if (!this.storageHandler.FileExists(userFile))
+            {
+                var userData = this.storageHandler.FileReadAllText(userFile);
+                this.users = JsonConvert.DeserializeObject<List<JuvoUser>>(userData);
             }
         }
 

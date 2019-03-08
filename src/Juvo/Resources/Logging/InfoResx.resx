@@ -141,6 +141,9 @@
   <data name="LoadingPlugins" xml:space="preserve">
     <value>Loading plugins...</value>
   </data>
+  <data name="LoadingUsers" xml:space="preserve">
+    <value>Loading users</value>
+  </data>
   <data name="ProcessingCommand" xml:space="preserve">
     <value>Processing command...</value>
   </data>
