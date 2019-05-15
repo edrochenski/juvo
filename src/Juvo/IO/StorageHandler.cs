@@ -4,6 +4,7 @@
 
 namespace JuvoProcess.IO
 {
+    using System;
     using System.IO;
 
     /// <summary>
@@ -14,43 +15,43 @@ namespace JuvoProcess.IO
         /// <inheritdoc/>
         public DirectoryInfo DirectoryCreate(string path)
         {
-            return Directory.CreateDirectory(path);
+            return Directory.CreateDirectory(Environment.ExpandEnvironmentVariables(path));
         }
 
         /// <inheritdoc/>
         public bool DirectoryExists(string path)
         {
-            return Directory.Exists(path);
+            return Directory.Exists(Environment.ExpandEnvironmentVariables(path));
         }
 
         /// <inheritdoc/>
         public string[] DirectoryGetFiles(string path)
         {
-            return Directory.GetFiles(path);
+            return Directory.GetFiles(Environment.ExpandEnvironmentVariables(path));
         }
 
         /// <inheritdoc/>
         public void FileDelete(string path)
         {
-            File.Delete(path);
+            File.Delete(Environment.ExpandEnvironmentVariables(path));
         }
 
         /// <inheritdoc/>
         public bool FileExists(string path)
         {
-            return File.Exists(path);
+            return File.Exists(Environment.ExpandEnvironmentVariables(path));
         }
 
         /// <inheritdoc/>
         public string FileReadAllText(string path)
         {
-            return File.ReadAllText(path);
+            return File.ReadAllText(Environment.ExpandEnvironmentVariables(path));
         }
 
         /// <inheritdoc/>
         public void FileWriteAllText(string path, string contents)
         {
-            File.WriteAllText(path, contents);
+            File.WriteAllText(Environment.ExpandEnvironmentVariables(path), contents);
         }
     }
 }
