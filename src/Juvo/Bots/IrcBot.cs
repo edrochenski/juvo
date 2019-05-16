@@ -20,6 +20,11 @@ namespace JuvoProcess.Bots
         /*/ Constants /*/
 
         private const string DefaultCommandToken = ".";
+        private const int Debug = 0;
+        private const int Info = 1;
+        private const int Warn = 2;
+        private const int Error = 3;
+        private const int Fatal = 4;
 
         /*/ Fields /*/
 
@@ -71,7 +76,7 @@ namespace JuvoProcess.Bots
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task Connect()
         {
-            this.log.Debug("Connecting");
+            this.Log(Info, "Connecting");
             await Task.Run(() =>
                 this.client.Connect(
                     this.config.Servers.First().Host,
@@ -100,7 +105,7 @@ namespace JuvoProcess.Bots
         /// <inheritdoc/>
         public async Task Quit(string message)
         {
-            this.log?.Info($"Quitting: {message ?? "(null)"}");
+            this.Log(Info, $"Quitting: {message ?? "(null)"}");
             await Task.Run(() => this.client.Quit(message));
         }
 
@@ -137,14 +142,14 @@ namespace JuvoProcess.Bots
         {
             if (this.IsAuthenticated)
             {
-                this.log.Error("Authenticate(): Bot has already authenticated");
+                this.Log(Error, "Authenticate(): Bot has already authenticated");
                 return;
             }
             else if (string.IsNullOrEmpty(this.config.User)
                 || string.IsNullOrEmpty(this.config.Pass)
                 || string.IsNullOrEmpty(this.config.Network))
             {
-                this.log.Error("Authenticate(): config missing user, pass, or network");
+                this.Log(Error, "Authenticate(): config missing user, pass, or network");
                 return;
             }
 
@@ -152,7 +157,7 @@ namespace JuvoProcess.Bots
             {
                 case IrcNetwork.Undernet:
                 {
-                    this.log.Info("Authenticating with X@ on undernet...");
+                    this.Log(Info, "Authenticating with X@ on undernet...");
                     this.client.SendMessage(
                         $"x@channels.undernet.org", $"login {this.config.User} {this.config.Pass}");
                     break;
@@ -189,7 +194,7 @@ namespace JuvoProcess.Bots
 
                 if (keys == null || chans.Length == keys.Length)
                 {
-                    this.log.Debug($"Joining {string.Join(", ", chans)}");
+                    this.Log(Info, $"Joining {string.Join(", ", chans)}");
                     this.client.Join(chans, keys);
                 }
             }
@@ -349,15 +354,15 @@ namespace JuvoProcess.Bots
 
         private void Client_ChannelJoined(object sender, ChannelUserEventArgs e)
         {
-            this.log.Info($"{e.User.Nickname} joined {e.Channel}");
+            this.Log(Debug, $"{e.User.Nickname} joined {e.Channel}");
         }
 
         private void Client_ChannelMessage(object sender, ChannelUserEventArgs e)
         {
-            this.log.Debug($"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
+            this.Log(Debug, $"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
             if (e.Message.StartsWith(this.config.CommandToken))
             {
-                this.log.Info($"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
+                this.Log(Info, $"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
                 this.host.QueueCommand(new IrcBotCommand
                 {
                     Bot = this,
@@ -421,21 +426,21 @@ namespace JuvoProcess.Bots
                 message.Append("]");
             }
 
-            this.log.Info(message.ToString());
+            this.Log(Debug, message.ToString());
         }
 
         private void Client_ChannelParted(object sender, ChannelUserEventArgs e)
         {
-            this.log.Info($"{e.User.Nickname} parted {e.Channel}");
+            this.Log(Debug, $"{e.User.Nickname} parted {e.Channel}");
         }
 
         private void Client_Connected(object sender, EventArgs e)
         {
-            this.log.Info($"Connected to server");
+            this.Log(Info, $"Connected to server");
 
             if (!string.IsNullOrEmpty(this.config.UserMode))
             {
-                this.log.Info($"Requeting mode: +{this.config.UserMode}");
+                this.Log(Debug, $"Requeting mode: +{this.config.UserMode}");
                 this.client.Send($"MODE {this.client.NickName} +{this.config.UserMode}{IrcClient.CrLf}");
             }
 
@@ -453,13 +458,13 @@ namespace JuvoProcess.Bots
 
         private void Client_Disconnected(object sender, EventArgs e)
         {
-            this.log.Info($"Disconnected from server");
+            this.Log(Info, $"Disconnected from server");
         }
 
         private void Client_HostHidden(object sender, HostHiddenEventArgs e)
         {
             this.IsAuthenticated = true;
-            this.log.Info($"Real host hidden using '{e.Host}'");
+            this.Log(Info, $"Real host hidden using '{e.Host}'");
 
             if (this.config.JoinOnHostMasked)
             {
@@ -469,23 +474,22 @@ namespace JuvoProcess.Bots
 
         private void Client_MessageReceived(object sender, MessageReceivedArgs e)
         {
-            this.log.Debug($"MSG: {e.Message}");
+            this.Log(Debug, $"MSG: {e.Message}");
         }
 
         private void Client_PrivateMessage(object sender, UserEventArgs e)
         {
-            this.log.Debug($"<PRIVMSG\\{e.User.Nickname}> {e.Message}");
+            this.Log(Debug, $"<PRIVMSG\\{e.User.Nickname}> {e.Message}");
         }
 
         private void Client_UserModeChanged(object sender, UserModeChangedEventArgs e)
         {
-            this.log.Info(
-                $"User mode changed: +[{string.Join(" ", e.Added)}] -[{string.Join(" ", e.Removed)}]");
+            this.Log(Debug, $"User mode changed: +[{string.Join(" ", e.Added)}] -[{string.Join(" ", e.Removed)}]");
         }
 
         private void Client_UserQuit(object sender, UserEventArgs e)
         {
-            this.log.Debug($"{e.User.Nickname} quit");
+            this.Log(Debug, $"{e.User.Nickname} quit");
         }
 
         private void JoinAllChannels()
@@ -496,6 +500,23 @@ namespace JuvoProcess.Bots
                 {
                     this.client.Join(chan.Name);
                 }
+            }
+        }
+
+        private void Log(int level, string text = null, Exception exc = null)
+        {
+            if (this.log == null) { return; }
+
+            var qualifiedText = $"[{this.config.Name}] {text}";
+
+            switch (level)
+            {
+                case Debug: this.log.Debug(qualifiedText, exc); break;
+                case Info: this.log.Info(qualifiedText, exc); break;
+                case Warn: this.log.Warn(qualifiedText, exc); break;
+                case Error: this.log.Error(qualifiedText, exc); break;
+                case Fatal: this.log.Fatal(qualifiedText, exc); break;
+                default: throw new ArgumentOutOfRangeException(nameof(level));
             }
         }
     }
