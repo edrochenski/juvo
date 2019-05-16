@@ -97,7 +97,7 @@ namespace JuvoProcess
             this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             this.slackBotFactory = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
             this.storageHandler = storageHandler ?? throw new ArgumentNullException(nameof(storageHandler));
-            this.webHostToken = default(CancellationToken);
+            this.webHostToken = default;
             this.webHostBuilder = webHostBuilder;
 
             this.bots = new List<IBot>();
@@ -148,7 +148,11 @@ namespace JuvoProcess
             Debug.Assert(cmd != null, "cmd == null");
             Debug.Assert(!string.IsNullOrEmpty(cmd.RequestText), "cmd.RequestText != null/empty");
 
-            this.commandQueue.Enqueue(cmd);
+            lock (this)
+            {
+                this.commandQueue.Enqueue(cmd);
+            }
+
             this.log?.Info(DebugResx.CommandEnqueued);
         }
 
@@ -188,18 +192,21 @@ namespace JuvoProcess
         /// Called when <see cref="commandTimer" /> tick occurs.
         /// </summary>
         /// <param name="state">State object.</param>
-        protected void CommandTimerTick(object state)
+        protected async void CommandTimerTick(object state)
         {
             if (this.commandQueue.Count > 0)
             {
+                var toRun = new List<IBotCommand>();
                 lock (this)
                 {
                     IBotCommand cmd;
                     while (this.commandQueue.Count > 0 && (cmd = this.commandQueue.Dequeue()) != null)
                     {
-                        this.ProcessCommand(cmd).Wait();
+                        toRun.Add(cmd);
                     }
                 }
+
+                await Task.Run(() => toRun.ForEach(async cmd => await this.ProcessCommand(cmd)));
             }
 
             lock (this.lastPerfLock)
