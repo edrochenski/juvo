@@ -27,6 +27,7 @@ namespace JuvoProcess
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
+    using Microsoft.CodeAnalysis.Emit;
     using Microsoft.Extensions.FileProviders;
     using Newtonsoft.Json;
 
@@ -39,6 +40,10 @@ namespace JuvoProcess
 
         private const int TimerTickRate = 100;
         private const string UserFileName = "users.json";
+
+        /*/ Static /*/
+
+        private static readonly string NL = Environment.NewLine;
 
         /*/ Fields /*/
 
@@ -118,7 +123,7 @@ namespace JuvoProcess
             {
                 { new[] { "shutdown", "die" }, this.CommandShutdown },
                 { new[] { "perf", "performance" }, this.CommandPerf },
-                { new[] { "ros", "roslyn" }, this.CommandRoslyn },
+                { new[] { "csc", "ros", "roslyn" }, this.CommandRoslyn },
                 { new[] { "set" }, this.CommandSet },
                 { new[] { "status" }, this.CommandStatus }
             };
@@ -319,69 +324,55 @@ namespace JuvoProcess
         /// <returns>A Task object associated with the async operation.</returns>
         protected async Task CommandRoslyn(IBotCommand command)
         {
+            var tokens = command.RequestText.Split(' ');
+            if (tokens.Length == 1)
+            {
+                command.ResponseText = $"USAGE: {tokens[0]} <code>";
+                return;
+            }
+
             try
             {
-                var comp = CSharpCompilation.Create("JuvoRuntime")
-                    .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                    .AddReferences(MetadataReference.CreateFromFile(typeof(object).GetType().Assembly.Location))
-                    .AddSyntaxTrees(CSharpSyntaxTree.ParseText(
-                    #pragma warning disable SA1118 // Parameter must not span multiple lines
-                    $"namespace Juvo " +
-                    $"{{ " +
-                    $"  using System;" +
-                    $"  using System.Text;" +
-                    $"  public class Program " +
-                    $"  {{ " +
-                    $"      public static string Main() " +
-                    $"      {{ " +
-                    $"          var outputBuilder = new StringBuilder();" +
-                    $"          {string.Join(' ', command.RequestText.Replace("_out_", "outputBuilder.Append").Split(' ').Skip(1).ToArray())} " +
-                    $"          return outputBuilder.ToString();" +
-                    $" return string.Empty;" +
-                    $"      }} " +
-                    $"  }} " +
-                    $"}}"));
-#pragma warning restore SA1118 // Parameter must not span multiple lines
+                var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.DataPath, "bin", "jr"));
+                var ts = DateTime.UtcNow.Ticks.ToString();
+                var name = $"jr{ts}";
+                var code =
+                    $"#pragma warning disable SA1118{NL}" +
+                    $"namespace {name}{NL}" +
+                    $"{{{NL}" +
+                    $"  using System;{NL}" +
+                    $"  using System.Text;{NL}" +
+                    $"  using JuvoProcess;{NL}" +
+                    $"  public class Program{NL}" +
+                    $"  {{{NL}" +
+                    $"    public static string Main(){NL}" +
+                    $"    {{{NL}" +
+                    $"      var __outputBuilder__ = new StringBuilder();{NL}" +
+                    $"      {string.Join(' ', command.RequestText.Replace("print(", "__outputBuilder__.Append(").Split(' ').Skip(1).ToArray())}{NL}" +
+                    $"      return __outputBuilder__.ToString();{NL}" +
+                    $"    }}{NL}" +
+                    $"  }}{NL}" +
+                    $"}}{NL}";
 
-                using (var memory = new MemoryStream())
+                if (!Directory.Exists(binPath))
                 {
-                    var fileName = $"{DateTime.UtcNow.Ticks.ToString()}.dll";
-                    var results = comp.Emit(memory);
-                    if (results.Success)
-                    {
-                        await memory.FlushAsync();
-
-                        var domain = AppDomain.CreateDomain("Plugin");
-                        try
-                        {
-                            domain.Load(memory.ToArray());
-
-                            // var a = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(fileName));
-                            var a = AssemblyLoadContext.Default.LoadFromStream(memory);
-                            var ret = a.GetType("Juvo.Program").GetMethod("Main").Invoke(null, null);
-                            command.ResponseText = "Output:" +
-                                ret == null || ret.ToString().Length == 0 ? "<no output>" : ret.ToString();
-                        }
-                        catch (Exception exc)
-                        {
-                            var msg = $"Error: {exc.Message}";
-                            command.ResponseText = msg;
-                            this.Log?.Error(msg, exc);
-                        }
-                        finally
-                        {
-                            AppDomain.Unload(domain);
-                            GC.Collect();
-                        }
-                    }
-                    else
-                    {
-                        foreach (var diag in results.Diagnostics)
-                        {
-                            command.ResponseText += $"[{diag.Id}] {diag.GetMessage()} ({diag.Location})";
-                        }
-                    }
+                    Directory.CreateDirectory(binPath);
                 }
+
+                var result = this.CompileAssembly(code, name, binPath);
+                if (!result.Success)
+                {
+                    foreach (var diag in result.Diagnostics)
+                    {
+                        command.ResponseText += $"[{diag.Id}] {diag.GetMessage()} ({diag.Location})";
+                    }
+
+                    return;
+                }
+
+                var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(binPath, $"{name}.dll"));
+                var ret = assembly.GetType($"jr{ts}.Program").GetMethod("Main").Invoke(null, null);
+                command.ResponseText = $"> {ret}";
             }
             catch (Exception exc)
             {
@@ -390,20 +381,6 @@ namespace JuvoProcess
                 this.Log?.Error(msg, exc);
             }
 
-            // var cp = CodeDomProvider.CreateProvider("CSharp");
-            // var res = cp.CompileAssemblyFromSource(
-            //     new CompilerParameters { GenerateInMemory = true, MainClass = "Program" },
-            // if (res.Errors.Count > 0)
-            // {
-            //     for (var i = 0; i < res.Errors.Count; ++i)
-            //     {
-            //         command.ResponseText += $"({i}) {res.Errors[i].ErrorText} ";
-            //     }
-            // }
-            // else
-            // {
-            //     command.ResponseText = "Compiled successfully!";
-            // }
             await Task.CompletedTask;
         }
 
@@ -526,6 +503,35 @@ namespace JuvoProcess
                 .Build();
         }
 
+        private EmitResult CompileAssembly(string code, string name, string assemblyPath)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(code), $"{nameof(code)} == null||empty");
+            Debug.Assert(!string.IsNullOrEmpty(assemblyPath), $"{nameof(assemblyPath)} == null||empty");
+
+            var assemblyFullPath = Path.Combine(assemblyPath, $"{name}.dll");
+            var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.2.5\System.Runtime.dll" // HACK: This needs to go away,
+                : "/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.5/System.Runtime.dll";       // look into dotnet --list-runtimes
+
+            try
+            {
+                var compilation = CSharpCompilation.Create(name)
+                    .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                    .AddReferences(
+                        MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                        MetadataReference.CreateFromFile(runtimeRef),
+                        MetadataReference.CreateFromFile(this.GetType().Assembly.Location))
+                    .AddSyntaxTrees(CSharpSyntaxTree.ParseText(code));
+
+                return compilation.Emit(assemblyFullPath);
+            }
+            catch (Exception exc)
+            {
+                this.log?.Error($"CompileAssembly(): {exc.Message}");
+                return null;
+            }
+        }
+
         private void CreateResources()
         {
             this.storageHandler.DirectoryCreate(this.Config.Juvo.BasePath);
@@ -581,8 +587,12 @@ namespace JuvoProcess
 
         private void LoadPlugins()
         {
-            var scriptPath = Path.Combine(this.Config.Juvo.BasePath, "scripts");
-            var binPath = Path.Combine(this.Config.Juvo.DataPath, "bin");
+            var scriptPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.BasePath, "scripts"));
+            var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.DataPath, "bin"));
+
+            this.log?.Debug($"Script Path: {scriptPath}");
+            this.log?.Debug($"Bin Path   : {binPath}");
+
             if (this.storageHandler.DirectoryExists(scriptPath))
             {
                 var scripts = this.Config.Juvo.Scripts
@@ -609,19 +619,10 @@ namespace JuvoProcess
                     var scriptCode = this.storageHandler.FileReadAllText(scriptFile.FullName);
                     var scriptName = scriptFile.Name.Remove(scriptFile.Name.LastIndexOf('.'));
                     var assemblyPath = Path.Combine(binPath, $"{scriptName}.dll");
-                    var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                        ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.0.5\System.Runtime.dll"
-                        : "/usr/share/dotnet/shared/Microsoft.NETCore.App/2.0.5/System.Runtime.dll";
-                    var compilation = CSharpCompilation.Create(scriptName)
-                        .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                        .AddReferences(
-                            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                            MetadataReference.CreateFromFile(runtimeRef),
-                            MetadataReference.CreateFromFile(this.GetType().Assembly.Location))
-                        .AddSyntaxTrees(CSharpSyntaxTree.ParseText(scriptCode));
-                    var result = compilation.Emit(assemblyPath);
 
+                    var result = this.CompileAssembly(scriptCode, scriptName, binPath);
                     stopWatch.Stop();
+
                     if (!result.Success)
                     {
                         this.Log?.Warn($"Failed to compile script '{scriptName}':");
