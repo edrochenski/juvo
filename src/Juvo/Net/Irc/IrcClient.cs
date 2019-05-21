@@ -6,9 +6,9 @@ namespace JuvoProcess.Net.Irc
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Text;
+    using Dbg = System.Diagnostics.Debug;
 
     /// <summary>
     /// IRC client.
@@ -34,6 +34,12 @@ namespace JuvoProcess.Net.Irc
 
         private const int BufferSize = 4096;
         private const int DefaultPort = 6667;
+        private const string DefaultCommandToken = ".";
+        private const int Debug = 0;
+        private const int Info = 1;
+        private const int Warn = 2;
+        private const int Error = 3;
+        private const int Fatal = 4;
 
         /*/ Fields /*/
 
@@ -169,14 +175,14 @@ namespace JuvoProcess.Net.Irc
         /// <inheritdoc/>
         public void Connect(string serverHost, int serverPort = DefaultPort, string serverPassword = null)
         {
-            Debug.Assert(!string.IsNullOrEmpty(serverHost), "serverHost == null||empty");
-            Debug.Assert(serverPort > 1024, "serverPort <= 1024");
+            Dbg.Assert(!string.IsNullOrEmpty(serverHost), "serverHost == null||empty");
+            Dbg.Assert(serverPort > 1024, "serverPort <= 1024");
 
             this.serverHost = serverHost;
             this.serverPassword = serverPassword;
             this.serverPort = serverPort;
 
-            this.log.Info($"Attempting to connect to {serverHost} on port {serverPort}");
+            this.Log(Info, $"Attempting to connect to {serverHost} on port {serverPort}");
 
             this.client.Connect(this.serverHost, this.serverPort);
         }
@@ -194,14 +200,14 @@ namespace JuvoProcess.Net.Irc
         /// <inheritdoc/>
         public void Join(string channel, string key = "")
         {
-            Debug.Assert(!string.IsNullOrEmpty(channel), "channel == null||empty");
+            Dbg.Assert(!string.IsNullOrEmpty(channel), "channel == null||empty");
             this.Send($"JOIN {channel}{CrLf}");
         }
 
         /// <inheritdoc/>
         public void Join(string[] channels, string[] channelKeys = null)
         {
-            Debug.Assert(channels != null && channels.Length > 0, "channels == null || empty");
+            Dbg.Assert(channels != null && channels.Length > 0, "channels == null || empty");
 
             var chans = string.Join(",", channels);
             var keys = (channelKeys != null) ? " " + string.Join(",", channelKeys) : string.Empty;
@@ -249,7 +255,7 @@ namespace JuvoProcess.Net.Irc
         /// <inheritdoc/>
         public void Part(string channel, string message = "")
         {
-            Debug.Assert(!string.IsNullOrEmpty(channel), "channel == null||empty");
+            Dbg.Assert(!string.IsNullOrEmpty(channel), "channel == null||empty");
 
             var msg = string.IsNullOrEmpty(message) ? string.Empty : string.Concat(" ", message);
             this.Send($"PART {channel}{msg}{CrLf}");
@@ -276,7 +282,7 @@ namespace JuvoProcess.Net.Irc
         /// <inheritdoc/>
         public void Send(byte[] data)
         {
-            this.log.Debug($"<< Sending {data.Length} bytes");
+            this.Log(Debug, $"<< Sending {data.Length} bytes");
             this.client.Send(data);
         }
 
@@ -433,11 +439,12 @@ namespace JuvoProcess.Net.Irc
 
         private void Client_ConnectFailed(object sender, EventArgs e)
         {
-            this.log.Error("Connection failed");
+            this.Log(Error, "Connection failed");
         }
 
         private void Client_Disconnected(object sender, EventArgs e)
         {
+            this.Log(Warn, $"Client disconnected");
         }
 
         private void Client_ReceiveCompleted(object sender, ReceiveCompletedEventArgs e)
@@ -453,16 +460,17 @@ namespace JuvoProcess.Net.Irc
 
         private void Client_ReceiveFailed(object sender, SocketEventArgs e)
         {
-            this.log.Error($"Receive failed ({e.Error})");
+            this.Log(Error, $"Receive failed ({e.Error})");
         }
 
         private void Client_SendCompleted(object sender, EventArgs e)
         {
+            this.Log(Debug, $"Send completed");
         }
 
         private void Client_SendFailed(object sender, SocketEventArgs e)
         {
-            this.log.Error($"Send failed ({e.Error})");
+            this.Log(Error, $"Send failed ({e.Error})");
         }
 
         private Dictionary<char, Tuple<IrcChannelMode, bool, bool>> CompileChannelModeDictionary()
@@ -568,10 +576,10 @@ namespace JuvoProcess.Net.Irc
                 case "NOTICE":
                     break;
                 case "PING":
-                    this.log.Info(">> PING");
+                    this.Log(Info, ">> PING");
                     var pingSource = msgParts[1].Replace(":", string.Empty);
                     this.Send($"PONG {pingSource}{CrLf}");
-                    this.log.Info("<< PONG");
+                    this.Log(Info, "<< PONG");
                     break;
             }
         }
@@ -733,6 +741,23 @@ namespace JuvoProcess.Net.Irc
                     this.OnUserQuit(new UserEventArgs(user, reply.Trailing, isOwned));
                     break;
                 }
+            }
+        }
+
+        private void Log(int level, string text = null, Exception exc = null)
+        {
+            if (this.log == null) { return; }
+
+            var qualifiedText = $"[{this.serverHost}] {text}";
+
+            switch (level)
+            {
+                case Debug: this.log.Debug(qualifiedText, exc); break;
+                case Info: this.log.Info(qualifiedText, exc); break;
+                case Warn: this.log.Warn(qualifiedText, exc); break;
+                case Error: this.log.Error(qualifiedText, exc); break;
+                case Fatal: this.log.Fatal(qualifiedText, exc); break;
+                default: throw new ArgumentOutOfRangeException(nameof(level));
             }
         }
     }
