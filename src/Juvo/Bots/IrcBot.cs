@@ -359,7 +359,6 @@ namespace JuvoProcess.Bots
 
         private void Client_ChannelMessage(object sender, ChannelUserEventArgs e)
         {
-            this.Log(Debug, $"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
             if (e.Message.StartsWith(this.config.CommandToken))
             {
                 this.Log(Info, $"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
@@ -373,6 +372,10 @@ namespace JuvoProcess.Bots
                         SourceType = CommandSourceType.ChannelOrGroup
                     }
                 });
+            }
+            else
+            {
+                this.Log(Debug, $"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
             }
         }
 
