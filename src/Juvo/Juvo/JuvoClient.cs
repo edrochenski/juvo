@@ -11,6 +11,7 @@ namespace JuvoProcess
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Runtime.Loader;
     using System.Text;
@@ -510,16 +511,21 @@ namespace JuvoProcess
 
             var assemblyFullPath = Path.Combine(assemblyPath, $"{name}.dll");
             var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.2.5\System.Runtime.dll" // HACK: This needs to go away,
-                : "/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.5/System.Runtime.dll";       // look into dotnet --list-runtimes
+                ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.2.5\" // HACK: This needs to go away,
+                : "/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.5/";       // look into dotnet --list-runtimes
 
             try
             {
                 var compilation = CSharpCompilation.Create(name)
                     .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                     .AddReferences(
-                        MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                        MetadataReference.CreateFromFile(runtimeRef),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "mscorlib.dll")),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "netstandard.dll")),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Linq.dll")),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Runtime.dll")),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Threading.Tasks.dll")),
+                        MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
+                        MetadataReference.CreateFromFile(typeof(AngleSharp.Configuration).GetTypeInfo().Assembly.Location),
                         MetadataReference.CreateFromFile(this.GetType().Assembly.Location))
                     .AddSyntaxTrees(CSharpSyntaxTree.ParseText(code));
 
@@ -724,12 +730,12 @@ namespace JuvoProcess
                 {
                     try
                     {
-                        await Task.Factory.StartNew(() => module.Value.Execute(cmd));
+                        await module.Value.Execute(cmd);
                     }
                     catch (Exception exc)
                     {
                         var message = string.Format(InfoResx.ErrorExecCommand, module.Value.GetType().Name);
-                        this.log?.Error(message, exc);
+                        this.log?.Error(message, exc.InnerException ?? exc);
                         cmd.ResponseText = message;
                     }
                 }
