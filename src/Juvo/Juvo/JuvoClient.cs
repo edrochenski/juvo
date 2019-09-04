@@ -337,6 +337,11 @@ namespace JuvoProcess
                 var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.DataPath, "bin", "jr"));
                 var ts = DateTime.UtcNow.Ticks.ToString();
                 var name = $"jr{ts}";
+                var inject = command.RequestText
+                    .Replace("print(", "__outputBuilder__.Append(")
+                    .Replace("Console.Write(", "__outputBuilder__.Append(")
+                    .Replace("Console.WriteLine(", "__outputBuilder__.Append(")
+                    .Split(' ').Skip(1).ToArray();
                 var code =
                     $"#pragma warning disable SA1118{NL}" +
                     $"namespace {name}{NL}" +
@@ -349,7 +354,7 @@ namespace JuvoProcess
                     $"    public static string Main(){NL}" +
                     $"    {{{NL}" +
                     $"      var __outputBuilder__ = new StringBuilder();{NL}" +
-                    $"      {string.Join(' ', command.RequestText.Replace("print(", "__outputBuilder__.Append(").Split(' ').Skip(1).ToArray())}{NL}" +
+                    $"      {string.Join(' ', inject)}{NL}" +
                     $"      return __outputBuilder__.ToString();{NL}" +
                     $"    }}{NL}" +
                     $"  }}{NL}" +
@@ -363,17 +368,31 @@ namespace JuvoProcess
                 var result = this.CompileAssembly(code, name, binPath);
                 if (!result.Success)
                 {
-                    foreach (var diag in result.Diagnostics)
+                    if (result.Diagnostics.Length > 2)
                     {
-                        command.ResponseText += $"[{diag.Id}] {diag.GetMessage()} ({diag.Location})";
+                        var diag = result.Diagnostics[0];
+                        command.ResponseText = $"{diag.Id}: {diag.GetMessage()} .. (+{result.Diagnostics.Length - 1} more errors)";
+                    }
+                    else
+                    {
+                        command.ResponseText = string.Empty;
+                        foreach (var diag in result.Diagnostics)
+                        {
+                            if (command.ResponseText.Length > 0)
+                            {
+                                command.ResponseText += " | ";
+                            }
+
+                            command.ResponseText += $"{diag.Id}: {diag.GetMessage()}";
+                        }
                     }
 
                     return;
                 }
 
                 var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(binPath, $"{name}.dll"));
-                var ret = assembly.GetType($"jr{ts}.Program").GetMethod("Main").Invoke(null, null);
-                command.ResponseText = $"> {ret}";
+                var ret = assembly.GetType($"jr{ts}.Program").GetMethod("Main").Invoke(null, null) as string;
+                command.ResponseText = $"> {(string.IsNullOrEmpty(ret) ? "(no output)" : ret)}";
             }
             catch (Exception exc)
             {
