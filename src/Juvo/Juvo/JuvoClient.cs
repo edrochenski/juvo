@@ -151,8 +151,8 @@ namespace JuvoProcess
         /// <param name="cmd">Command object.</param>
         public void QueueCommand(IBotCommand cmd)
         {
-            Debug.Assert(cmd != null, "cmd == null");
-            Debug.Assert(!string.IsNullOrEmpty(cmd.RequestText), "cmd.RequestText != null/empty");
+            Debug.Assert(cmd != null, $"{nameof(cmd)} == null");
+            Debug.Assert(!string.IsNullOrEmpty(cmd.RequestText), $"{nameof(cmd.RequestText)} != null/empty");
 
             lock (this)
             {
@@ -165,24 +165,14 @@ namespace JuvoProcess
         /// <inheritdoc/>
         public async Task Run()
         {
-            this.log?.Info(InfoResx.CreatingMissingResources);
             this.CreateResources();
-
-            this.log?.Info($"{InfoResx.LoadingUsers}...");
             this.LoadUsers();
-
-            this.log?.Info(InfoResx.LoadingPlugins);
             this.LoadPlugins();
-
-            this.log?.Info(InfoResx.LoadingConfigFile);
             this.LoadConfig();
-
-            this.log?.Info(InfoResx.StartingBots);
             await this.StartBots();
 
             if (this.Config.WebServer.Enabled)
             {
-                this.log?.Info(InfoResx.StartingWebServer);
                 await this.StartWebServer();
             }
             else
@@ -559,6 +549,8 @@ namespace JuvoProcess
 
         private void CreateResources()
         {
+            this.log?.Info(InfoResx.CreatingMissingResources);
+
             this.storageHandler.DirectoryCreate(this.Config.Juvo.BasePath);
             this.storageHandler.DirectoryCreate(this.Config.Juvo.DataPath);
 
@@ -580,6 +572,8 @@ namespace JuvoProcess
 
         private void LoadConfig()
         {
+            this.log?.Info(InfoResx.LoadingConfigFile);
+
             if (this.Config == null)
             {
                 return;
@@ -612,6 +606,8 @@ namespace JuvoProcess
 
         private void LoadPlugins()
         {
+            this.log?.Info(InfoResx.LoadingPlugins);
+
             var scriptPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.BasePath, "scripts"));
             var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.DataPath, "bin"));
 
@@ -645,6 +641,7 @@ namespace JuvoProcess
                     var scriptName = scriptFile.Name.Remove(scriptFile.Name.LastIndexOf('.'));
                     var assemblyPath = Path.Combine(binPath, $"{scriptName}.dll");
 
+                    // TODO: wrap this process in a try-catch
                     var result = this.CompileAssembly(scriptCode, scriptName, binPath);
                     stopWatch.Stop();
 
@@ -687,6 +684,8 @@ namespace JuvoProcess
 
         private void LoadUsers()
         {
+            this.log?.Info($"{InfoResx.LoadingUsers}...");
+
             var userFile = Environment.ExpandEnvironmentVariables(this.Config.Juvo.BasePath);
             userFile = Path.Combine(userFile, UserFileName);
             if (!this.storageHandler.FileExists(userFile))
@@ -773,6 +772,8 @@ namespace JuvoProcess
 
         private async Task StartBots()
         {
+            this.log?.Info(InfoResx.StartingBots);
+
             var startTasks = new List<Task>();
 
             if (this.Config.Discord.Enabled)
@@ -804,6 +805,8 @@ namespace JuvoProcess
 
         private async Task StartWebServer()
         {
+            this.log?.Info(InfoResx.StartingWebServer);
+
             if (this.webServerRunning)
             {
                 return;
