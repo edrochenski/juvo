@@ -530,8 +530,8 @@ namespace JuvoProcess
 
             var assemblyFullPath = Path.Combine(assemblyPath, $"{name}.dll");
             var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.2.6\" // HACK: This needs to go away,
-                : "/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.6/";       // look into `dotnet --list-runtimes`
+                ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.0.0\" // HACK: This needs to go away,
+                : "/usr/share/dotnet/shared/Microsoft.NETCore.App/3.0.0/";       // look into `dotnet --list-runtimes`
 
             try
             {
