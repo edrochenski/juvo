@@ -16,7 +16,7 @@ namespace JuvoProcess.Net.Irc
         /// </summary>
         /// <param name="mode">Channel mode.</param>
         /// <param name="value">Associated value.</param>
-        public IrcChannelModeValue(IrcChannelMode mode, string value)
+        public IrcChannelModeValue(IrcChannelMode mode, string? value)
         {
             this.Mode = mode;
             this.Value = value;
@@ -32,6 +32,6 @@ namespace JuvoProcess.Net.Irc
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
     }
 }

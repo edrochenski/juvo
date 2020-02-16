@@ -17,8 +17,8 @@ namespace JuvoProcess.Bots
         /*/ Fields /*/
 
         private readonly string[] greetings = { "Hey there {0}!", "sup {0}! How's it goin?" };
-        private readonly ILog log;
-        private readonly ILogManager logManager;
+        private readonly ILog? log;
+        private readonly ILogManager? logManager;
         private readonly Random random;
         private readonly ISlackClient slackClient;
 
@@ -31,14 +31,20 @@ namespace JuvoProcess.Bots
         /// <summary>
         /// Initializes a new instance of the <see cref="SlackBot"/> class.
         /// </summary>
+        /// <param name="host">Host.</param>
         /// <param name="slackClient">Slack client.</param>
+        /// <param name="config">Configuration to use.</param>
         /// <param name="logManager">Log manager.</param>
-        public SlackBot(ISlackClient slackClient, ILogManager logManager)
+        public SlackBot(IJuvoClient host, ISlackClient slackClient, SlackConfigConnection config, ILogManager? logManager = null)
         {
-            this.slackClient = slackClient ?? throw new ArgumentNullException(nameof(slackClient));
+            this.host = host;
+            this.config = config;
             this.logManager = logManager;
-            this.log = this.logManager.GetLogger(typeof(SlackBot));
+            this.log = this.logManager?.GetLogger(typeof(SlackBot));
             this.random = new Random(DateTime.Now.Millisecond * DateTime.Now.Second);
+
+            this.slackClient = slackClient ?? throw new ArgumentNullException(nameof(slackClient));
+            this.slackClient.Initialize(config.Token);
             this.slackClient.MessageReceived += this.SlackClient_MessageReceived;
         }
 
@@ -63,15 +69,6 @@ namespace JuvoProcess.Bots
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        /// <inheritdoc/>
-        public void Initialize(SlackConfigConnection config, IJuvoClient host)
-        {
-            this.config = config;
-            this.host = host;
-
-            this.slackClient.Initialize(config.Token);
         }
 
         /// <inheritdoc/>

@@ -16,7 +16,7 @@ namespace JuvoProcess.Bots
         public string RequestText { get; set; }
 
         /// <inheritdoc/>
-        public string ResponseText { get; set; }
+        public string? ResponseText { get; set; }
 
         /// <inheritdoc/>
         public CommandSource Source { get; set; }

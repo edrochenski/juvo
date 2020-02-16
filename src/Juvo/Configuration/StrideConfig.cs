@@ -14,11 +14,11 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the connections.
         /// </summary>
-        public IEnumerable<StrideConfigConnection> Connections { get; set; }
+        public IEnumerable<StrideConfigConnection>? Connections { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether Stride is enabled.
         /// </summary>
-        public bool Enabled { get; set; }
+        public bool Enabled { get; set; } = false;
     }
 }

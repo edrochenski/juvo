@@ -15,13 +15,13 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the data.
         /// </summary>
         [JsonProperty(PropertyName = "d")]
-        public string Data { get; set; }
+        public string Data { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the event name.
         /// </summary>
         [JsonProperty(PropertyName = "t")]
-        public string EventName { get; set; }
+        public string EventName { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the op code.

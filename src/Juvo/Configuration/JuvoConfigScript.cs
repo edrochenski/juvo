@@ -17,6 +17,6 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the filename of the script (may or may not contain the extension.)
         /// </summary>
-        public string Script { get; set; }
+        public string? Script { get; set; }
     }
 }

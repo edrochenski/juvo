@@ -15,25 +15,25 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the avatar hash.
         /// </summary>
         [JsonProperty(PropertyName = "avatar")]
-        public string AvatarHash { get; set; }
+        public string AvatarHash { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the discriminator.
         /// </summary>
         [JsonProperty(PropertyName = "discriminator")]
-        public string Discriminator { get; set; }
+        public string Discriminator { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the email.
         /// </summary>
         [JsonProperty(PropertyName = "email")]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the id.
         /// </summary>
         [JsonProperty(PropertyName = "id")]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the user is a bot.
@@ -57,6 +57,6 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the username.
         /// </summary>
         [JsonProperty(PropertyName = "username")]
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty;
     }
 }

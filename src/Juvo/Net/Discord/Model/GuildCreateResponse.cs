@@ -17,7 +17,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the data.
         /// </summary>
         [JsonProperty(PropertyName = "d")]
-        public new GuildCreateData Data { get; set; }
+        public new GuildCreateData? Data { get; set; }
 
         /// <summary>
         /// Represents the data in a GUILD_CREATE response.
@@ -27,7 +27,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// <summary>
             /// Gets or sets the channels.
             /// </summary>
-            public IEnumerable<Channel> Channels { get; set; }
+            public IEnumerable<Channel>? Channels { get; set; }
 
             /// <summary>
             /// Gets or sets a value indicating whether the guild is considered large.
@@ -49,12 +49,12 @@ namespace JuvoProcess.Net.Discord.Model
             /// <summary>
             /// Gets or sets the members.
             /// </summary>
-            public IEnumerable<GuildMember> Members { get; set; }
+            public IEnumerable<GuildMember>? Members { get; set; }
 
             /// <summary>
             /// Gets or sets pesences.
             /// </summary>
-            public IEnumerable<PresenceUpdate> Presences { get; set; }
+            public IEnumerable<PresenceUpdate>? Presences { get; set; }
 
             /// <summary>
             /// Gets or sets a value indicating whether the guild is unavailable.
@@ -68,7 +68,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// Voice state will not contain the guild_id key.
             /// </remarks>
             [JsonProperty(PropertyName = "voice_states")]
-            public IEnumerable<VoiceState> VoiceStates { get; set; }
+            public IEnumerable<VoiceState>? VoiceStates { get; set; }
         }
     }
 }

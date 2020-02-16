@@ -14,7 +14,7 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the connections.
         /// </summary>
-        public IEnumerable<SlackConfigConnection> Connections { get; set; }
+        public IEnumerable<SlackConfigConnection>? Connections { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether any Slack connections should be enabled.

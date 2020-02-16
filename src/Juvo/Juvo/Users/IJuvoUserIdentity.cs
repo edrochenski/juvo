@@ -14,7 +14,7 @@ namespace JuvoProcess.Juvo
         /// <summary>
         /// Gets or sets masks for the identity.
         /// </summary>
-        IEnumerable<string> Masks { get; set; }
+        IEnumerable<string>? Masks { get; set; }
 
         /// <summary>
         /// Gets or sets the name.

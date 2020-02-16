@@ -27,9 +27,9 @@ namespace JuvoProcess.Net
         private SocketAsyncEventArgs[] argsSend;
         private byte[] dataBuffer;
         private bool disposed;
-        private string host;
+        private string? host;
         private int port;
-        private DnsEndPoint remoteEndPoint;
+        private DnsEndPoint? remoteEndPoint;
         private ISocket socket;
 
         /*/ Constructors /*/
@@ -61,25 +61,25 @@ namespace JuvoProcess.Net
         /*/ Events /*/
 
         /// <inheritdoc/>
-        public event EventHandler<EventArgs> ConnectCompleted;
+        public event EventHandler<EventArgs>? ConnectCompleted;
 
         /// <inheritdoc/>
-        public event EventHandler<EventArgs> ConnectFailed;
+        public event EventHandler<EventArgs>? ConnectFailed;
 
         /// <inheritdoc/>
-        public event EventHandler<EventArgs> Disconnected;
+        public event EventHandler<EventArgs>? Disconnected;
 
         /// <inheritdoc/>
-        public event EventHandler<ReceiveCompletedEventArgs> ReceiveCompleted;
+        public event EventHandler<ReceiveCompletedEventArgs>? ReceiveCompleted;
 
         /// <inheritdoc/>
-        public event EventHandler<SocketEventArgs> ReceiveFailed;
+        public event EventHandler<SocketEventArgs>? ReceiveFailed;
 
         /// <inheritdoc/>
-        public event EventHandler<EventArgs> SendCompleted;
+        public event EventHandler<EventArgs>? SendCompleted;
 
         /// <inheritdoc/>
-        public event EventHandler<SocketEventArgs> SendFailed;
+        public event EventHandler<SocketEventArgs>? SendFailed;
 
         /*/ Methods /*/
 
@@ -179,7 +179,7 @@ namespace JuvoProcess.Net
             args.UserToken = null;
         }
 
-        private void SocketConnect_Completed(object sender, SocketAsyncEventArgs e)
+        private void SocketConnect_Completed(object? sender, SocketAsyncEventArgs e)
         {
             if (e.SocketError == SocketError.Success)
             {
@@ -192,7 +192,7 @@ namespace JuvoProcess.Net
             }
         }
 
-        private void SocketReceive_Completed(object sender, SocketAsyncEventArgs e)
+        private void SocketReceive_Completed(object? sender, SocketAsyncEventArgs e)
         {
             if (e.SocketError == SocketError.Success)
             {
@@ -217,7 +217,7 @@ namespace JuvoProcess.Net
             }
         }
 
-        private void SocketSend_Completed(object sender, SocketAsyncEventArgs e)
+        private void SocketSend_Completed(object? sender, SocketAsyncEventArgs e)
         {
             if (e.SocketError == SocketError.Success)
             {

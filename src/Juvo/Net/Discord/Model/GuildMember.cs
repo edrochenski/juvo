@@ -37,16 +37,16 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the nick.
         /// </summary>
-        public string Nick { get; set; }
+        public string Nick { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the roles.
         /// </summary>
-        public IEnumerable<string> Roles { get; set; }
+        public IEnumerable<string>? Roles { get; set; }
 
         /// <summary>
         /// Gets or sets the user.
         /// </summary>
-        public User User { get; set; }
+        public User? User { get; set; }
     }
 }

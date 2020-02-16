@@ -23,7 +23,7 @@ namespace JuvoProcess.Net.Irc
             string channel,
             IrcUser user,
             bool isOwned)
-            : this(channel, user, isOwned, null, IrcMessageType.None)
+            : this(channel, user, isOwned, string.Empty, IrcMessageType.None)
         {
         }
 

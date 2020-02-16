@@ -55,7 +55,6 @@ namespace JuvoProcess
         private readonly IDiscordBotFactory discordBotFactory;
         private readonly IIrcBotFactory ircBotFactory;
         private readonly Mutex lastPerfLock;
-        private readonly ILog log;
         private readonly Dictionary<string[], IBotPlugin> plugins;
         private readonly IServiceProvider serviceProvider;
         private readonly ISlackBotFactory slackBotFactory;
@@ -65,10 +64,10 @@ namespace JuvoProcess
         private readonly IWebHostBuilder webHostBuilder;
         private readonly CancellationToken webHostToken;
 
-        private string lastPerf;
+        private string lastPerf = string.Empty;
         private DateTime lastPerfTime;
-        private List<JuvoUser> users;
-        private IWebHost webHost;
+        private List<JuvoUser>? users;
+        private IWebHost? webHost;
         private bool webServerRunning;
 
         /*/ Constructors /*/
@@ -94,7 +93,7 @@ namespace JuvoProcess
             ILogManager logManager,
             IWebHostBuilder webHostBuilder,
             IStorageHandler storageHandler,
-            ManualResetEvent resetEvent = null)
+            ManualResetEvent? resetEvent = null)
         {
             this.Config = configuration ?? throw new ArgumentException(nameof(configuration));
             this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
@@ -110,7 +109,7 @@ namespace JuvoProcess
             this.commandQueue = new Queue<IBotCommand>();
             this.commandTimer = new Timer(this.CommandTimerTick, null, TimerTickRate, TimerTickRate);
             this.lastPerfLock = new Mutex();
-            this.log = logManager?.GetLogger(typeof(JuvoClient));
+            this.Log = logManager?.GetLogger(typeof(JuvoClient));
             this.plugins = new Dictionary<string[], IBotPlugin>();
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
@@ -136,7 +135,7 @@ namespace JuvoProcess
         public Config Config { get; }
 
         /// <inheritdoc/>
-        public ILog Log => this.log;
+        public ILog? Log { get; }
 
         /// <summary>
         /// Gets or sets the bot's current state.
@@ -159,7 +158,7 @@ namespace JuvoProcess
                 this.commandQueue.Enqueue(cmd);
             }
 
-            this.log?.Info(DebugResx.CommandEnqueued);
+            this.Log?.Info(DebugResx.CommandEnqueued);
         }
 
         /// <inheritdoc/>
@@ -171,24 +170,24 @@ namespace JuvoProcess
             this.LoadConfig();
             await this.StartBots();
 
-            if (this.Config.WebServer.Enabled)
+            if (this.Config.WebServer != null && this.Config.WebServer.Enabled)
             {
                 await this.StartWebServer();
             }
             else
             {
-                this.log?.Warn(WarnResx.WebServerDisabled);
+                this.Log?.Warn(WarnResx.WebServerDisabled);
             }
 
             this.State = JuvoState.Running;
-            this.log?.Info(InfoResx.BotRunning);
+            this.Log?.Info(InfoResx.BotRunning);
         }
 
         /// <summary>
         /// Called when <see cref="commandTimer" /> tick occurs.
         /// </summary>
         /// <param name="state">State object.</param>
-        protected async void CommandTimerTick(object state)
+        protected async void CommandTimerTick(object? state)
         {
             if (this.commandQueue.Count > 0)
             {
@@ -324,7 +323,7 @@ namespace JuvoProcess
 
             try
             {
-                var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.DataPath, "bin", "jr"));
+                var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo?.DataPath ?? string.Empty, "bin", "jr"));
                 var ts = DateTime.UtcNow.Ticks.ToString();
                 var name = $"jr{ts}";
                 var inject = command.RequestText
@@ -356,6 +355,11 @@ namespace JuvoProcess
                 }
 
                 var result = this.CompileAssembly(code, name, binPath);
+                if (result == null)
+                {
+                    return;
+                }
+
                 if (!result.Success)
                 {
                     if (result.Diagnostics.Length > 2)
@@ -381,7 +385,7 @@ namespace JuvoProcess
                 }
 
                 var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(binPath, $"{name}.dll"));
-                var ret = assembly.GetType($"jr{ts}.Program").GetMethod("Main").Invoke(null, null) as string;
+                var ret = assembly.GetType($"jr{ts}.Program")?.GetMethod("Main")?.Invoke(null, null) as string;
                 command.ResponseText = $"> {(string.IsNullOrEmpty(ret) ? "(no output)" : ret)}";
             }
             catch (Exception exc)
@@ -424,7 +428,7 @@ namespace JuvoProcess
                     catch (Exception exc)
                     {
                         var message = $"{SetResx.ErrorSettingCulture}: {exc.Message}";
-                        this.log?.Error(message, exc);
+                        this.Log?.Error(message, exc);
                         command.ResponseText = message;
                     }
 
@@ -449,7 +453,7 @@ namespace JuvoProcess
                 quitMsg = string.Join(' ', cmdTokens, 1, cmdTokens.Length - 1);
             }
 
-            this.log?.Info(InfoResx.ShuttingDown);
+            this.Log?.Info(InfoResx.ShuttingDown);
             await this.StopBots(quitMsg);
             await this.StopWebServer();
 
@@ -513,18 +517,18 @@ namespace JuvoProcess
                 .Build();
         }
 
-        private EmitResult CompileAssembly(string code, string name, string assemblyPath)
+        private EmitResult? CompileAssembly(string code, string name, string assemblyPath)
         {
             Debug.Assert(!string.IsNullOrEmpty(code), $"{nameof(code)} == null||empty");
             Debug.Assert(!string.IsNullOrEmpty(assemblyPath), $"{nameof(assemblyPath)} == null||empty");
 
-            var assemblyFullPath = Path.Combine(assemblyPath, $"{name}.dll");
-            var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.0.0\" // HACK: This needs to go away,
-                : "/usr/share/dotnet/shared/Microsoft.NETCore.App/3.0.0/";       // look into `dotnet --list-runtimes`
-
             try
             {
+                var assemblyFullPath = Path.Combine(assemblyPath, $"{name}.dll");
+                var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                    ? "C:/Program Files/dotnet/shared/Microsoft.NETCore.App/3.1.1/" // HACK: This needs to go away,
+                    : "/usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.1/";      // look into `dotnet --list-runtimes`
+
                 var compilation = CSharpCompilation.Create(name)
                     .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                     .AddReferences(
@@ -540,21 +544,30 @@ namespace JuvoProcess
 
                 return compilation.Emit(assemblyFullPath);
             }
+            catch (FileNotFoundException exc)
+            {
+                this.Log?.Error("This exception was most likely caused by referencing a missing version of the .NETCore runtime");
+                this.Log?.Error($"CompileAssembly(): {exc.Message}");
+                return null;
+            }
             catch (Exception exc)
             {
-                this.log?.Error($"CompileAssembly(): {exc.Message}");
+                this.Log?.Error($"CompileAssembly(): {exc.Message}");
                 return null;
             }
         }
 
         private void CreateResources()
         {
-            this.log?.Info(InfoResx.CreatingMissingResources);
+            this.Log?.Info(InfoResx.CreatingMissingResources);
 
-            this.storageHandler.DirectoryCreate(this.Config.Juvo.BasePath);
-            this.storageHandler.DirectoryCreate(this.Config.Juvo.DataPath);
+            if (this.Config.Juvo?.BasePath != null)
+            { this.storageHandler.DirectoryCreate(this.Config.Juvo.BasePath); }
 
-            var userFile = Environment.ExpandEnvironmentVariables(this.Config.Juvo.BasePath);
+            if (this.Config.Juvo?.DataPath != null)
+            { this.storageHandler.DirectoryCreate(this.Config.Juvo.DataPath); }
+
+            var userFile = Environment.ExpandEnvironmentVariables(this.Config.Juvo?.BasePath ?? string.Empty);
             userFile = Path.Combine(userFile, UserFileName);
             if (!this.storageHandler.FileExists(userFile))
             {
@@ -572,53 +585,57 @@ namespace JuvoProcess
 
         private void LoadConfig()
         {
-            this.log?.Info(InfoResx.LoadingConfigFile);
-
-            if (this.Config == null)
-            {
-                return;
-            }
+            this.Log?.Info(InfoResx.LoadingConfigFile);
 
             if (this.Config.Discord != null && this.Config.Discord.Enabled)
             {
-                foreach (var disc in this.Config.Discord.Connections?.Where(x => x.Enabled))
+                if (this.Config.Discord.Connections != null && this.Config.Discord.Connections.Any())
                 {
-                    this.bots.Add(this.discordBotFactory.Create(disc, this.serviceProvider, this));
+                    foreach (var disc in this.Config.Discord.Connections.Where(x => x.Enabled))
+                    {
+                        this.bots.Add(this.discordBotFactory.Create(disc, this.serviceProvider, this));
+                    }
                 }
             }
 
             if (this.Config.Irc != null && this.Config.Irc.Enabled)
             {
-                foreach (var irc in this.Config.Irc.Connections?.Where(x => x.Enabled))
+                if (this.Config.Irc.Connections != null && this.Config.Irc.Connections.Any())
                 {
-                    this.bots.Add(this.ircBotFactory.Create(irc, this.serviceProvider, this));
+                    foreach (var irc in this.Config.Irc.Connections.Where(x => x.Enabled))
+                    {
+                        this.bots.Add(this.ircBotFactory.Create(irc, this.serviceProvider, this));
+                    }
                 }
             }
 
             if (this.Config.Slack != null && this.Config.Slack.Enabled)
             {
-                foreach (var slack in this.Config.Slack.Connections?.Where(x => x.Enabled))
+                if (this.Config.Slack.Connections != null && this.Config.Slack.Connections.Any())
                 {
-                    this.bots.Add(this.slackBotFactory.Create(slack, this.serviceProvider, this));
+                    foreach (var slack in this.Config.Slack.Connections.Where(x => x.Enabled))
+                    {
+                        this.bots.Add(this.slackBotFactory.Create(slack, this.serviceProvider, this));
+                    }
                 }
             }
         }
 
         private void LoadPlugins()
         {
-            this.log?.Info(InfoResx.LoadingPlugins);
+            this.Log?.Info(InfoResx.LoadingPlugins);
 
-            var scriptPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.BasePath, "scripts"));
-            var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo.DataPath, "bin"));
+            var scriptPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo?.BasePath ?? string.Empty, "scripts"));
+            var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo?.DataPath ?? string.Empty, "bin"));
 
-            this.log?.Debug($"Script Path: {scriptPath}");
-            this.log?.Debug($"Bin Path   : {binPath}");
+            this.Log?.Debug($"Script Path: {scriptPath}");
+            this.Log?.Debug($"Bin Path   : {binPath}");
 
             if (this.storageHandler.DirectoryExists(scriptPath))
             {
-                var scripts = this.Config.Juvo.Scripts
-                    .Where(s => s.Enabled && this.storageHandler.FileExists(Path.Combine(scriptPath, s.Script)));
-                if (!scripts.Any())
+                var scripts = this.Config.Juvo?.Scripts
+                    .Where(s => s.Enabled && this.storageHandler.FileExists(Path.Combine(scriptPath, s.Script ?? string.Empty)));
+                if (scripts == null || !scripts.Any())
                 {
                     return;
                 }
@@ -635,6 +652,8 @@ namespace JuvoProcess
 
                 foreach (var script in scripts)
                 {
+                    if (script.Script is null) { continue; }
+
                     var stopWatch = Stopwatch.StartNew();
                     var scriptFile = new FileInfo(Path.Combine(scriptPath, script.Script));
                     var scriptCode = this.storageHandler.FileReadAllText(scriptFile.FullName);
@@ -645,7 +664,7 @@ namespace JuvoProcess
                     var result = this.CompileAssembly(scriptCode, scriptName, binPath);
                     stopWatch.Stop();
 
-                    if (!result.Success)
+                    if (result != null && !result.Success)
                     {
                         this.Log?.Warn($"Failed to compile script '{scriptName}':");
                         foreach (var diag in result.Diagnostics)
@@ -684,9 +703,9 @@ namespace JuvoProcess
 
         private void LoadUsers()
         {
-            this.log?.Info($"{InfoResx.LoadingUsers}...");
+            this.Log?.Info($"{InfoResx.LoadingUsers}...");
 
-            var userFile = Environment.ExpandEnvironmentVariables(this.Config.Juvo.BasePath);
+            var userFile = Environment.ExpandEnvironmentVariables(this.Config.Juvo?.BasePath ?? string.Empty);
             userFile = Path.Combine(userFile, UserFileName);
             if (!this.storageHandler.FileExists(userFile))
             {
@@ -719,12 +738,12 @@ namespace JuvoProcess
                 this.lastPerfTime = DateTime.UtcNow;
             }
 
-            this.log?.Info(this.lastPerf);
+            this.Log?.Info(this.lastPerf);
         }
 
         private async Task ProcessCommand(IBotCommand cmd)
         {
-            this.log?.Info(InfoResx.ProcessingCommand);
+            this.Log?.Info(InfoResx.ProcessingCommand);
             var cmdName = cmd.RequestText.Split(' ')[0].ToLowerInvariant();
 
             var command = this.commands.SingleOrDefault(c => c.Key.Contains(cmdName));
@@ -737,7 +756,7 @@ namespace JuvoProcess
                 catch (Exception exc)
                 {
                     var message = string.Format(InfoResx.ErrorExecCommand, command.Value.Method.Name);
-                    this.log?.Error(message, exc);
+                    this.Log?.Error(message, exc);
                     cmd.ResponseText = message;
                 }
             }
@@ -753,7 +772,7 @@ namespace JuvoProcess
                     catch (Exception exc)
                     {
                         var message = string.Format(InfoResx.ErrorExecCommand, module.Value.GetType().Name);
-                        this.log?.Error(message, exc.InnerException ?? exc);
+                        this.Log?.Error(message, exc.InnerException ?? exc);
                         cmd.ResponseText = message;
                     }
                 }
@@ -763,7 +782,7 @@ namespace JuvoProcess
                 }
             }
 
-            this.log?.Debug(DebugResx.EnqueuingResponse);
+            this.Log?.Debug(DebugResx.EnqueuingResponse);
             if (cmd.Bot != null)
             {
                 await cmd.Bot.QueueResponse(cmd);
@@ -772,11 +791,11 @@ namespace JuvoProcess
 
         private async Task StartBots()
         {
-            this.log?.Info(InfoResx.StartingBots);
+            this.Log?.Info(InfoResx.StartingBots);
 
             var startTasks = new List<Task>();
 
-            if (this.Config.Discord.Enabled)
+            if (this.Config.Discord != null && this.Config.Discord.Enabled)
             {
                 foreach (var bot in this.bots.Where(b => b.Type == BotType.Discord))
                 {
@@ -784,7 +803,7 @@ namespace JuvoProcess
                 }
             }
 
-            if (this.Config.Irc.Enabled)
+            if (this.Config.Irc != null && this.Config.Irc.Enabled)
             {
                 foreach (var bot in this.bots.Where(b => b.Type == BotType.Irc))
                 {
@@ -792,7 +811,7 @@ namespace JuvoProcess
                 }
             }
 
-            if (this.Config.Slack.Enabled)
+            if (this.Config.Slack != null && this.Config.Slack.Enabled)
             {
                 foreach (var bot in this.bots.Where(b => b.Type == BotType.Slack))
                 {
@@ -805,21 +824,22 @@ namespace JuvoProcess
 
         private async Task StartWebServer()
         {
-            this.log?.Info(InfoResx.StartingWebServer);
+            Debug.Assert(this.webHost is null && this.webServerRunning, "Start called on running web server");
 
+            this.Log?.Info(InfoResx.StartingWebServer);
             if (this.webServerRunning)
             {
                 return;
             }
 
             this.webHost = this.BuildWebHost();
-            await this.webHost?.RunAsync(this.webHostToken);
+            await this.webHost.RunAsync(this.webHostToken);
             this.webServerRunning = true;
         }
 
         private async Task StopBots(string quitMessage)
         {
-            this.log?.Info(InfoResx.StoppingBots);
+            this.Log?.Info(InfoResx.StoppingBots);
 
             var stopTasks = new List<Task>();
             foreach (var bot in this.bots)
@@ -832,12 +852,14 @@ namespace JuvoProcess
 
         private async Task StopWebServer()
         {
-            if (!this.webServerRunning)
+            Debug.Assert(this.webHost != null && this.webServerRunning, "Stop called on stopped web server");
+
+            if (!this.webServerRunning || this.webHost is null)
             {
                 return;
             }
 
-            this.log?.Info(InfoResx.StoppingWebServer);
+            this.Log?.Info(InfoResx.StoppingWebServer);
             await this.webHost.StopAsync(this.webHostToken);
         }
 

@@ -18,13 +18,13 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the channel ID the user is connected to.
         /// </summary>
         [JsonProperty(PropertyName = "channel_id")]
-        public string ChannelId { get; set; }
+        public string ChannelId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the guild ID the voice state is for.
         /// </summary>
         [JsonProperty(PropertyName = "guild_id")]
-        public string GuildId { get; set; }
+        public string GuildId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the user is deafened by the server.
@@ -54,7 +54,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the guild ID the voice state is for.
         /// </summary>
         [JsonProperty(PropertyName = "session_id")]
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the user is muted by the current user.
@@ -66,6 +66,6 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the user ID the voice state is for.
         /// </summary>
         [JsonProperty(PropertyName = "user_id")]
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
     }
 }

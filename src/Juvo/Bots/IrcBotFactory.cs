@@ -25,9 +25,10 @@ namespace JuvoProcess.Bots
         public IIrcBot Create(IrcConfigConnection config, IServiceProvider services, IJuvoClient host)
         {
             var bot = new IrcBot(
-                services.GetService<ILogManager>(),
-                services.GetService<IIrcClient>());
-            bot.Initialize(config, host);
+                host,
+                services.GetService<IIrcClient>(),
+                config,
+                services.GetService<ILogManager>());
             return bot;
         }
     }

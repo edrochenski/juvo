@@ -149,7 +149,7 @@ namespace JuvoProcess.Net.Irc
         /// </summary>
         /// <param name="channels">Channels to join.</param>
         /// <param name="channelKeys">Keys for channels.</param>
-        void Join(string[] channels, string[] channelKeys = null);
+        void Join(string[] channels, string[] channelKeys);
 
         /// <summary>
         /// Looks up a user mode.

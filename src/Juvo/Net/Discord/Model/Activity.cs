@@ -12,7 +12,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets Name.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets Type.
@@ -22,6 +22,6 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets Url.
         /// </summary>
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
     }
 }

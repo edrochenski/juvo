@@ -24,7 +24,7 @@ namespace JuvoProcess.Logging
         }
 
         /// <inheritdoc/>
-        public IDisposable BeginScope<TState>(TState state)
+        public IDisposable? BeginScope<TState>(TState state)
         {
             return null;
         }

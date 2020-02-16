@@ -26,8 +26,9 @@ namespace JuvoProcess.Bots
         {
             var bot = new DiscordBot(
                 services.GetService<IDiscordClient>(),
+                config,
+                juvoClient,
                 services.GetService<ILogManager>());
-            bot.Initialize(config, juvoClient);
 
             return bot;
         }

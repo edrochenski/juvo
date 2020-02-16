@@ -19,12 +19,12 @@ namespace JuvoProcess.Bots
         /*/ Fields /*/
 
         private readonly IDiscordClient discordClient;
-        private readonly ILog log;
-        private readonly ILogManager logManager;
-        private DiscordConfigConnection config;
-        private IJuvoClient host;
+        private readonly ILog? log;
+        private readonly ILogManager? logManager;
+        private readonly DiscordConfigConnection config;
+        private readonly IJuvoClient? host;
         private bool isDisposed;
-        private ReadyData discordData;
+        private ReadyData? discordData;
 
         /*/ Constructors /*/
 
@@ -32,13 +32,20 @@ namespace JuvoProcess.Bots
         /// Initializes a new instance of the <see cref="DiscordBot"/> class.
         /// </summary>
         /// <param name="discordClient">Discord client.</param>
+        /// <param name="config">Configuration to use during initialization.</param>
+        /// <param name="juvoClient">Host.</param>
         /// <param name="logManager">Log manager.</param>
-        public DiscordBot(IDiscordClient discordClient, ILogManager logManager)
+        public DiscordBot(IDiscordClient discordClient, DiscordConfigConnection config, IJuvoClient juvoClient, ILogManager? logManager = null)
         {
-            this.discordClient = discordClient ?? throw new ArgumentNullException(nameof(discordClient));
-            this.logManager = logManager ?? throw new ArgumentNullException(nameof(logManager));
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
+            this.host = juvoClient ?? throw new ArgumentNullException(nameof(juvoClient));
+            this.logManager = logManager;
             this.log = logManager?.GetLogger(typeof(DiscordBot));
 
+            if (this.config.AuthToken is null) { throw new InvalidOperationException("Configuration is missing Auth Token"); }
+
+            this.discordClient = discordClient ?? throw new ArgumentNullException(nameof(discordClient));
+            this.discordClient.Initialize(new DiscordClientOptions { AuthToken = this.config.AuthToken, IsBot = true });
             this.discordClient.Disconnected += this.DiscordClient_Disconnected;
             this.discordClient.ReadyReceived += this.DiscordClient_ReadyReceived;
         }
@@ -46,7 +53,7 @@ namespace JuvoProcess.Bots
         /*/ Properties /*/
 
         /// <inheritdoc/>
-        public DiscordConfigConnection Configuration => this.config;
+        public DiscordConfigConnection? Configuration => this.config;
 
         /// <inheritdoc/>
         public BotType Type => BotType.Discord;
@@ -59,9 +66,9 @@ namespace JuvoProcess.Bots
         /// <returns>A Task object associated with the async operation.</returns>
         public async Task Connect()
         {
-            if (!this.config.Enabled)
+            if (this.config is null || !this.config.Enabled)
             {
-                this.log.Warn("Connect() called on a disabled bot!");
+                this.log?.Warn("Connect() called on a disabled bot!");
                 return;
             }
 
@@ -73,19 +80,6 @@ namespace JuvoProcess.Bots
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        /// <inheritdoc/>
-        public void Initialize(DiscordConfigConnection config, IJuvoClient juvoClient)
-        {
-            this.config = config ?? throw new ArgumentNullException(nameof(config));
-            this.host = juvoClient;
-
-            this.discordClient.Initialize(new DiscordClientOptions
-            {
-                AuthToken = config.AuthToken,
-                IsBot = true
-            });
         }
 
         /// <inheritdoc/>
@@ -124,7 +118,7 @@ namespace JuvoProcess.Bots
         {
             if (!arg.UserInitiated)
             {
-                this.log.Warn("Disconnected, trying to reconnect...");
+                this.log?.Warn("Disconnected, trying to reconnect...");
                 this.discordClient.Connect();
             }
         }

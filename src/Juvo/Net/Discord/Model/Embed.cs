@@ -20,7 +20,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the description.
         /// </summary>
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the timestamp.
@@ -30,17 +30,17 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the title.
         /// </summary>
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the type.
         /// </summary>
-        public string Type { get; set; }
+        public string Type { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the URL.
         /// </summary>
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
 
         /// <summary>
         /// Represents an author in an embed object.
@@ -51,23 +51,23 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the icon URL. (only supports http(s) and attachments)
             /// </summary>
             [JsonProperty(PropertyName = "icon_url")]
-            public string IconUrl { get; set; }
+            public string IconUrl { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the name.
             /// </summary>
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the proxied icon URL.
             /// </summary>
             [JsonProperty(PropertyName = "proxy_icon_url")]
-            public string ProxyIconUrl { get; set; }
+            public string ProxyIconUrl { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the URL.
             /// </summary>
-            public string Url { get; set; }
+            public string Url { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -84,12 +84,12 @@ namespace JuvoProcess.Net.Discord.Model
             /// <summary>
             /// Gets or sets the name.
             /// </summary>
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the value.
             /// </summary>
-            public string Value { get; set; }
+            public string Value { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -101,18 +101,18 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the icon URL. (only supports http(s) and attachments)
             /// </summary>
             [JsonProperty(PropertyName = "icon_url")]
-            public string IconUrl { get; set; }
+            public string IconUrl { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the proxied icon URL.
             /// </summary>
             [JsonProperty(PropertyName = "proxy_icon_url")]
-            public string ProxyIconUrl { get; set; }
+            public string ProxyIconUrl { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the text.
             /// </summary>
-            public string Text { get; set; }
+            public string Text { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -129,12 +129,12 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the proxied URL.
             /// </summary>
             [JsonProperty(PropertyName = "proxy_url")]
-            public string ProxyUrl { get; set; }
+            public string ProxyUrl { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the source. (only supports http(s) and attachments)
             /// </summary>
-            public string Url { get; set; }
+            public string Url { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the width.
@@ -150,12 +150,12 @@ namespace JuvoProcess.Net.Discord.Model
             /// <summary>
             /// Gets or sets the name.
             /// </summary>
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the URL.
             /// </summary>
-            public string Url { get; set; }
+            public string Url { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -172,12 +172,12 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the proxied URL.
             /// </summary>
             [JsonProperty(PropertyName = "proxy_url")]
-            public string ProxyUrl { get; set; }
+            public string ProxyUrl { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the source. (only supports http(s) and attachments)
             /// </summary>
-            public string Url { get; set; }
+            public string Url { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the width.
@@ -198,7 +198,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// <summary>
             /// Gets or sets the source. (only supports http(s) and attachments)
             /// </summary>
-            public string Url { get; set; }
+            public string Url { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the width.

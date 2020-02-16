@@ -6,7 +6,6 @@ namespace Juvo.Tests.Juvo
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Threading;
     using JuvoProcess;
     using JuvoProcess.Bots;
@@ -21,6 +20,9 @@ namespace Juvo.Tests.Juvo
         [Fact]
         public void CreateInstanceAndRun()
         {
+            var storageMock = new Mock<IStorageHandler>();
+            storageMock.Setup<string>(m => m.FileReadAllText(It.IsAny<string>())).Returns(string.Empty);
+
             var instance = new JuvoClient(
                 this.GetWindowsConfiguration(),
                 new Mock<IServiceProvider>().Object,
@@ -29,10 +31,9 @@ namespace Juvo.Tests.Juvo
                 new Mock<SlackBotFactory>().Object,
                 new Mock<ILogManager>().Object,
                 new Mock<IWebHostBuilder>().Object,
-                new Mock<IStorageHandler>().Object,
+                storageMock.Object,
                 new ManualResetEvent(false));
             Assert.NotNull(instance);
-
             instance.Run().Wait(1000);
         }
 

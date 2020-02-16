@@ -15,17 +15,17 @@ namespace JuvoProcess.Configuration
         /// Gets or sets the base path for the bot. Typically where
         /// the .config/.dat/etc data will reside.
         /// </summary>
-        public string BasePath { get; set; }
+        public string? BasePath { get; set; }
 
         /// <summary>
         /// Gets or sets the data path for the bot. This is where logs,
         /// temporary data, etc will reside.
         /// </summary>
-        public string DataPath { get; set; }
+        public string? DataPath { get; set; }
 
         /// <summary>
         /// Gets or sets the scripts from the configuration file.
         /// </summary>
-        public IEnumerable<JuvoConfigScript> Scripts { get; set; }
+        public IEnumerable<JuvoConfigScript>? Scripts { get; set; }
     }
 }

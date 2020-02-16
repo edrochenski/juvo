@@ -12,7 +12,7 @@ namespace JuvoProcess.Bots
         /// Gets or sets the identifier (if any) assigned to the source.
         /// (Channel or user name)
         /// </summary>
-        public string Identifier { get; set; }
+        public string Identifier { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the type of the source.
@@ -42,7 +42,7 @@ namespace JuvoProcess.Bots
         }
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj == null || !(obj is CommandSource))
             {
@@ -50,8 +50,8 @@ namespace JuvoProcess.Bots
             }
 
             var temp = obj as CommandSource;
-            return this.Identifier == temp.Identifier
-                && this.SourceType == temp.SourceType;
+            return this.Identifier == temp?.Identifier
+                && this.SourceType == temp?.SourceType;
         }
 
         /// <inheritdoc/>

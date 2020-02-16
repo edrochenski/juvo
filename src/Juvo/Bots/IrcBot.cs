@@ -29,27 +29,49 @@ namespace JuvoProcess.Bots
         /*/ Fields /*/
 
         private readonly IIrcClient client;
-        private readonly ILogManager logManager;
+        private readonly IrcConfigConnection config;
+        private readonly IJuvoClient host;
 
         private string commandToken;
-        private IrcConfigConnection config;
-        private IJuvoClient host;
         private bool isDisposed;
-        private ILog log;
+        private ILog? log;
+        private ILogManager? logManager;
 
         /*/ Constructors /*/
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IrcBot"/> class.
         /// </summary>
-        /// <param name="logManager">Log manager.</param>
+        /// <param name="juvoClient">Host.</param>
         /// <param name="ircClient">IRC client.</param>
-        public IrcBot(ILogManager logManager, IIrcClient ircClient)
+        /// <param name="config">IRC configuration.</param>
+        /// <param name="logManager">Log manager.</param>
+        public IrcBot(IJuvoClient juvoClient, IIrcClient ircClient, IrcConfigConnection config, ILogManager? logManager = null)
         {
+            this.config = config;
+            this.host = juvoClient;
             this.logManager = logManager;
             this.client = ircClient;
-
             this.log = logManager?.GetLogger(typeof(IrcBot));
+
+            this.client.Network = IrcClient.LookupNetwork(this.config.Network ?? string.Empty);
+            this.client.NickName = config.Nickname ?? throw new Exception("Nickname is missing from configuration");
+            this.client.NickNameAlt = config.NicknameAlt ?? $"{config.Nickname}-";
+            this.client.RealName = config.RealName ?? string.Empty;
+            this.client.Username = config.Ident ?? config.Nickname.ToLowerInvariant();
+
+            this.client.ChannelJoined += this.Client_ChannelJoined;
+            this.client.ChannelMessage += this.Client_ChannelMessage;
+            this.client.ChannelModeChanged += this.Client_ChannelModeChanged;
+            this.client.ChannelParted += this.Client_ChannelParted;
+            this.client.Connected += this.Client_Connected;
+            this.client.Disconnected += this.Client_Disconnected;
+            this.client.HostHidden += this.Client_HostHidden;
+            this.client.MessageReceived += this.Client_MessageReceived;
+            this.client.PrivateMessage += this.Client_PrivateMessage;
+            this.client.UserModeChanged += this.Client_UserModeChanged;
+            this.client.UserQuit += this.Client_UserQuit;
+            this.commandToken = config.CommandToken ?? DefaultCommandToken;
         }
 
         /*/ Properties /*/
@@ -76,12 +98,18 @@ namespace JuvoProcess.Bots
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task Connect()
         {
+            if (this.config.Servers is null || !this.config.Servers.Any())
+            { throw new InvalidOperationException("No server or host available"); }
+
+            var temp = this.config.Servers.First(); // TODO: fix this
+
+            if (temp.Host is null)
+            { throw new InvalidOperationException("Server does not specify a hostname"); }
+
             this.Log(Info, "Connecting");
+
             await Task.Run(() =>
-                this.client.Connect(
-                    this.config.Servers.First().Host,
-                    this.config.Servers.First().Port,
-                    this.config.NetworkToken));
+                this.client.Connect(temp.Host, temp.Port, this.config.NetworkToken ?? string.Empty));
         }
 
         /// <inheritdoc/>
@@ -106,33 +134,7 @@ namespace JuvoProcess.Bots
         public async Task Quit(string message)
         {
             this.Log(Info, $"Quitting: {message ?? "(null)"}");
-            await Task.Run(() => this.client.Quit(message));
-        }
-
-        /// <inheritdoc/>
-        public void Initialize(IrcConfigConnection config, IJuvoClient juvoClient)
-        {
-            this.config = config;
-            this.host = juvoClient;
-
-            this.client.Network = IrcClient.LookupNetwork(this.config.Network);
-            this.client.NickName = config.Nickname ?? throw new Exception("Nickname is missing from configuration");
-            this.client.NickNameAlt = config.NicknameAlt ?? $"{config.Nickname}-";
-            this.client.RealName = config.RealName ?? string.Empty;
-            this.client.Username = config.Ident ?? config.Nickname.ToLowerInvariant();
-
-            this.client.ChannelJoined += this.Client_ChannelJoined;
-            this.client.ChannelMessage += this.Client_ChannelMessage;
-            this.client.ChannelModeChanged += this.Client_ChannelModeChanged;
-            this.client.ChannelParted += this.Client_ChannelParted;
-            this.client.Connected += this.Client_Connected;
-            this.client.Disconnected += this.Client_Disconnected;
-            this.client.HostHidden += this.Client_HostHidden;
-            this.client.MessageReceived += this.Client_MessageReceived;
-            this.client.PrivateMessage += this.Client_PrivateMessage;
-            this.client.UserModeChanged += this.Client_UserModeChanged;
-            this.client.UserQuit += this.Client_UserQuit;
-            this.commandToken = config.CommandToken ?? DefaultCommandToken;
+            await Task.Run(() => this.client.Quit(message ?? string.Empty));
         }
 
         /// <summary>
@@ -183,20 +185,20 @@ namespace JuvoProcess.Bots
             }
         }
 
-        private void Client_ChannelJoined(object sender, ChannelUserEventArgs e)
+        private void Client_ChannelJoined(object? sender, ChannelUserEventArgs e)
         {
             this.Log(Debug, $"{e.User.Nickname} joined {e.Channel}");
         }
 
-        private void Client_ChannelMessage(object sender, ChannelUserEventArgs e)
+        private void Client_ChannelMessage(object? sender, ChannelUserEventArgs e)
         {
-            if (e.Message.StartsWith(this.config.CommandToken))
+            if (e.Message.StartsWith(this.commandToken))
             {
                 this.Log(Info, $"<{e.Channel}\\{e.User.Nickname}> {e.Message}");
                 this.host.QueueCommand(new IrcBotCommand
                 {
                     Bot = this,
-                    RequestText = e.Message.Remove(0, this.config.CommandToken.Length),
+                    RequestText = e.Message.Remove(0, this.commandToken.Length),
                     Source = new CommandSource
                     {
                         Identifier = e.Channel,
@@ -210,7 +212,7 @@ namespace JuvoProcess.Bots
             }
         }
 
-        private void Client_ChannelModeChanged(object sender, ChannelModeChangedEventArgs e)
+        private void Client_ChannelModeChanged(object? sender, ChannelModeChangedEventArgs e)
         {
             var message = new StringBuilder($"{e.Channel} mode changed: ");
 
@@ -263,65 +265,65 @@ namespace JuvoProcess.Bots
             this.Log(Debug, message.ToString());
         }
 
-        private void Client_ChannelParted(object sender, ChannelUserEventArgs e)
+        private void Client_ChannelParted(object? sender, ChannelUserEventArgs e)
         {
             this.Log(Debug, $"{e.User.Nickname} parted {e.Channel}");
         }
 
-        private void Client_Connected(object sender, EventArgs e)
+        private void Client_Connected(object? sender, EventArgs e)
         {
             this.Log(Info, $"Connected to server");
 
-            if (!string.IsNullOrEmpty(this.config.UserMode))
+            if (!string.IsNullOrEmpty(this.config?.UserMode))
             {
                 this.Log(Debug, $"Requeting mode: +{this.config.UserMode}");
                 this.client.Send($"MODE {this.client.NickName} +{this.config.UserMode}{IrcClient.CrLf}");
             }
 
-            if (!string.IsNullOrEmpty(this.config.User)
+            if (!string.IsNullOrEmpty(this.config?.User)
                 && !string.IsNullOrEmpty(this.config.Pass))
             {
                 this.Authenticate();
             }
 
-            if (!this.config.JoinOnHostMasked)
+            if (this.config != null && this.config.JoinOnHostMasked)
             {
                 this.JoinAllChannels();
             }
         }
 
-        private void Client_Disconnected(object sender, EventArgs e)
+        private void Client_Disconnected(object? sender, EventArgs e)
         {
             this.Log(Info, $"Disconnected from server");
         }
 
-        private void Client_HostHidden(object sender, HostHiddenEventArgs e)
+        private void Client_HostHidden(object? sender, HostHiddenEventArgs e)
         {
             this.IsAuthenticated = true;
             this.Log(Info, $"Real host hidden using '{e.Host}'");
 
-            if (this.config.JoinOnHostMasked)
+            if (this.config != null && this.config.JoinOnHostMasked)
             {
                 this.JoinAllChannels();
             }
         }
 
-        private void Client_MessageReceived(object sender, MessageReceivedArgs e)
+        private void Client_MessageReceived(object? sender, MessageReceivedArgs e)
         {
             this.Log(Debug, $"MSG: {e.Message}");
         }
 
-        private void Client_PrivateMessage(object sender, UserEventArgs e)
+        private void Client_PrivateMessage(object? sender, UserEventArgs e)
         {
             this.Log(Debug, $"<PRIVMSG\\{e.User.Nickname}> {e.Message}");
         }
 
-        private void Client_UserModeChanged(object sender, UserModeChangedEventArgs e)
+        private void Client_UserModeChanged(object? sender, UserModeChangedEventArgs e)
         {
             this.Log(Debug, $"User mode changed: +[{string.Join(" ", e.Added)}] -[{string.Join(" ", e.Removed)}]");
         }
 
-        private void Client_UserQuit(object sender, UserEventArgs e)
+        private void Client_UserQuit(object? sender, UserEventArgs e)
         {
             this.Log(Debug, $"{e.User.Nickname} quit");
         }
@@ -332,16 +334,18 @@ namespace JuvoProcess.Bots
             {
                 foreach (var chan in this.config.Channels)
                 {
+                    if (chan.Name is null) { continue; }
+
                     this.client.Join(chan.Name);
                 }
             }
         }
 
-        private void Log(int level, string text = null, Exception exc = null)
+        private void Log(int level, string? text = null, Exception? exc = null)
         {
             if (this.log == null) { return; }
 
-            var qualifiedText = $"[{this.config.Name}] {text}";
+            var qualifiedText = $"[{this.config?.Name}] {text}";
 
             switch (level)
             {

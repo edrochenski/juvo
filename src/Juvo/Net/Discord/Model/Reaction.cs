@@ -17,7 +17,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the emoji information.
         /// </summary>
-        public Emoji Emoji { get; set; }
+        public Emoji? Emoji { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the current user reacted using this emoji.

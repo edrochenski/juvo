@@ -14,12 +14,12 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the channels.
         /// </summary>
-        public IEnumerable<IrcConfigChannel> Channels { get; set; }
+        public IEnumerable<IrcConfigChannel>? Channels { get; set; }
 
         /// <summary>
         /// Gets or sets the command token.
         /// </summary>
-        public string CommandToken { get; set; }
+        public string? CommandToken { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the connection is enabled.
@@ -29,7 +29,7 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the ident.
         /// </summary>
-        public string Ident { get; set; }
+        public string? Ident { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the bot should wait until its host is masked
@@ -40,56 +40,56 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the network
         /// </summary>
-        public string Network { get; set; }
+        public string? Network { get; set; }
 
         /// <summary>
         /// Gets or sets the password/token used when connecting to the network.
         /// </summary>
-        public string NetworkToken { get; set; }
+        public string? NetworkToken { get; set; }
 
         /// <summary>
         /// Gets or sets the nickname.
         /// </summary>
-        public string Nickname { get; set; }
+        public string? Nickname { get; set; }
 
         /// <summary>
         /// Gets or sets the alternative nickname.
         /// </summary>
-        public string NicknameAlt { get; set; }
+        public string? NicknameAlt { get; set; }
 
         /// <summary>
         /// Gets or sets the password.
         /// </summary>
-        public string Pass { get; set; }
+        public string? Pass { get; set; }
 
         /// <summary>
         /// Gets or sets the real name.
         /// </summary>
-        public string RealName { get; set; }
+        public string? RealName { get; set; }
 
         /// <summary>
         /// Gets or sets the servers.
         /// </summary>
-        public IEnumerable<IrcConfigServer> Servers { get; set; }
+        public IEnumerable<IrcConfigServer>? Servers { get; set; }
 
         /// <summary>
         /// Gets or sets the user.
         /// </summary>
-        public string User { get; set; }
+        public string? User { get; set; }
 
         /// <summary>
         /// Gets or sets the user mode.
         /// </summary>
-        public string UserMode { get; set; }
+        public string? UserMode { get; set; }
 
         /// <summary>
         /// Gets or sets the username.
         /// </summary>
-        public string Username { get; set; }
+        public string? Username { get; set; }
     }
 }

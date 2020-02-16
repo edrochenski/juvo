@@ -31,13 +31,15 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the Data.
         /// </summary>
         [JsonProperty(PropertyName ="d")]
-        public new IdentityData Data { get; set; }
+        public new IdentityData? Data { get; set; }
 
         /// <summary>
         /// Gets or sets the shards.
         /// </summary>
+#pragma warning disable SA1011 // Closing square brackets must be spaced correctly
         [JsonProperty(PropertyName = "shard")]
-        public int[] Shard { get; set; }
+        public int[]? Shard { get; set; }
+#pragma warning restore SA1011 // Closing square brackets must be spaced correctly
 
         /// <summary>
         /// Representation
@@ -60,19 +62,19 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the presence.
             /// </summary>
             [JsonProperty(PropertyName = "presence")]
-            public StatusUpdate Presence { get; set; }
+            public StatusUpdate? Presence { get; set; }
 
             /// <summary>
             /// Gets or sets the properties.
             /// </summary>
             [JsonProperty(PropertyName = "properties")]
-            public ConnectionProperties Properties { get; set; }
+            public ConnectionProperties? Properties { get; set; }
 
             /// <summary>
             /// Gets or sets the token.
             /// </summary>
             [JsonProperty(PropertyName = "token")]
-            public string Token { get; set; }
+            public string Token { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -84,19 +86,19 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the browser.
             /// </summary>
             [JsonProperty(PropertyName = "$browser")]
-            public string Browser { get; set; }
+            public string Browser { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the device.
             /// </summary>
             [JsonProperty(PropertyName = "$device")]
-            public string Device { get; set; }
+            public string Device { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the OS.
             /// </summary>
             [JsonProperty(PropertyName = "$os")]
-            public string Os { get; set; }
+            public string Os { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -108,7 +110,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the name.
             /// </summary>
             [JsonProperty(PropertyName = "name")]
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the type.
@@ -120,7 +122,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the URL.
             /// </summary>
             [JsonProperty(PropertyName = "url")]
-            public string Url { get; set; }
+            public string Url { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -138,7 +140,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the game.
             /// </summary>
             [JsonProperty(PropertyName = "game")]
-            public GameObject Game { get; set; }
+            public GameObject? Game { get; set; }
 
             /// <summary>
             /// Gets or sets since.
@@ -150,7 +152,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets status.
             /// </summary>
             [JsonProperty(PropertyName = "status")]
-            public string Status { get; set; }
+            public string Status { get; set; } = string.Empty;
         }
     }
 }

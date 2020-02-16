@@ -28,7 +28,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the ID.
         /// </summary>
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the role is managed.
@@ -43,7 +43,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the permissions (bit flags.)

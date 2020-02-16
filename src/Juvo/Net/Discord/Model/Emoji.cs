@@ -16,7 +16,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the ID.
         /// </summary>
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the emoji is animated.
@@ -31,7 +31,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the emoji must be wrapped in colons.
@@ -42,11 +42,11 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the role this emoji is whitelisted to.
         /// </summary>
-        public IEnumerable<string> Roles { get; set; }
+        public IEnumerable<string>? Roles { get; set; }
 
         /// <summary>
         /// Gets or sets the user who created this emoji.
         /// </summary>
-        public User User { get; set; }
+        public User? User { get; set; }
     }
 }

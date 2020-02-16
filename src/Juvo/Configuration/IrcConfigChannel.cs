@@ -12,6 +12,6 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the name of the channel.
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }

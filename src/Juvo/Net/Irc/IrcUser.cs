@@ -19,8 +19,8 @@ namespace JuvoProcess.Net.Irc
         {
             if (identifier.Contains("!") && identifier.Contains("@"))
             {
-                string[] parts = identifier.Split('@');
-                string[] userParts = parts[0].Split('!');
+                var parts = identifier.Split('@');
+                var userParts = parts[0].Split('!');
                 this.Host = parts[1];
                 this.Nickname = userParts[0];
                 this.Username = userParts[1];
@@ -36,16 +36,16 @@ namespace JuvoProcess.Net.Irc
         /// <summary>
         /// Gets or sets the host.
         /// </summary>
-        public string Host { get; protected set; }
+        public string Host { get; protected set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the nickname.
         /// </summary>
-        public string Nickname { get; protected set; }
+        public string Nickname { get; protected set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the username.
         /// </summary>
-        public string Username { get; protected set; }
+        public string Username { get; protected set; } = string.Empty;
     }
 }

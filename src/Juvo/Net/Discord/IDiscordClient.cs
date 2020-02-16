@@ -40,9 +40,9 @@ namespace JuvoProcess.Net.Discord
         Task Disconnect();
 
         /// <summary>
-        /// Initializes the client.
+        /// Initializes the bot with options.
         /// </summary>
-        /// <param name="options">Options to use.</param>
+        /// <param name="options">Options for the bot.</param>
         void Initialize(DiscordClientOptions options);
     }
 }

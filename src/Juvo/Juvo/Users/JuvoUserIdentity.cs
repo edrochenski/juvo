@@ -12,15 +12,15 @@ namespace JuvoProcess.Juvo
     public class JuvoUserIdentity : IJuvoUserIdentity
     {
         /// <inheritdoc/>
-        public IEnumerable<string> Masks { get; set; }
+        public IEnumerable<string>? Masks { get; set; }
 
         /// <inheritdoc/>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <inheritdoc/>
-        public UserIdentityType Type { get; set; }
+        public UserIdentityType Type { get; set; } = UserIdentityType.None;
 
         /// <inheritdoc/>
-        public string TypeId { get; set; }
+        public string TypeId { get; set; } = string.Empty;
     }
 }

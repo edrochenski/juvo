@@ -14,7 +14,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the name of the attached file.
         /// </summary>
-        public string Filename { get; set; }
+        public string Filename { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the height, if the attachment is an image.
@@ -24,13 +24,13 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the ID.
         /// </summary>
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the proxied URL of the file.
         /// </summary>
         [JsonProperty(PropertyName = "proxy_url")]
-        public string ProxyUrl { get; set; }
+        public string ProxyUrl { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the size of the file in bytes.
@@ -40,7 +40,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the source URL of the file.
         /// </summary>
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the width, if the attachment is an image.

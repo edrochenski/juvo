@@ -20,7 +20,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the AFK channel ID.
         /// </summary>
         [JsonProperty(PropertyName = "afk_channel_id")]
-        public string AfkChannelId { get; set; }
+        public string AfkChannelId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the AFK timeout in seconds.
@@ -32,7 +32,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the application ID.
         /// </summary>
         [JsonProperty(PropertyName = "application_id")]
-        public string ApplicationId { get; set; }
+        public string ApplicationId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the default message notification level.
@@ -44,7 +44,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets ID of the embeddable channel.
         /// </summary>
         [JsonProperty(PropertyName = "embed_channel_id")]
-        public string EmbedChannelId { get; set; }
+        public string EmbedChannelId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets if the guild is embeddable (i.e. widget)
@@ -55,7 +55,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the custom guild emojis.
         /// </summary>
-        public IEnumerable<Emoji> Emojis { get; set; }
+        public IEnumerable<Emoji>? Emojis { get; set; }
 
         /// <summary>
         /// Gets or sets the explicit content filter level.
@@ -66,7 +66,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the enabled guild features.
         /// </summary>
-        public IEnumerable<string> Features { get; set; }
+        public IEnumerable<string>? Features { get; set; }
 
         /// <summary>
         /// Gets or sets the icon hash.
@@ -75,12 +75,12 @@ namespace JuvoProcess.Net.Discord.Model
         /// Discord uses IDs/hashes to render images to the client, more @
         /// https://discordapp.com/developers/docs/reference#image-formatting
         /// </remarks>
-        public string Icon { get; set; }
+        public string Icon { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the ID.
         /// </summary>
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the MFA level.
@@ -92,7 +92,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the name.
         /// </summary>
         /// <remarks>Limited to 2-100 characters.</remarks>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets if the current user is the owner.
@@ -105,7 +105,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the owner's ID.
         /// </summary>
-        public string OwnerId { get; set; }
+        public string OwnerId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the total permissions for the user (not including channel overrides.)
@@ -118,12 +118,12 @@ namespace JuvoProcess.Net.Discord.Model
         /// <remarks>
         /// https://discordapp.com/developers/docs/resources/voice#voice-region
         /// </remarks>
-        public string Region { get; set; }
+        public string Region { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the roles in the guild.
         /// </summary>
-        public IEnumerable<Role> Roles { get; set; }
+        public IEnumerable<Role>? Roles { get; set; }
 
         /// <summary>
         /// Gets or sets the splash hash.
@@ -132,13 +132,13 @@ namespace JuvoProcess.Net.Discord.Model
         /// Discord uses IDs/hashes to render images to the client, more @
         /// https://discordapp.com/developers/docs/reference#image-formatting
         /// </remarks>
-        public string Splash { get; set; }
+        public string Splash { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the system channel ID.
         /// </summary>
         [JsonProperty(PropertyName = "system_channel_id")]
-        public string SystemChannelId { get; set; }
+        public string SystemChannelId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the verification level.
@@ -153,7 +153,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the widget channel ID.
         /// </summary>
         [JsonProperty(PropertyName = "widget_channel_id")]
-        public string WidgetChannelId { get; set; }
+        public string WidgetChannelId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the widget is enabled.

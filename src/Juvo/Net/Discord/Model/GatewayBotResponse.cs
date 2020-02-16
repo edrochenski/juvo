@@ -17,6 +17,6 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the URL.
         /// </summary>
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
     }
 }

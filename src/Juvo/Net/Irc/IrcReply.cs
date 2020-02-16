@@ -20,11 +20,11 @@ namespace JuvoProcess.Net.Irc
         public IrcReply(string rawMessage)
         {
             // ignore sects[0] since it should just be empty
-            string[] sects = rawMessage.Split(new char[] { ':' }, 3);
+            var sects = rawMessage.Split(new char[] { ':' }, 3);
 
             if (sects.Length > 1)
             {
-                string[] parts = sects[1].Split(' ');
+                var parts = sects[1].Split(' ');
 
                 if (parts.Length > 0)
                 {
@@ -44,7 +44,7 @@ namespace JuvoProcess.Net.Irc
                 if (parts.Length > 3)
                 {
                     this.Params = new string[parts.Length - 3];
-                    for (int x = 3; x < parts.Length; ++x)
+                    for (var x = 3; x < parts.Length; ++x)
                     {
                         this.Params[x - 3] = parts[x];
                     }
@@ -62,22 +62,24 @@ namespace JuvoProcess.Net.Irc
         /// <summary>
         /// Gets or sets the command.
         /// </summary>
-        public string Command { get; protected set; }
+        public string Command { get; protected set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the params.
         /// </summary>
-        public string[] Params { get; protected set; }
+#pragma warning disable SA1011 // Closing square brackets must be spaced correctly
+        public string[]? Params { get; protected set; }
+#pragma warning restore SA1011 // Closing square brackets must be spaced correctly
 
         /// <summary>
         /// Gets or sets the prefix.
         /// </summary>
-        public string Prefix { get; protected set; }
+        public string Prefix { get; protected set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the target.
         /// </summary>
-        public string Target { get; protected set; }
+        public string Target { get; protected set; } = string.Empty;
 
         /// <summary>
         /// Gets a value indicating whether the target is a channel.
@@ -93,6 +95,6 @@ namespace JuvoProcess.Net.Irc
         /// <summary>
         /// Gets or sets trailing text.
         /// </summary>
-        public string Trailing { get; protected set; }
+        public string Trailing { get; protected set; } = string.Empty;
     }
 }

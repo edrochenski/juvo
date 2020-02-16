@@ -16,7 +16,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the data.
         /// </summary>
         [JsonProperty(PropertyName = "d")]
-        public new HelloData Data { get; set; }
+        public new HelloData? Data { get; set; }
 
         /// <summary>
         /// Hello data.
@@ -33,7 +33,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets trace.
             /// </summary>
             [JsonProperty(PropertyName = "_trace")]
-            public IEnumerable<string> Trace { get; set; }
+            public IEnumerable<string>? Trace { get; set; }
         }
     }
 }

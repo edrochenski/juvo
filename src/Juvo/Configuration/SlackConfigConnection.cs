@@ -12,21 +12,21 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the command token.
         /// </summary>
-        public string CommandToken { get; set; }
+        public string CommandToken { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the connection is enabled.
         /// </summary>
-        public bool Enabled { get; set; }
+        public bool Enabled { get; set; } = false;
 
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Token { get; set; }
+        public string Token { get; set; } = string.Empty;
     }
 }

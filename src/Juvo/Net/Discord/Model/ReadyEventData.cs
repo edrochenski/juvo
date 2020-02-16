@@ -16,7 +16,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the data.
         /// </summary>
         [JsonProperty(PropertyName = "d")]
-        public new ReadyData Data { get; set; }
+        public new ReadyData? Data { get; set; }
 
         /// <summary>
         /// Ready data.
@@ -27,7 +27,7 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the private channels.
             /// </summary>
             [JsonProperty(PropertyName = "private_channels")]
-            public IEnumerable<Channel> PrivateChannels { get; set; }
+            public IEnumerable<Channel>? PrivateChannels { get; set; }
 
             /// <summary>
             /// Gets or sets the gateway protocol version.
@@ -39,19 +39,19 @@ namespace JuvoProcess.Net.Discord.Model
             /// Gets or sets the session ID.
             /// </summary>
             [JsonProperty(PropertyName = "session_id")]
-            public string SessionId { get; set; }
+            public string SessionId { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets trace.
             /// </summary>
             [JsonProperty(PropertyName = "_trace")]
-            public IEnumerable<string> Trace { get; set; }
+            public IEnumerable<string>? Trace { get; set; }
 
             /// <summary>
             /// Gets or sets the user.
             /// </summary>
             [JsonProperty(PropertyName = "user")]
-            public User User { get; set; }
+            public User? User { get; set; }
         }
     }
 }

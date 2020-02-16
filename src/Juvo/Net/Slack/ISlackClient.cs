@@ -40,9 +40,9 @@ namespace JuvoProcess.Net.Slack
         Task Disconnect();
 
         /// <summary>
-        /// Intializes the client.
+        /// Initializes the slack client.
         /// </summary>
-        /// <param name="token">Token.</param>
+        /// <param name="token">Token to use.</param>
         void Initialize(string token);
 
         /// <summary>

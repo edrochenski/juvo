@@ -14,21 +14,21 @@ namespace JuvoProcess.Juvo
         /// <summary>
         /// Gets or sets the ID.
         /// </summary>
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the user's identities.
         /// </summary>
-        public IEnumerable<IJuvoUserIdentity> Identities { get; set; }
+        public IEnumerable<IJuvoUserIdentity>? Identities { get; set; }
 
         /// <summary>
         /// Gets or sets the password.
         /// </summary>
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the username.
         /// </summary>
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty;
     }
 }

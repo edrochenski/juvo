@@ -35,7 +35,7 @@ namespace JuvoProcess
         private static readonly string DefaultConfigFileName = "config.json";
         private static readonly ManualResetEvent ResetEvent;
         private static readonly IServiceCollection ServiceCollection;
-        private static IServiceProvider serviceProvider;
+        private static IServiceProvider? serviceProvider;
 
         private readonly IJuvoClient juvoClient;
         private readonly ILog log;
@@ -67,18 +67,18 @@ namespace JuvoProcess
         /// <summary>
         /// Gets the running instance of the process.
         /// </summary>
-        public static Program Instance { get; private set; }
+        public static Program? Instance { get; private set; }
 
         /// <summary>
         /// Gets the instances service provider.
         /// </summary>
-        public IServiceProvider Services => serviceProvider;
+        public IServiceProvider? Services => serviceProvider;
 
         /*/ Methods /*/
 
         private static string GetDefaultConfigFile()
         {
-            string path = null;
+            string? path = null;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 path = Environment.ExpandEnvironmentVariables("%APPDATA%/juvo");

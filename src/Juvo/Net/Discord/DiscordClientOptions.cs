@@ -14,7 +14,7 @@ namespace JuvoProcess.Net.Discord
         /// <summary>
         /// Gets or sets the API URL.
         /// </summary>
-        public Uri ApiUri { get; set; }
+        public Uri? ApiUri { get; set; }
 
         /// <summary>
         /// Gets or sets the API version.
@@ -24,7 +24,7 @@ namespace JuvoProcess.Net.Discord
         /// <summary>
         /// Gets or sets the authentication token.
         /// </summary>
-        public string AuthToken { get; set; }
+        public string AuthToken { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether it is a bot.
@@ -39,6 +39,6 @@ namespace JuvoProcess.Net.Discord
         /// <summary>
         /// Gets or sets the gateway URI.
         /// </summary>
-        public Uri GatewayUri { get; set; }
+        public Uri? GatewayUri { get; set; }
     }
 }

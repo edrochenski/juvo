@@ -15,32 +15,32 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the Game.
         /// </summary>
-        public Activity Game { get; set; }
+        public Activity? Game { get; set; }
 
         /// <summary>
         /// Gets or sets the guild ID.
         /// </summary>
         [JsonProperty(PropertyName = "guild_id")]
-        public string GuildId { get; set; }
+        public string GuildId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets nick, if any.
         /// </summary>
-        public string Nick { get; set; }
+        public string Nick { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets nick, if any.
         /// </summary>
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets roles.
         /// </summary>
-        public IEnumerable<string> Roles { get; set; }
+        public IEnumerable<string>? Roles { get; set; }
 
         /// <summary>
         /// Gets or sets the user.
         /// </summary>
-        public User User { get; set; }
+        public User? User { get; set; }
     }
 }

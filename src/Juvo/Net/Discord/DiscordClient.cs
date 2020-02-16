@@ -85,8 +85,8 @@ namespace JuvoProcess.Net.Discord
         private readonly CancellationToken cancelToken;
         private readonly Timer heartbeatTimer;
         private readonly IHttpClient httpClient;
-        private readonly ILog log;
-        private readonly ILogManager logManager;
+        private readonly ILog? log;
+        private readonly ILogManager? logManager;
         private readonly IClientWebSocket socket;
         private bool isConnected;
         private int? lastSequence;
@@ -99,7 +99,10 @@ namespace JuvoProcess.Net.Discord
         /// <param name="clientWebSocket">Client web socket.</param>
         /// <param name="httpClient">Http client.</param>
         /// <param name="logManager">Log Manager.</param>
-        public DiscordClient(IClientWebSocket clientWebSocket, IHttpClient httpClient, ILogManager logManager)
+        public DiscordClient(
+            IClientWebSocket clientWebSocket,
+            IHttpClient httpClient,
+            ILogManager? logManager = null)
         {
             this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             this.socket = clientWebSocket ?? throw new ArgumentNullException(nameof(clientWebSocket));
@@ -117,30 +120,30 @@ namespace JuvoProcess.Net.Discord
         /*/ Events /*/
 
         /// <inheritdoc/>
-        public event DisconnectedEventHandler Disconnected;
+        public event DisconnectedEventHandler? Disconnected;
 
         /// <summary>
         /// Fires when a GUILD_CREATE response is received.
         /// </summary>
-        public event GuildCreatedEventHandler GuildCreated;
+        public event GuildCreatedEventHandler? GuildCreated;
 
         /// <summary>
         /// Fires when a hello response is received.
         /// </summary>
-        public event HelloResponseReceivedEventHandler HelloResponseReceived;
+        public event HelloResponseReceivedEventHandler? HelloResponseReceived;
 
         /// <summary>
         /// Fires when a message is received.
         /// </summary>
-        public event MessageReceivedEventHandler MessageReceived;
+        public event MessageReceivedEventHandler? MessageReceived;
 
         /// <summary>
         /// Fires when a presence updated response is received.
         /// </summary>
-        public event PresenceUpdatedEventHandler PresenceUpdated;
+        public event PresenceUpdatedEventHandler? PresenceUpdated;
 
         /// <inheritdoc/>
-        public event ReadyReceivedEventHandler ReadyReceived;
+        public event ReadyReceivedEventHandler? ReadyReceived;
 
         /*/ Properties /*/
 
@@ -152,13 +155,15 @@ namespace JuvoProcess.Net.Discord
         /// <summary>
         /// Gets the Options for the discord client.
         /// </summary>
-        public DiscordClientOptions Options { get; private set; }
+        public DiscordClientOptions? Options { get; private set; }
 
         /*/ Methods /*/
 
         /// <inheritdoc/>
         public async Task Connect()
         {
+            if (this.Options is null) { throw new InvalidOperationException("Connect() called before Initialize()"); }
+
             if (this.Options.GatewayUri == null)
             {
                 if (this.Options.IsBot)
@@ -211,11 +216,10 @@ namespace JuvoProcess.Net.Discord
             this.socket?.Dispose();
         }
 
-        /// <inheritdoc />
-        public void Initialize(DiscordClientOptions options)
+        /// <inheritdoc/>
+        public virtual void Initialize(DiscordClientOptions options)
         {
-            this.Options = options ?? new DiscordClientOptions();
-
+            this.Options = options;
             if (this.Options.ApiUri == null)
             {
                 this.Options.ApiUri = new Uri(Discord.DefaultApiUrl);
@@ -245,6 +249,10 @@ namespace JuvoProcess.Net.Discord
         /// <param name="response">Data associated with the response.</param>
         protected virtual void OnGuildCreated(GuildCreateResponse response)
         {
+            Debug.Assert(response != null && response.Data != null, "Response data is null/missing");
+
+            if (response is null || response.Data is null) { return; }
+
             this.log?.Info($"{RecInd} Created Guild: {response.Data.Name}");
             this.GuildCreated?.Invoke(this, response);
         }
@@ -253,7 +261,7 @@ namespace JuvoProcess.Net.Discord
         /// Called when the heartbeat interval is reached.
         /// </summary>
         /// <param name="state">Stateful object assigned to the timer.</param>
-        protected virtual async void OnHeartbeatInterval(object state)
+        protected virtual async void OnHeartbeatInterval(object? state)
         {
             if (this.isConnected)
             {
@@ -271,9 +279,11 @@ namespace JuvoProcess.Net.Discord
         /// <returns>Task.</returns>
         protected virtual async Task OnHelloResponseReceived(HelloResponse response)
         {
+            Debug.Assert(response != null && response.Data != null, "Response data is null/missing");
+
             this.log?.Info($"{RecInd} Hello");
             this.lastSequence = response.Sequence;
-            this.HeartbeatInterval = response.Data.HeartbeatInterval;
+            this.HeartbeatInterval = response.Data is null ? -1 : response.Data.HeartbeatInterval;
 
             this.SetHeartbeatInterval(this.HeartbeatInterval);
 
@@ -296,7 +306,7 @@ namespace JuvoProcess.Net.Discord
                         Device = "disco",
                         Os = "windows" // Environment.OSVersion.Platform.ToString()
                     },
-                    Token = this.Options.AuthToken
+                    Token = this.Options!.AuthToken
                 },
                 OpCode = GatewayOpCode.Identity,
                 Shard = new int[0]
@@ -314,8 +324,11 @@ namespace JuvoProcess.Net.Discord
         /// <param name="response">Data associated with the response.</param>
         protected virtual void OnMessageReceived(MessageCreateResponse response)
         {
+            Debug.Assert(!(response is null || response.Data is null), "Response data is missing/null");
+            if (response is null || response.Data is null) { return; }
+
             this.log?.Info(
-                $"{RecInd} [{response.Data.GuildId}/{response.Data.ChannelId}/{response.Data.Author.Id}]" +
+                $"{RecInd} [{response.Data.GuildId}/{response.Data.ChannelId}/{response.Data.Author?.Id}]" +
                 $"{response.Data.Content}");
             this.MessageReceived?.Invoke(this, response);
         }
@@ -326,8 +339,11 @@ namespace JuvoProcess.Net.Discord
         /// <param name="response">Data associated with the response.</param>
         protected virtual void OnPresenceUpdatedReceived(PresenceUpdateResponse response)
         {
+            Debug.Assert(!(response is null || response.Data is null), "Response data is missing/null");
+            if (response is null || response.Data is null) { return; }
+
             this.log?.Info(
-                $"{RecInd} Presence: {response.Data.User.Id} is now {response.Data.Status}");
+                $"{RecInd} Presence: {response.Data.User?.Id} is now {response.Data.Status}");
             this.PresenceUpdated?.Invoke(this, response);
         }
 
@@ -337,13 +353,16 @@ namespace JuvoProcess.Net.Discord
         /// <param name="data">Data associated with the event.</param>
         protected virtual void OnReadyReceived(ReadyEventData data)
         {
+            Debug.Assert(!(data is null || data.Data is null), "Event data is missing/null");
+            if (data is null || data.Data is null) { return; }
+
             this.log?.Info($"{RecInd} Ready -- Session '{data.Data.SessionId}'");
             this.ReadyReceived?.Invoke(this, data);
         }
 
         private string BuildWssUrl()
         {
-            return $"{this.Options.GatewayUri}/?v={this.Options.ApiVersion}&" +
+            return $"{this.Options?.GatewayUri}/?v={this.Options?.ApiVersion}&" +
                    $"encoding={Discord.DefaultApiEncoding}";
         }
 
@@ -377,16 +396,20 @@ namespace JuvoProcess.Net.Discord
 
         private async Task GetGateway()
         {
+            if (this.Options is null) { throw new InvalidOperationException("GetGateway() called before Initialize()"); }
+
             this.log?.Debug(
                 $"Retrieving gateway from " +
                 $"{this.httpClient.BaseAddress}{Discord.ApiPaths.Gateway}");
             var response = await this.httpClient.GetStringAsync(Discord.ApiPaths.Gateway);
             this.Options.GatewayUri =
-                new Uri(JsonConvert.DeserializeObject<GatewayResponse>(response)?.Url);
+                new Uri(JsonConvert.DeserializeObject<GatewayResponse>(response)?.Url ?? string.Empty);
         }
 
         private async Task GetGatewayBot()
         {
+            if (this.Options is null) { throw new InvalidOperationException("GetGatewayBot() called before Initialize()"); }
+
             this.log?.Debug(
                 $"Retrieving bot-gateway from " +
                 $"{this.httpClient.BaseAddress}{Discord.ApiPaths.GatewayBot}");

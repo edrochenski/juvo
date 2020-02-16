@@ -50,17 +50,17 @@ namespace JuvoProcess.Net.Slack
 
 /*/ Fields /*/
         private readonly StringContent emptyStringContent;
-        private readonly ILog log;
-        private readonly ILogManager logManager;
+        private readonly ILog? log;
+        private readonly ILogManager? logManager;
         private readonly IClientWebSocket webSocket;
 
-        private string apiToken;
-        private List<SlackChannel> channels;
-        private string myId;
-        private string myName;
-        private List<SlackUser> users;
+        private string apiToken = string.Empty;
+        private List<SlackChannel> channels = new List<SlackChannel>();
+        private string myId = string.Empty;
+        private string myName = string.Empty;
+        private List<SlackUser> users = new List<SlackUser>();
         private CancellationToken webSocketCancelToken;
-        private string wsUrl;
+        private string wsUrl = string.Empty;
 
         /*/ Constructors /*/
 
@@ -69,7 +69,7 @@ namespace JuvoProcess.Net.Slack
         /// </summary>
         /// <param name="clientWebSocket">Client web socket.</param>
         /// <param name="logManager">Log manager.</param>
-        public SlackClient(IClientWebSocket clientWebSocket, ILogManager logManager)
+        public SlackClient(IClientWebSocket clientWebSocket, ILogManager? logManager = null)
         {
             this.webSocket = clientWebSocket ?? throw new ArgumentNullException(nameof(clientWebSocket));
             this.logManager = logManager;
@@ -81,13 +81,13 @@ namespace JuvoProcess.Net.Slack
         /*/ Events /*/
 
         /// <inheritdoc/>
-        public event MessageReceivedEventHandler MessageReceived;
+        public event MessageReceivedEventHandler? MessageReceived;
 
         /// <inheritdoc/>
-        public event PresenceChangedEventHandler PresenceChanged;
+        public event PresenceChangedEventHandler? PresenceChanged;
 
         /// <inheritdoc/>
-        public event UserTypingEventHandler UserTyping;
+        public event UserTypingEventHandler? UserTyping;
 
 /*/ Methods /*/
 
@@ -133,12 +133,12 @@ namespace JuvoProcess.Net.Slack
                 await Task.CompletedTask;
             }
 
-            await this.webSocket.CloseOutputAsync(WebSocketCloseStatus.Empty, null, this.webSocketCancelToken);
-            await this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, null, this.webSocketCancelToken);
+            await this.webSocket.CloseOutputAsync(WebSocketCloseStatus.Empty, string.Empty, this.webSocketCancelToken);
+            await this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, this.webSocketCancelToken);
         }
 
         /// <inheritdoc/>
-        public void Initialize(string token)
+        public virtual void Initialize(string token)
         {
             this.apiToken = token;
         }
@@ -282,7 +282,7 @@ namespace JuvoProcess.Net.Slack
             }
             catch (Exception exc)
             {
-                this.log.Error($"Error while receiving: {exc.Message}");
+                this.log?.Error($"Error while receiving: {exc.Message}");
                 throw new Exception("Receiving data error", exc);
             }
         }

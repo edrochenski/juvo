@@ -12,7 +12,7 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the host.
         /// </summary>
-        public string Host { get; set; }
+        public string? Host { get; set; }
 
         /// <summary>
         /// Gets or sets the port.

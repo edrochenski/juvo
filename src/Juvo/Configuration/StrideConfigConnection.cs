@@ -12,12 +12,12 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the client ID.
         /// </summary>
-        public string ClientId { get; set; }
+        public string ClientId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the client secret.
         /// </summary>
-        public string ClientSecret { get; set; }
+        public string ClientSecret { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether Stride is enabled.
@@ -27,6 +27,6 @@ namespace JuvoProcess.Configuration
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }

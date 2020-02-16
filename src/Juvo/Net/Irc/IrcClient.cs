@@ -46,15 +46,13 @@ namespace JuvoProcess.Net.Irc
         private static readonly Dictionary<string, IrcNetwork> IrcNetworkLookup;
         private readonly Dictionary<char, Tuple<IrcChannelMode, bool, bool>> chanModeDict;
         private readonly ISocketClient client;
-        private readonly ILog log;
-        private readonly ILogManager logManager;
+        private readonly ILog? log;
+        private readonly ILogManager? logManager;
         private readonly Dictionary<char, IrcUserMode> userModeDict;
 
-        private List<string> currentChannels;
-        private string currentNickname;
         private StringBuilder dataBuffer;
-        private string serverHost;
-        private string serverPassword;
+        private string? serverHost;
+        private string? serverPassword;
         private int serverPort;
 
         /*/ Constructors /*/
@@ -72,7 +70,7 @@ namespace JuvoProcess.Net.Irc
         /// </summary>
         /// <param name="logManager">Log manager.</param>
         /// <param name="socketClient">Socket client.</param>
-        public IrcClient(ILogManager logManager, ISocketClient socketClient)
+        public IrcClient(ISocketClient socketClient, ILogManager? logManager = null)
         {
             this.logManager = logManager;
             this.client = socketClient;
@@ -86,49 +84,56 @@ namespace JuvoProcess.Net.Irc
             this.client.SendFailed += this.Client_SendFailed;
 
             this.dataBuffer = new StringBuilder();
-            this.currentChannels = new List<string>(0);
             this.log = this.logManager?.GetLogger(typeof(IrcClient));
             this.chanModeDict = this.CompileChannelModeDictionary();
             this.userModeDict = this.CompileUserModeDictionary();
+
+            this.CurrentChannels = new List<string>(0);
+            this.CurrentNickname = string.Empty;
+            this.NickName = string.Empty;
+            this.NickNameAlt = string.Empty;
+            this.RealName = string.Empty;
+            this.UserModes = new IrcUserMode[0];
+            this.Username = string.Empty;
         }
 
         /*/ Events /*/
 
         /// <inheritdoc/>
-        public event EventHandler<ChannelUserEventArgs> ChannelJoined;
+        public event EventHandler<ChannelUserEventArgs>? ChannelJoined;
 
         /// <inheritdoc/>
-        public event EventHandler<ChannelUserEventArgs> ChannelMessage;
+        public event EventHandler<ChannelUserEventArgs>? ChannelMessage;
 
         /// <inheritdoc/>
-        public event EventHandler<ChannelModeChangedEventArgs> ChannelModeChanged;
+        public event EventHandler<ChannelModeChangedEventArgs>? ChannelModeChanged;
 
         /// <inheritdoc/>
-        public event EventHandler<ChannelUserEventArgs> ChannelParted;
+        public event EventHandler<ChannelUserEventArgs>? ChannelParted;
 
         /// <inheritdoc/>
-        public event EventHandler Connected;
+        public event EventHandler? Connected;
 
         /// <inheritdoc/>
-        public event EventHandler Disconnected;
+        public event EventHandler? Disconnected;
 
         /// <inheritdoc/>
-        public event EventHandler<HostHiddenEventArgs> HostHidden;
+        public event EventHandler<HostHiddenEventArgs>? HostHidden;
 
         /// <inheritdoc/>
-        public event EventHandler<MessageReceivedArgs> MessageReceived;
+        public event EventHandler<MessageReceivedArgs>? MessageReceived;
 
         /// <inheritdoc/>
-        public event EventHandler<UserEventArgs> PrivateMessage;
+        public event EventHandler<UserEventArgs>? PrivateMessage;
 
         /// <inheritdoc/>
-        public event EventHandler<IrcReply> ReplyReceived;
+        public event EventHandler<IrcReply>? ReplyReceived;
 
         /// <inheritdoc/>
-        public event EventHandler<UserModeChangedEventArgs> UserModeChanged;
+        public event EventHandler<UserModeChangedEventArgs>? UserModeChanged;
 
         /// <inheritdoc/>
-        public event EventHandler<UserEventArgs> UserQuit;
+        public event EventHandler<UserEventArgs>? UserQuit;
 
         /*/ Properties /*/
 
@@ -173,7 +178,7 @@ namespace JuvoProcess.Net.Irc
         }
 
         /// <inheritdoc/>
-        public void Connect(string serverHost, int serverPort = DefaultPort, string serverPassword = null)
+        public void Connect(string serverHost, int serverPort = DefaultPort, string? serverPassword = null)
         {
             Dbg.Assert(!string.IsNullOrEmpty(serverHost), "serverHost == null||empty");
             Dbg.Assert(serverPort > 1024, "serverPort <= 1024");
@@ -205,7 +210,8 @@ namespace JuvoProcess.Net.Irc
         }
 
         /// <inheritdoc/>
-        public void Join(string[] channels, string[] channelKeys = null)
+#pragma warning disable SA1011 // Closing square brackets must be spaced correctly
+        public void Join(string[] channels, string[]? channelKeys = null)
         {
             Dbg.Assert(channels != null && channels.Length > 0, "channels == null || empty");
 
@@ -214,19 +220,22 @@ namespace JuvoProcess.Net.Irc
 
             this.Send($"JOIN {chans}{keys}{CrLf}");
         }
+#pragma warning restore SA1011 // Closing square brackets must be spaced correctly
 
         /// <summary>
         /// Looks up a channel mode.
         /// </summary>
         /// <param name="mode">Resolved mode.</param>
         /// <returns>A tuple with the channel mode, has add parameter, and has remove parameter.</returns>
-        public(IrcChannelMode Mode, bool HasAddParam, bool HasRemParam) LookupChannelMode(char mode)
+#pragma warning disable SA1008 // Opening parenthesis must be spaced correctly
+        public (IrcChannelMode Mode, bool HasAddParam, bool HasRemParam) LookupChannelMode(char mode)
         {
             return (
                 this.chanModeDict[mode].Item1,
                 this.chanModeDict[mode].Item2,
                 this.chanModeDict[mode].Item3);
         }
+#pragma warning restore SA1008 // Opening parenthesis must be spaced correctly
 
         /// <inheritdoc/>
         public IrcUserMode LookupUserMode(char mode)
@@ -351,7 +360,7 @@ namespace JuvoProcess.Net.Irc
         /// <param name="e">Data associated with the event.</param>
         protected virtual void OnConnected(EventArgs e)
         {
-            this.currentNickname = this.NickName;
+            this.CurrentNickname = this.NickName;
             this.Connected?.Invoke(this, e);
         }
 
@@ -427,7 +436,7 @@ namespace JuvoProcess.Net.Irc
             this.UserQuit?.Invoke(this, e);
         }
 
-        private void Client_ConnectCompleted(object sender, EventArgs e)
+        private void Client_ConnectCompleted(object? sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(this.serverPassword))
             {
@@ -437,17 +446,17 @@ namespace JuvoProcess.Net.Irc
             this.Send($"NICK {this.NickName}{CrLf}USER {this.Username} 0 * :{this.Username}{CrLf}");
         }
 
-        private void Client_ConnectFailed(object sender, EventArgs e)
+        private void Client_ConnectFailed(object? sender, EventArgs e)
         {
             this.Log(Error, "Connection failed");
         }
 
-        private void Client_Disconnected(object sender, EventArgs e)
+        private void Client_Disconnected(object? sender, EventArgs e)
         {
             this.Log(Warn, $"Client disconnected");
         }
 
-        private void Client_ReceiveCompleted(object sender, ReceiveCompletedEventArgs e)
+        private void Client_ReceiveCompleted(object? sender, ReceiveCompletedEventArgs e)
         {
             if (this.client == null)
             {
@@ -458,17 +467,17 @@ namespace JuvoProcess.Net.Irc
             this.HandleData(e.Data);
         }
 
-        private void Client_ReceiveFailed(object sender, SocketEventArgs e)
+        private void Client_ReceiveFailed(object? sender, SocketEventArgs e)
         {
             this.Log(Error, $"Receive failed ({e.Error})");
         }
 
-        private void Client_SendCompleted(object sender, EventArgs e)
+        private void Client_SendCompleted(object? sender, EventArgs e)
         {
             this.Log(Debug, $"Send completed");
         }
 
-        private void Client_SendFailed(object sender, SocketEventArgs e)
+        private void Client_SendFailed(object? sender, SocketEventArgs e)
         {
             this.Log(Error, $"Send failed ({e.Error})");
         }
@@ -605,8 +614,8 @@ namespace JuvoProcess.Net.Irc
 
                 case "396":
                 {
-                    // :<server> 396 enloco enloco.users.undernet.org :is now your hidden host
-                    this.OnHostHidden(new HostHiddenEventArgs(reply.Params[0]));
+                    // :<server> 396 <nickname> <new.hostname.tld> :is now your hidden host
+                    this.OnHostHidden(new HostHiddenEventArgs(reply.Params?[0] ?? string.Empty));
                     break;
                 }
 
@@ -616,9 +625,9 @@ namespace JuvoProcess.Net.Irc
                     var user = new IrcUser(reply.Prefix);
                     var isOwned = false;
 
-                    if (user.Nickname == this.currentNickname)
+                    if (user.Nickname == this.CurrentNickname)
                     {
-                        this.currentChannels.Add(reply.Target);
+                        this.CurrentChannels.Add(reply.Target);
                         isOwned = true;
                     }
 
@@ -664,10 +673,10 @@ namespace JuvoProcess.Net.Irc
                     {
                         var add = new List<IrcChannelModeValue>(0);
                         var rem = new List<IrcChannelModeValue>(0);
-                        var ops = reply.Params[0];
+                        var ops = reply.Params?[0];
                         var ctr = '\0';
 
-                        for (int x = 0, c = 0; x < ops.Length; ++x)
+                        for (int x = 0, c = 0; x < ops?.Length; ++x)
                         {
                             if ("-+".Contains(ops[x]))
                             {
@@ -679,12 +688,12 @@ namespace JuvoProcess.Net.Irc
 
                             if (ctr == '+')
                             {
-                                var val = mode.HasAddParam ? reply.Params[++c] : null;
+                                var val = mode.HasAddParam ? reply.Params?[++c] : null;
                                 add.Add(new IrcChannelModeValue(mode.Mode, val));
                             }
                             else if (ctr == '-')
                             {
-                                var val = mode.HasRemParam ? reply.Params[++c] : null;
+                                var val = mode.HasRemParam ? reply.Params?[++c] : null;
                                 rem.Add(new IrcChannelModeValue(mode.Mode, val));
                             }
                         }
@@ -701,9 +710,9 @@ namespace JuvoProcess.Net.Irc
                     var user = new IrcUser(reply.Prefix);
                     var isOwned = false;
 
-                    if (user.Nickname == this.currentNickname)
+                    if (user.Nickname == this.CurrentNickname)
                     {
-                        this.currentChannels.Remove(reply.Target);
+                        this.CurrentChannels.Remove(reply.Target);
                         isOwned = true;
                     }
 
@@ -715,7 +724,7 @@ namespace JuvoProcess.Net.Irc
                 case "NOTICE":
                 {
                     var user = new IrcUser(reply.Prefix);
-                    var isOwned = user.Nickname == this.currentNickname;
+                    var isOwned = user.Nickname == this.CurrentNickname;
                     var msgType = (cmd == "PRIVMSG") ? IrcMessageType.PrivateMessage : IrcMessageType.Notice;
 
                     if (reply.TargetIsChannel)
@@ -736,7 +745,7 @@ namespace JuvoProcess.Net.Irc
                 {
                     // :<nick>!<user>@<host> QUIT :<message>
                     var user = new IrcUser(reply.Prefix);
-                    var isOwned = user.Nickname == this.currentNickname;
+                    var isOwned = user.Nickname == this.CurrentNickname;
 
                     this.OnUserQuit(new UserEventArgs(user, reply.Trailing, isOwned));
                     break;
@@ -744,7 +753,7 @@ namespace JuvoProcess.Net.Irc
             }
         }
 
-        private void Log(int level, string text = null, Exception exc = null)
+        private void Log(int level, string? text = null, Exception? exc = null)
         {
             if (this.log == null) { return; }
 

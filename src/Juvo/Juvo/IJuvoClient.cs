@@ -21,7 +21,7 @@ namespace JuvoProcess
         /// <summary>
         /// Gets the log.
         /// </summary>
-        ILog Log { get; }
+        ILog? Log { get; }
 
         /// <summary>
         /// Queues a command for the bot to execute.

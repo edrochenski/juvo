@@ -9,6 +9,19 @@ namespace JuvoProcess.Bots
     /// </summary>
     public class BotCommand : IBotCommand
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BotCommand"/> class.
+        /// </summary>
+        /// <param name="bot">Bot that received the command.</param>
+        /// <param name="source">Source of the command.</param>
+        /// <param name="request">Request text.</param>
+        public BotCommand(IBot bot, CommandSource source, string request)
+        {
+            this.Bot = bot;
+            this.Source = source;
+            this.RequestText = request;
+        }
+
         /// <inheritdoc/>
         public IBot Bot { get; set; }
 
@@ -16,7 +29,7 @@ namespace JuvoProcess.Bots
         public string RequestText { get; set; }
 
         /// <inheritdoc/>
-        public string ResponseText { get; set; }
+        public string? ResponseText { get; set; }
 
         /// <inheritdoc/>
         public CommandSource Source { get; set; }

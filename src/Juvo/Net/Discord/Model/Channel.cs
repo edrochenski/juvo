@@ -16,7 +16,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the Application ID.
         /// </summary>
         [JsonProperty(PropertyName = "application_id")]
-        public string ApplicationId { get; set; }
+        public string ApplicationId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the bitrate.
@@ -28,37 +28,37 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the ID.
         /// </summary>
         [JsonProperty(PropertyName = "id")]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the Guild ID.
         /// </summary>
         [JsonProperty(PropertyName = "guild_id")]
-        public string GuildId { get; set; }
+        public string GuildId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the Icon Hash.
         /// </summary>
         [JsonProperty(PropertyName = "icon")]
-        public string IconHash { get; set; }
+        public string IconHash { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the last message ID.
         /// </summary>
         [JsonProperty(PropertyName = "last_message_id")]
-        public string LastMessageId { get; set; }
+        public string LastMessageId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the last last pin date/time.
         /// </summary>
         [JsonProperty(PropertyName = "last_pin_timestamp")]
-        public string LastPin { get; set; }
+        public string LastPin { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
         [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether channel is NSFW.
@@ -70,13 +70,13 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the Owner ID.
         /// </summary>
         [JsonProperty(PropertyName = "owner_id")]
-        public string OwnerId { get; set; }
+        public string OwnerId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the Parent ID.
         /// </summary>
         [JsonProperty(PropertyName = "parent_id")]
-        public string ParentId { get; set; }
+        public string ParentId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the position.
@@ -88,13 +88,13 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the recipients.
         /// </summary>
         [JsonProperty(PropertyName = "recipients")]
-        public IEnumerable<User> Recipients { get; set; }
+        public IEnumerable<User>? Recipients { get; set; }
 
         /// <summary>
         /// Gets or sets the topic.
         /// </summary>
         [JsonProperty(PropertyName = "topic")]
-        public string Topic { get; set; }
+        public string Topic { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets type of channel.

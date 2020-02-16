@@ -25,9 +25,10 @@ namespace JuvoProcess.Bots
         public ISlackBot Create(SlackConfigConnection config, IServiceProvider services, IJuvoClient host)
         {
             var bot = new SlackBot(
+                host,
                 services.GetService<ISlackClient>(),
+                config,
                 services.GetService<ILogManager>());
-            bot.Initialize(config, host);
 
             return bot;
         }
