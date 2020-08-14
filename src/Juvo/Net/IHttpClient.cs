@@ -21,7 +21,7 @@ namespace JuvoProcess.Net
         /// <summary>
         /// Gets or sets the base address.
         /// </summary>
-        Uri BaseAddress { get; set; }
+        Uri? BaseAddress { get; set; }
 
         /// <summary>
         /// Gets the default request headers.

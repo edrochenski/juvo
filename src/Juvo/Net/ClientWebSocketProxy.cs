@@ -38,7 +38,7 @@ namespace JuvoProcess.Net
         /// <summary>
         /// Gets a description of the reason why the instance was closed.
         /// </summary>
-        public string CloseStatusDescription => this.webSocket.CloseStatusDescription;
+        public string? CloseStatusDescription => this.webSocket.CloseStatusDescription;
 
         /// <summary>
         /// Gets the WebSocket options for the instance.
@@ -53,7 +53,7 @@ namespace JuvoProcess.Net
         /// <summary>
         /// Gets the supported WebSocket sub-protocol for the instance.
         /// </summary>
-        public string SubProtocol => this.webSocket.SubProtocol;
+        public string? SubProtocol => this.webSocket.SubProtocol;
 
         /*/ Methods /*/
 

@@ -524,10 +524,11 @@ namespace JuvoProcess
 
             try
             {
+                // HACK: This needs to go away, look into `dotnet --info, --version, --list-runtimes`
                 var assemblyFullPath = Path.Combine(assemblyPath, $"{name}.dll");
                 var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                    ? "C:/Program Files/dotnet/shared/Microsoft.NETCore.App/3.1.1/" // HACK: This needs to go away,
-                    : "/usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.1/";      // look into `dotnet --list-runtimes`
+                    ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\5.0.0-preview.7.20364.11\"
+                    : @"/usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.2/";
 
                 var compilation = CSharpCompilation.Create(name)
                     .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
@@ -633,7 +634,7 @@ namespace JuvoProcess
 
             if (this.storageHandler.DirectoryExists(scriptPath))
             {
-                var scripts = this.Config.Juvo?.Scripts
+                var scripts = this.Config.Juvo?.Scripts?
                     .Where(s => s.Enabled && this.storageHandler.FileExists(Path.Combine(scriptPath, s.Script ?? string.Empty)));
                 if (scripts == null || !scripts.Any())
                 {
@@ -824,7 +825,7 @@ namespace JuvoProcess
 
         private async Task StartWebServer()
         {
-            Debug.Assert(this.webHost is null && this.webServerRunning, "Start called on running web server");
+            Debug.Assert(this.webHost is null && !this.webServerRunning, "Start called on running web server");
 
             this.Log?.Info(InfoResx.StartingWebServer);
             if (this.webServerRunning)

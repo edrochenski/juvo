@@ -24,7 +24,7 @@ namespace JuvoProcess.Net
         /// <summary>
         /// Gets the remote endpoint's description of the reason why the connection was closed.
         /// </summary>
-        string CloseStatusDescription { get; }
+        string? CloseStatusDescription { get; }
 
         /// <summary>
         /// Gets the current state of the WebSocket connection.
@@ -34,7 +34,7 @@ namespace JuvoProcess.Net
         /// <summary>
         /// Gets the subprotocol that was negotiated during the opening handshake.
         /// </summary>
-        string SubProtocol { get; }
+        string? SubProtocol { get; }
 
         /*/ Methods /*/
 

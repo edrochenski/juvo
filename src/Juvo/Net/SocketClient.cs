@@ -196,7 +196,7 @@ namespace JuvoProcess.Net
         {
             if (e.SocketError == SocketError.Success)
             {
-                if (e.BytesTransferred > 0)
+                if (e.BytesTransferred > 0 && e.Buffer != null)
                 {
                     Debug.WriteLine($"[SocketClient] Received {e.BytesTransferred} bytes...");
                     var data = new byte[e.BytesTransferred];
@@ -219,7 +219,7 @@ namespace JuvoProcess.Net
 
         private void SocketSend_Completed(object? sender, SocketAsyncEventArgs e)
         {
-            if (e.SocketError == SocketError.Success)
+            if (e.SocketError == SocketError.Success && e.Buffer != null)
             {
                 Debug.WriteLine($"[SocketClient] Send completed: {Encoding.UTF8.GetString(e.Buffer, 0, e.BytesTransferred)}");
                 this.SendCompleted?.Invoke(this, EventArgs.Empty);
