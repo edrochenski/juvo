@@ -9,9 +9,6 @@ namespace JuvoProcess.Net.Discord.Model
     /// <summary>
     /// Represents a voice state.
     /// </summary>
-    /// <remarks>
-    /// https://discordapp.com/developers/docs/resources/voice#voice-state-object
-    /// </remarks>
     public class VoiceState
     {
         /// <summary>

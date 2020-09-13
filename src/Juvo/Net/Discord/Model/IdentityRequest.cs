@@ -7,7 +7,7 @@ namespace JuvoProcess.Net.Discord.Model
     using Newtonsoft.Json;
 
     /// <summary>
-    /// Game type
+    /// Game type.
     /// </summary>
     public enum GameType
     {
@@ -42,7 +42,7 @@ namespace JuvoProcess.Net.Discord.Model
 #pragma warning restore SA1011 // Closing square brackets must be spaced correctly
 
         /// <summary>
-        /// Representation
+        /// Identity data.
         /// </summary>
         public class IdentityData
         {

@@ -8,10 +8,11 @@ namespace JuvoProcess.Net.Irc
     /// Settable modes for an IRC channel.
     /// </summary>
     /// <remarks>
-    ///     Charybdis: http://www.stack.nl/~jilles/irc/charybdis-oper-guide/cmodes.htm
-    ///     ircu     : http://ircu.sourceforge.net/
-    ///     DALnet  : http://docs.dal.net/docs/modes.html#2
-    ///     Undernet: http://www.help.undernet.org/faq.php?what=channelmodes
+    /// Codes for IRC servers can be found:
+    /// <see href="http://www.stack.nl/~jilles/irc/charybdis-oper-guide/cmodes.htm">Charybdis</see>,
+    /// <see href="http://ircu.sourceforge.net/">ircu</see>,
+    /// <see href="http://docs.dal.net/docs/modes.html#2">DALnet</see>,
+    /// <see href="http://www.help.undernet.org/faq.php?what=channelmodes">Undernet</see>.
     /// </remarks>
     public enum IrcChannelMode
     {

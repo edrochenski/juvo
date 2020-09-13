@@ -8,7 +8,8 @@ namespace JuvoProcess.Net.Discord.Model
     /// Content filter level.
     /// </summary>
     /// <remarks>
-    /// https://discordapp.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level
+    /// Levels can be looked up
+    /// <see href="https://discordapp.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level">here</see>.
     /// </remarks>
     public enum ExplicitContentFilterLevel
     {
@@ -32,7 +33,8 @@ namespace JuvoProcess.Net.Discord.Model
     /// Notification levels.
     /// </summary>
     /// <remarks>
-    /// https://discordapp.com/developers/docs/resources/guild#guild-object-default-message-notification-level
+    /// Levels can be looked up
+    /// <see href="https://discordapp.com/developers/docs/resources/guild#guild-object-default-message-notification-level">here</see>.
     /// </remarks>
     public enum MessageNotificationLevel
     {
@@ -67,7 +69,8 @@ namespace JuvoProcess.Net.Discord.Model
     /// Represents a verification level.
     /// </summary>
     /// <remarks>
-    /// https://discordapp.com/developers/docs/resources/guild#guild-object-verification-level
+    /// Levels can be looked up
+    /// <see href="https://discordapp.com/developers/docs/resources/guild#guild-object-verification-level">here</see>.
     /// </remarks>
     public enum VerificationLevel
     {

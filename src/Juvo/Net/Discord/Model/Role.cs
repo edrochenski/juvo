@@ -9,9 +9,6 @@ namespace JuvoProcess.Net.Discord.Model
     /// <summary>
     /// Represents a Discord role object.
     /// </summary>
-    /// <remarks>
-    /// https://discordapp.com/developers/docs/topics/permissions#role-object
-    /// </remarks>
     public class Role
     {
         /// <summary>

@@ -10,7 +10,7 @@ namespace JuvoProcess.Bots
     {
         /// <summary>
         /// Gets or sets the identifier (if any) assigned to the source.
-        /// (Channel or user name)
+        /// This will either be the channel or user name.
         /// </summary>
         public string Identifier { get; set; } = string.Empty;
 

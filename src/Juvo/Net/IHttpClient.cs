@@ -41,7 +41,7 @@ namespace JuvoProcess.Net
         /*/ Methods /*/
 
         /// <summary>
-        /// Cancel any pending requests
+        /// Cancel any pending requests.
         /// </summary>
         void CancelPendingRequests();
 

@@ -17,6 +17,7 @@ namespace JuvoProcess.Net
         /*/ Fields /*/
 
         private readonly ClientWebSocket webSocket;
+        private bool isDisposed;
 
         /*/ Constructors /*/
 
@@ -97,10 +98,12 @@ namespace JuvoProcess.Net
         public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
             => await this.webSocket.ConnectAsync(uri, cancellationToken);
 
-        /// <summary>
-        /// Dispose of any instance resources.
-        /// </summary>
-        public void Dispose() => this.webSocket?.Dispose();
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         /// Receive data as an async operation.
@@ -127,5 +130,19 @@ namespace JuvoProcess.Net
             bool endOfMessage,
             CancellationToken cancellationToken)
             => await this.webSocket.SendAsync(buffer, messageType, endOfMessage, cancellationToken);
+
+        /// <summary>
+        /// Dispose of any resources.
+        /// </summary>
+        /// <param name="isDisposing">Is dispose being called on the object.</param>
+        protected virtual void Dispose(bool isDisposing)
+        {
+            if (!this.isDisposed && isDisposing)
+            {
+                this.webSocket?.Dispose();
+            }
+
+            this.isDisposed = true;
+        }
     }
 }

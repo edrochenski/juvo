@@ -141,7 +141,7 @@ namespace JuvoProcess.Net.Irc
         /// Joins a channel.
         /// </summary>
         /// <param name="channel">Channel to join.</param>
-        /// <param name="key">Key for channel, defaults to <see cref="string.Empty"/></param>
+        /// <param name="key">Key for channel, defaults to <see cref="string.Empty"/>.</param>
         void Join(string channel, string key = "");
 
         /// <summary>

@@ -26,7 +26,7 @@ namespace JuvoProcess.Net
         private SocketAsyncEventArgs argsReceive;
         private SocketAsyncEventArgs[] argsSend;
         private byte[] dataBuffer;
-        private bool disposed;
+        private bool isDisposed;
         private string? host;
         private int port;
         private DnsEndPoint? remoteEndPoint;
@@ -37,11 +37,11 @@ namespace JuvoProcess.Net
         /// <summary>
         /// Initializes a new instance of the <see cref="SocketClient"/> class.
         /// </summary>
-        /// <param name="socket">Socket</param>
+        /// <param name="socket">Socket to use.</param>
         public SocketClient(ISocket socket)
         {
             this.socket = socket ?? throw new ArgumentNullException(nameof(socket));
-            this.disposed = false;
+            this.isDisposed = false;
             this.dataBuffer = new byte[DefaultBufferSize];
 
             this.argsConnect = new SocketAsyncEventArgs();
@@ -105,7 +105,7 @@ namespace JuvoProcess.Net
         public void Dispose()
         {
             this.Dispose(true);
-            GC.SuppressFinalize(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <inheritdoc/>
@@ -133,20 +133,19 @@ namespace JuvoProcess.Net
         /// <summary>
         /// Disposes of any resources being used by this instance.
         /// </summary>
-        /// <param name="disposing">Was dispose explicitly called.</param>
-        protected virtual void Dispose(bool disposing)
+        /// <param name="isDisposing">Was dispose explicitly called.</param>
+        protected virtual void Dispose(bool isDisposing)
         {
-            if (this.disposed)
-            {
-                return;
-            }
+            if (this.isDisposed) { return; }
 
-            if (disposing)
+            if (isDisposing)
             {
+                this.argsConnect.Dispose();
+                this.argsReceive.Dispose();
                 this.socket?.Dispose();
             }
 
-            this.disposed = true;
+            this.isDisposed = true;
         }
 
         private void Connect()

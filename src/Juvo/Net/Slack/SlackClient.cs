@@ -42,7 +42,7 @@ namespace JuvoProcess.Net.Slack
     /// <summary>
     /// Slack client.
     /// </summary>
-    public class SlackClient : ISlackClient
+    public class SlackClient : ISlackClient, IDisposable
     {
 /*/ Constants /*/
         private const string SlackParams = "simple_latest=1&no_unreads=1&pretty=1";
@@ -56,6 +56,7 @@ namespace JuvoProcess.Net.Slack
 
         private string apiToken = string.Empty;
         private List<SlackChannel> channels = new List<SlackChannel>();
+        private bool isDisposed = true;
         private string myId = string.Empty;
         private string myName = string.Empty;
         private List<SlackUser> users = new List<SlackUser>();
@@ -106,15 +107,16 @@ namespace JuvoProcess.Net.Slack
                 result = await response.Content.ReadAsStringAsync();
             }
 
+            // TODO: Properly check for null... the code below is ugly but gets by the nullref checks for now
             var jObject = JObject.Parse(result);
-            this.myId = jObject["self"]["id"].Value<string>();
-            this.myName = jObject["self"]["name"].Value<string>();
-            this.wsUrl = jObject["url"].Value<string>();
+            this.myId = jObject["self"] !["id"] !.Value<string>();
+            this.myName = jObject["self"] !["name"] !.Value<string>();
+            this.wsUrl = jObject["url"] !.Value<string>();
 
-            var tempJson = jObject["channels"].ToString();
+            var tempJson = jObject["channels"] !.ToString();
             this.channels = JsonConvert.DeserializeObject<List<SlackChannel>>(tempJson);
 
-            tempJson = jObject["users"].ToString();
+            tempJson = jObject["users"] !.ToString();
             this.users = JsonConvert.DeserializeObject<List<SlackUser>>(tempJson);
 
             this.webSocketCancelToken = new CancellationToken(false);
@@ -135,6 +137,13 @@ namespace JuvoProcess.Net.Slack
 
             await this.webSocket.CloseOutputAsync(WebSocketCloseStatus.Empty, string.Empty, this.webSocketCancelToken);
             await this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, this.webSocketCancelToken);
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <inheritdoc/>
@@ -182,6 +191,19 @@ namespace JuvoProcess.Net.Slack
     // Protected
 
         /// <summary>
+        /// Dispose of any resources.
+        /// </summary>
+        /// <param name="isDisposing">Is dispose being called on the object.</param>
+        protected virtual void Dispose(bool isDisposing)
+        {
+            if (isDisposing && !this.isDisposed)
+            {
+                this.emptyStringContent?.Dispose();
+                this.webSocket?.Dispose();
+            }
+        }
+
+        /// <summary>
         /// Called when <see cref="MessageReceived"/> is raised.
         /// </summary>
         /// <param name="arg">Data associated with the event.</param>
@@ -220,7 +242,7 @@ namespace JuvoProcess.Net.Slack
                 return;
             }
 
-            switch (jObject["type"].Value<string>().ToLowerInvariant())
+            switch (jObject["type"]?.Value<string>()?.ToLowerInvariant())
             {
                 case "message":
                 {

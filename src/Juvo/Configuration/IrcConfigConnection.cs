@@ -43,7 +43,7 @@ namespace JuvoProcess.Configuration
         public string? Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the network
+        /// Gets or sets the network.
         /// </summary>
         public string? Network { get; set; }
 

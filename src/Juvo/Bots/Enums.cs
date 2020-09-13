@@ -5,7 +5,7 @@
 namespace JuvoProcess.Bots
 {
     /// <summary>
-    /// Source type the command originated from
+    /// Source type the command originated from.
     /// </summary>
     public enum CommandSourceType
     {

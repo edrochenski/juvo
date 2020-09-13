@@ -23,7 +23,7 @@ namespace JuvoProcess.Net.Irc
         public const string ChannelIdents = "&#+!";
 
         /// <summary>
-        /// Line ending for IRC commands (\r\n)
+        /// Line ending for IRC commands (\r\n).
         /// </summary>
         public const string CrLf = "\r\n";
 
@@ -196,7 +196,7 @@ namespace JuvoProcess.Net.Irc
         public void Dispose()
         {
             this.Dispose(true);
-            GC.SuppressFinalize(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <inheritdoc/>

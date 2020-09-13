@@ -3,6 +3,7 @@
 // </copyright>
 namespace JuvoProcess.Logging
 {
+    using System;
     using System.Collections.Concurrent;
     using System.IO;
     using System.Linq;
@@ -16,6 +17,7 @@ namespace JuvoProcess.Logging
     {
         private readonly ConcurrentDictionary<string, ILogger> loggers;
         private string configFileName = string.Empty;
+        private bool isDisposed = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Log4NetLoggerProvider"/> class.
@@ -36,7 +38,20 @@ namespace JuvoProcess.Logging
         /// <inheritdoc/>
         public void Dispose()
         {
-            this.loggers.Clear();
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Dispose of any resources.
+        /// </summary>
+        /// <param name="isDisposing">Is dispose being called on the object.</param>
+        protected virtual void Dispose(bool isDisposing)
+        {
+            if (isDisposing && !this.isDisposed)
+            {
+                this.loggers?.Clear();
+            }
         }
 
         private Log4NetLogger CreateLoggerImplementation(string categoryName)

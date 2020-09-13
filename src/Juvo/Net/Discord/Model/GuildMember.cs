@@ -11,9 +11,6 @@ namespace JuvoProcess.Net.Discord.Model
     /// <summary>
     /// Represents a guild member object.
     /// </summary>
-    /// <remarks>
-    /// https://discordapp.com/developers/docs/resources/guild#guild-member-object
-    /// </remarks>
     public class GuildMember
     {
         /// <summary>

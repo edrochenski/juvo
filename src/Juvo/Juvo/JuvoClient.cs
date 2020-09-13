@@ -35,7 +35,7 @@ namespace JuvoProcess
     /// <summary>
     /// Juvo client.
     /// </summary>
-    public class JuvoClient : IJuvoClient
+    public class JuvoClient : IJuvoClient, IDisposable
     {
         /*/ Constants /*/
 
@@ -54,7 +54,7 @@ namespace JuvoProcess
         private readonly Timer commandTimer;
         private readonly IDiscordBotFactory discordBotFactory;
         private readonly IIrcBotFactory ircBotFactory;
-        private readonly Mutex lastPerfLock;
+        private readonly object lastPerfLock;
         private readonly Dictionary<string[], IBotPlugin> plugins;
         private readonly IServiceProvider serviceProvider;
         private readonly ISlackBotFactory slackBotFactory;
@@ -64,6 +64,7 @@ namespace JuvoProcess
         private readonly IWebHostBuilder webHostBuilder;
         private readonly CancellationToken webHostToken;
 
+        private bool isDisposed;
         private string lastPerf = string.Empty;
         private DateTime lastPerfTime;
         private List<JuvoUser>? users;
@@ -144,6 +145,13 @@ namespace JuvoProcess
 
         /*/ Methods /*/
 
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         /// <summary>
         /// Queues command for the bot to execute or pass on.
         /// </summary>
@@ -153,7 +161,7 @@ namespace JuvoProcess
             Debug.Assert(cmd != null, $"{nameof(cmd)} == null");
             Debug.Assert(!string.IsNullOrEmpty(cmd.RequestText), $"{nameof(cmd.RequestText)} != null/empty");
 
-            lock (this)
+            lock (this.commandQueue)
             {
                 this.commandQueue.Enqueue(cmd);
             }
@@ -192,7 +200,7 @@ namespace JuvoProcess
             if (this.commandQueue.Count > 0)
             {
                 var toRun = new List<IBotCommand>();
-                lock (this)
+                lock (this.commandQueue)
                 {
                     IBotCommand cmd;
                     while (this.commandQueue.Count > 0 && (cmd = this.commandQueue.Dequeue()) != null)
@@ -489,6 +497,22 @@ namespace JuvoProcess
             command.ResponseText = status.ToString();
 
             await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Disposes of any resources being used by this instance.
+        /// </summary>
+        /// <param name="isDisposing">Was dispose explicitly called.</param>
+        protected virtual void Dispose(bool isDisposing)
+        {
+            if (!this.isDisposed && isDisposing)
+            {
+                this.commandTimer?.Dispose();
+                this.resetEvent?.Dispose();
+                this.webHost?.Dispose();
+            }
+
+            this.isDisposed = true;
         }
 
         private IWebHost BuildWebHost()

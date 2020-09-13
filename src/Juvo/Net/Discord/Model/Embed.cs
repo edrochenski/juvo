@@ -48,7 +48,7 @@ namespace JuvoProcess.Net.Discord.Model
         public class EmbedAuthor
         {
             /// <summary>
-            /// Gets or sets the icon URL. (only supports http(s) and attachments)
+            /// Gets or sets the icon URL. (only supports http(s) and attachments).
             /// </summary>
             [JsonProperty(PropertyName = "icon_url")]
             public string IconUrl { get; set; } = string.Empty;
@@ -98,7 +98,7 @@ namespace JuvoProcess.Net.Discord.Model
         public class EmbedFooter
         {
             /// <summary>
-            /// Gets or sets the icon URL. (only supports http(s) and attachments)
+            /// Gets or sets the icon URL. (only supports http(s) and attachments).
             /// </summary>
             [JsonProperty(PropertyName = "icon_url")]
             public string IconUrl { get; set; } = string.Empty;
@@ -132,7 +132,7 @@ namespace JuvoProcess.Net.Discord.Model
             public string ProxyUrl { get; set; } = string.Empty;
 
             /// <summary>
-            /// Gets or sets the source. (only supports http(s) and attachments)
+            /// Gets or sets the source. (only supports http(s) and attachments).
             /// </summary>
             public string Url { get; set; } = string.Empty;
 
@@ -175,7 +175,7 @@ namespace JuvoProcess.Net.Discord.Model
             public string ProxyUrl { get; set; } = string.Empty;
 
             /// <summary>
-            /// Gets or sets the source. (only supports http(s) and attachments)
+            /// Gets or sets the source. (only supports http(s) and attachments).
             /// </summary>
             public string Url { get; set; } = string.Empty;
 
@@ -196,7 +196,7 @@ namespace JuvoProcess.Net.Discord.Model
             public int? Height { get; set; }
 
             /// <summary>
-            /// Gets or sets the source. (only supports http(s) and attachments)
+            /// Gets or sets the source. (only supports http(s) and attachments).
             /// </summary>
             public string Url { get; set; } = string.Empty;
 

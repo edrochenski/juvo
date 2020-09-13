@@ -89,6 +89,7 @@ namespace JuvoProcess.Net.Discord
         private readonly ILogManager? logManager;
         private readonly IClientWebSocket socket;
         private bool isConnected;
+        private bool isDisposed;
         private int? lastSequence;
 
         /*/ Constructors /*/
@@ -213,7 +214,8 @@ namespace JuvoProcess.Net.Discord
         /// </summary>
         public void Dispose()
         {
-            this.socket?.Dispose();
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <inheritdoc/>
@@ -235,6 +237,21 @@ namespace JuvoProcess.Net.Discord
         }
 
         /// <summary>
+        /// Dispose of any resources.
+        /// </summary>
+        /// <param name="isDisposing">Is dispose being called on the object.</param>
+        protected virtual void Dispose(bool isDisposing)
+        {
+            if (!this.isDisposed && isDisposing)
+            {
+                this.socket?.Dispose();
+                this.heartbeatTimer?.Dispose();
+            }
+
+            this.isDisposed = true;
+        }
+
+        /// <summary>
         /// Called when the client is disconnected.
         /// </summary>
         /// <param name="data">Data associated with the disconnection.</param>
@@ -244,7 +261,7 @@ namespace JuvoProcess.Net.Discord
         }
 
         /// <summary>
-        /// Called when a new guild is "created."
+        /// Called when a new guild is created.
         /// </summary>
         /// <param name="response">Data associated with the response.</param>
         protected virtual void OnGuildCreated(GuildCreateResponse response)
@@ -422,51 +439,78 @@ namespace JuvoProcess.Net.Discord
         private async Task HandleMessage(string message)
         {
             var msg = JObject.Parse(message);
-            switch ((int)msg["op"])
+            var msgOp = msg["op"];
+            var msgT = msg["t"]?.ToString();
+
+            if (msgOp is null || msg["t"] is null) { return; }
+            switch ((int)msgOp)
             {
                 case 0: // Dispatch
-                    switch (msg["t"].ToString())
+                {
+                    switch (msgT)
                     {
                         case "GUILD_CREATE":
-                            this.OnGuildCreated(msg.ToObject<GuildCreateResponse>());
+                        {
+                            var response = msg.ToObject<GuildCreateResponse>();
+                            if (response is GuildCreateResponse) { this.OnGuildCreated(response); }
                             break;
+                        }
+
                         case "MESSAGE_CREATE":
-                            this.OnMessageReceived(msg.ToObject<MessageCreateResponse>());
+                        {
+                            var response = msg.ToObject<MessageCreateResponse>();
+                            if (response is MessageCreateResponse) { this.OnMessageReceived(response); }
                             break;
+                        }
+
                         case "PRESENCE_UPDATE":
-                            this.OnPresenceUpdatedReceived(msg.ToObject<PresenceUpdateResponse>());
+                        {
+                            var response = msg.ToObject<PresenceUpdateResponse>();
+                            if (response is PresenceUpdateResponse) { this.OnPresenceUpdatedReceived(response); }
                             break;
+                        }
+
                         case "READY":
-                            this.OnReadyReceived(msg.ToObject<ReadyEventData>());
+                        {
+                            var response = msg.ToObject<ReadyEventData>();
+                            if (response is ReadyEventData) { this.OnReadyReceived(response); }
                             break;
+                        }
 
                         default:
+                        {
                             this.log?.Warn($"Not capturing '{msg["t"]}' event.");
                             break;
+                        }
                     }
 
                     break;
+                }
 
                 case 1: // Heartbeat
-
-                    break;
-
                 case 9: // Invalid Session
-
+                {
                     break;
+                }
 
                 case 10: // Hello
-                    await this.OnHelloResponseReceived(msg.ToObject<HelloResponse>());
+                {
+                    var response = msg.ToObject<HelloResponse>();
+                    if (response is HelloResponse) { await this.OnHelloResponseReceived(response); }
                     break;
+                }
 
                 case 11: // Heartbeat ACK
+                {
                     this.log?.Info($"{RecInd} Heartbeat ACK");
                     break;
+                }
 
                 default:
-                    this.log?.Warn(
-                        msg.ToString().Replace("\n", string.Empty).Replace("\r", string.Empty));
+                {
+                    this.log?.Warn(msg.ToString().Replace("\n", string.Empty).Replace("\r", string.Empty));
                     break;
+                }
             }
         }
 

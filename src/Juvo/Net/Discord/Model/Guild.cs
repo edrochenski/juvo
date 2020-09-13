@@ -12,7 +12,7 @@ namespace JuvoProcess.Net.Discord.Model
     /// channels often referred to as "servers" in the UI.
     /// </summary>
     /// <remarks>
-    /// More info: https://discordapp.com/developers/docs/resources/guild
+    /// <see href="https://discordapp.com/developers/docs/resources/guild">More info</see>.
     /// </remarks>
     public class Guild
     {
@@ -47,7 +47,7 @@ namespace JuvoProcess.Net.Discord.Model
         public string EmbedChannelId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets if the guild is embeddable (i.e. widget)
+        /// Gets or sets if the guild is embeddable (i.e. widget).
         /// </summary>
         [JsonProperty(PropertyName = "embed_enabled")]
         public bool? EmbedEnabled { get; set; }
@@ -71,10 +71,6 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the icon hash.
         /// </summary>
-        /// <remarks>
-        /// Discord uses IDs/hashes to render images to the client, more @
-        /// https://discordapp.com/developers/docs/reference#image-formatting
-        /// </remarks>
         public string Icon { get; set; } = string.Empty;
 
         /// <summary>
@@ -98,7 +94,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets if the current user is the owner.
         /// </summary>
         /// <remarks>
-        /// Have not seen this in the logs, maybe deprecated?
+        /// Have not seen this in the logs, possibly deprecated.
         /// </remarks>
         public bool? Owner { get; set; }
 
@@ -115,9 +111,6 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the voice region ID.
         /// </summary>
-        /// <remarks>
-        /// https://discordapp.com/developers/docs/resources/voice#voice-region
-        /// </remarks>
         public string Region { get; set; } = string.Empty;
 
         /// <summary>
@@ -129,8 +122,7 @@ namespace JuvoProcess.Net.Discord.Model
         /// Gets or sets the splash hash.
         /// </summary>
         /// <remarks>
-        /// Discord uses IDs/hashes to render images to the client, more @
-        /// https://discordapp.com/developers/docs/reference#image-formatting
+        /// Discord uses IDs/hashes to render images to the client.
         /// </remarks>
         public string Splash { get; set; } = string.Empty;
 
@@ -143,9 +135,6 @@ namespace JuvoProcess.Net.Discord.Model
         /// <summary>
         /// Gets or sets the verification level.
         /// </summary>
-        /// <remarks>
-        /// https://discordapp.com/developers/docs/resources/guild#guild-object-verification-level
-        /// </remarks>
         [JsonProperty(PropertyName = "verification_level")]
         public VerificationLevel VerificationLevel { get; set; }
 
