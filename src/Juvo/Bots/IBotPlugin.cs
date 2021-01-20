@@ -17,10 +17,16 @@ namespace JuvoProcess.Bots
         IList<string> Commands { get; }
 
         /// <summary>
+        /// Gets the collection of times (minutes) to have the bot execute a command.
+        /// </summary>
+        IList<int>? CommandTimeMin { get; } // nocommit: need to rethink name and process a bit?
+
+        /// <summary>
         /// Test method.
         /// </summary>
         /// <param name="cmd">Command to execute.</param>
+        /// <param name="client">Host client of the plugin.</param>
         /// <returns>Updated command object.</returns>
-        Task<IBotCommand> Execute(IBotCommand cmd);
+        Task<IBotCommand> Execute(IBotCommand cmd, IJuvoClient client);
     }
 }

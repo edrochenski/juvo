@@ -13,17 +13,19 @@ namespace JuvoProcess.Bots
         /// Initializes a new instance of the <see cref="BotCommand"/> class.
         /// </summary>
         /// <param name="bot">Bot that received the command.</param>
+        /// <param name="triggeredBy">Source that triggered the command.</param>
         /// <param name="source">Source of the command.</param>
         /// <param name="request">Request text.</param>
-        public BotCommand(IBot bot, CommandSource source, string request)
+        public BotCommand(IBot? bot, CommandTriggerType triggeredBy, CommandSource source, string request)
         {
             this.Bot = bot;
             this.Source = source;
             this.RequestText = request;
+            this.TriggeredBy = triggeredBy;
         }
 
         /// <inheritdoc/>
-        public IBot Bot { get; set; }
+        public IBot? Bot { get; set; }
 
         /// <inheritdoc/>
         public string RequestText { get; set; }
@@ -33,5 +35,8 @@ namespace JuvoProcess.Bots
 
         /// <inheritdoc/>
         public CommandSource Source { get; set; }
+
+        /// <inheritdoc/>
+        public CommandTriggerType TriggeredBy { get; set; }
     }
 }

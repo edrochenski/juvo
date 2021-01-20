@@ -26,6 +26,10 @@
     <DocumentationFile>bin\Release\netcoreapp2.0\juvo.xml</DocumentationFile>
     <CodeAnalysisRuleSet>Juvo.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="Plugins\HackerNewsPlugin.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="log4net.config" />
@@ -44,6 +48,10 @@
     <Content Include="wwwroot\index.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Plugins\HackerNewsPlugin.cs" />
   </ItemGroup>
 
   <ItemGroup>

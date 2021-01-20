@@ -29,4 +29,30 @@ namespace JuvoProcess.Bots
         /// </summary>
         Message = 2
     }
+
+    /// <summary>
+    /// Type of source that triggered the command.
+    /// </summary>
+    public enum CommandTriggerType
+    {
+        /// <summary>
+        /// Unknown.
+        /// </summary>
+        Unknown = -1,
+
+        /// <summary>
+        /// None.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// User.
+        /// </summary>
+        User = 1,
+
+        /// <summary>
+        /// Timer.
+        /// </summary>
+        Timer = 2
+    }
 }

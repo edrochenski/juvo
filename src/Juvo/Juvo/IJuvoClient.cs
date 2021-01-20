@@ -4,6 +4,7 @@
 
 namespace JuvoProcess
 {
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
@@ -14,6 +15,11 @@ namespace JuvoProcess
     /// </summary>
     public interface IJuvoClient
     {
+        /// <summary>
+        /// Gets a list of bots running on the client.
+        /// </summary>
+        List<IBot> Bots { get; }
+
         /// <summary>
         /// Gets the config.
         /// </summary>
@@ -34,6 +40,13 @@ namespace JuvoProcess
         /// </summary>
         /// <param name="cmd">Command to execute.</param>
         void QueueCommand(IBotCommand cmd);
+
+        /// <summary>
+        /// Queues a response for a specific bot.
+        /// </summary>
+        /// <param name="cmd">Command containing the source and response.</param>
+        /// <returns>Result of the call.</returns>
+        Task QueueResponse(IBotCommand cmd);
 
         /// <summary>
         /// Starts the bot.

@@ -12,7 +12,7 @@ namespace JuvoProcess.Bots
         /// <summary>
         /// Gets or sets the bot associated with the command.
         /// </summary>
-        IBot Bot { get; set; }
+        IBot? Bot { get; set; }
 
         /// <summary>
         /// Gets or sets the request.
@@ -28,5 +28,10 @@ namespace JuvoProcess.Bots
         /// Gets or sets the source of the command.
         /// </summary>
         CommandSource Source { get; set; }
+
+        /// <summary>
+        /// Gets or sets the source of what triggered the command.
+        /// </summary>
+        CommandTriggerType TriggeredBy { get; set; }
     }
 }

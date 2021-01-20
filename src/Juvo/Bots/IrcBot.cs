@@ -203,7 +203,8 @@ namespace JuvoProcess.Bots
                     {
                         Identifier = e.Channel,
                         SourceType = CommandSourceType.ChannelOrGroup
-                    }
+                    },
+                    TriggeredBy = CommandTriggerType.User
                 });
             }
             else

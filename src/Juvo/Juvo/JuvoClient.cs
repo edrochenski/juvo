@@ -66,6 +66,7 @@ namespace JuvoProcess
         private readonly IWebHostBuilder webHostBuilder;
         private readonly CancellationToken webHostToken;
 
+        private int commandTimerLastMin = -1;
         private bool isDisposed;
         private string lastPerf = string.Empty;
         private DateTime lastPerfTime;
@@ -138,6 +139,9 @@ namespace JuvoProcess
         /*/ Properties /*/
 
         /// <inheritdoc/>
+        public List<IBot> Bots => this.bots;
+
+        /// <inheritdoc/>
         public Config Config { get; }
 
         /// <inheritdoc/>
@@ -178,12 +182,28 @@ namespace JuvoProcess
         }
 
         /// <inheritdoc/>
+        public async Task QueueResponse(IBotCommand cmd)
+        {
+            this.Log?.Debug(DebugResx.EnqueuingResponse);
+            if (cmd.Bot != null)
+            {
+                await cmd.Bot.QueueResponse(cmd);
+            }
+        }
+
+        /// <inheritdoc/>
         public async Task Run()
         {
             this.CreateResources();
             this.LoadUsers();
-            this.LoadPlugins();
             this.LoadConfig();
+
+            if (!this.LoadPlugins() && this.Config.Juvo != null && this.Config.Juvo.StopOnCompileErrors)
+            {
+                Environment.Exit(-1);
+                return;
+            }
+
             await this.StartBots();
 
             if (this.Config.WebServer != null && this.Config.WebServer.Enabled)
@@ -218,6 +238,23 @@ namespace JuvoProcess
                 }
 
                 await Task.Run(() => toRun.ForEach(async cmd => await this.ProcessCommand(cmd)));
+            }
+
+            if (this.commandTimerLastMin != DateTime.Now.Minute && this.plugins.Count > 0)
+            {
+                this.commandTimerLastMin = DateTime.Now.Minute;
+                foreach (var plugin in this.plugins.Values)
+                {
+                    if (plugin.CommandTimeMin is null || !plugin.CommandTimeMin.Contains(DateTime.Now.Minute))
+                    {
+                        continue;
+                    }
+
+                    var src = new CommandSource { SourceType = CommandSourceType.None };
+                    var cmd = new BotCommand(null, CommandTriggerType.Timer, src, string.Empty);
+
+                    await plugin.Execute(cmd, this); // nocommit: how do we know where to send the unsolicited response??
+                }
             }
 
             lock (this.lastPerfLock)
@@ -559,7 +596,7 @@ namespace JuvoProcess
                 // HACK: This needs to go away, look into `dotnet --info, --version, --list-runtimes`
                 var assemblyFullPath = Path.Combine(assemblyPath, $"{name}.dll");
                 var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                    ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\5.0.0-preview.7.20364.11\"
+                    ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\5.0.2\"
                     : @"/usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.2/";
 
                 var compilation = CSharpCompilation.Create(name)
@@ -568,10 +605,14 @@ namespace JuvoProcess
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "mscorlib.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "netstandard.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Linq.dll")),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Net.dll")),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Net.Http.dll")),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Private.Uri.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Runtime.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Threading.Tasks.dll")),
                         MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
                         MetadataReference.CreateFromFile(typeof(AngleSharp.Configuration).GetTypeInfo().Assembly.Location),
+                        MetadataReference.CreateFromFile(typeof(JsonConvert).GetTypeInfo().Assembly.Location),
                         MetadataReference.CreateFromFile(this.GetType().Assembly.Location))
                     .AddSyntaxTrees(CSharpSyntaxTree.ParseText(code));
 
@@ -654,8 +695,10 @@ namespace JuvoProcess
             }
         }
 
-        private void LoadPlugins()
+        private bool LoadPlugins()
         {
+            var loadResult = true;
+
             this.Log?.Info(InfoResx.LoadingPlugins);
 
             var scriptPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo?.BasePath ?? string.Empty, "scripts"));
@@ -670,7 +713,7 @@ namespace JuvoProcess
                     .Where(s => s.Enabled && this.storageHandler.FileExists(Path.Combine(scriptPath, s.Script ?? string.Empty)));
                 if (scripts == null || !scripts.Any())
                 {
-                    return;
+                    return loadResult;
                 }
 
                 if (!this.storageHandler.DirectoryExists(binPath))
@@ -699,6 +742,8 @@ namespace JuvoProcess
 
                     if (result != null && !result.Success)
                     {
+                        loadResult = false;
+
                         this.Log?.Warn($"Failed to compile script '{scriptName}':");
                         foreach (var diag in result.Diagnostics)
                         {
@@ -722,6 +767,7 @@ namespace JuvoProcess
                         var instance = Activator.CreateInstance(type) as IBotPlugin;
                         if (instance == null)
                         {
+                            loadResult = false;
                             this.Log?.Warn($"Could not instantiate plugin '{scriptName}'");
                             continue;
                         }
@@ -732,6 +778,8 @@ namespace JuvoProcess
                     }
                 }
             }
+
+            return loadResult;
         }
 
         private void LoadUsers()
@@ -800,7 +848,7 @@ namespace JuvoProcess
                 {
                     try
                     {
-                        await module.Value.Execute(cmd);
+                        await module.Value.Execute(cmd, this);
                     }
                     catch (Exception exc)
                     {
@@ -815,11 +863,7 @@ namespace JuvoProcess
                 }
             }
 
-            this.Log?.Debug(DebugResx.EnqueuingResponse);
-            if (cmd.Bot != null)
-            {
-                await cmd.Bot.QueueResponse(cmd);
-            }
+            await this.QueueResponse(cmd);
         }
 
         private async Task StartBots()

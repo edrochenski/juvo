@@ -118,7 +118,8 @@ namespace JuvoProcess.Bots
                     {
                         Identifier = arg.Channel,
                         SourceType = CommandSourceType.ChannelOrGroup
-                    }
+                    },
+                    TriggeredBy = CommandTriggerType.User
                 });
 
                 // var greet = greetings[random.Next(0, greetings.Length - 1)];

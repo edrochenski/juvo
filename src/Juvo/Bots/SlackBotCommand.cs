@@ -9,7 +9,7 @@ namespace JuvoProcess.Bots
     public struct SlackBotCommand : IBotCommand
     {
         /// <inheritdoc/>
-        public IBot Bot { get; set; }
+        public IBot? Bot { get; set; }
 
         /// <inheritdoc/>
         public string RequestText { get; set; }
@@ -19,5 +19,8 @@ namespace JuvoProcess.Bots
 
         /// <inheritdoc/>
         public CommandSource Source { get; set; }
+
+        /// <inheritdoc/>
+        public CommandTriggerType TriggeredBy { get; set; }
     }
 }

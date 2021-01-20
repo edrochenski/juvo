@@ -54,6 +54,19 @@ namespace JuvoProcess.Bots
                 && this.SourceType == temp?.SourceType;
         }
 
+        /// <summary>
+        /// Gets a value-based copy of the object.
+        /// </summary>
+        /// <returns>Copy of the this object.</returns>
+        public CommandSource GetCopy()
+        {
+            return new CommandSource
+            {
+                Identifier = this.Identifier,
+                SourceType = this.SourceType
+            };
+        }
+
         /// <inheritdoc/>
         public override int GetHashCode()
         {
