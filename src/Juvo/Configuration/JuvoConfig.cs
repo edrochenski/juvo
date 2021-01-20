@@ -24,6 +24,12 @@ namespace JuvoProcess.Configuration
         public string? DataPath { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the bot should stop/shutdown
+        /// if it encounters errors while compiling scripts.
+        /// </summary>
+        public bool StopOnCompileErrors { get; set; }
+
+        /// <summary>
         /// Gets or sets the scripts from the configuration file.
         /// </summary>
         public IEnumerable<JuvoConfigScript>? Scripts { get; set; }

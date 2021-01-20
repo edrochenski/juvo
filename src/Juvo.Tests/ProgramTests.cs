@@ -4,9 +4,6 @@
 
 namespace Juvo.Tests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
     using JuvoProcess;
     using Moq;
     using Xunit;
@@ -17,8 +14,7 @@ namespace Juvo.Tests
         public void CreateInstance()
         {
             var program = new Program(
-                new Mock<IJuvoClient>().Object,
-                new Mock<ILogManager>().Object);
+                new Mock<IJuvoClient>().Object);
             Assert.NotNull(program);
         }
     }

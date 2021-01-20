@@ -39,8 +39,6 @@ namespace JuvoProcess
         private static IServiceProvider? serviceProvider;
 
         private readonly IJuvoClient juvoClient;
-        private readonly ILog log;
-        private readonly ILogManager logManager;
 
         /*/ Constructors /*/
 
@@ -54,13 +52,9 @@ namespace JuvoProcess
         /// Initializes a new instance of the <see cref="Program"/> class.
         /// </summary>
         /// <param name="juvoClient">Client to use.</param>
-        /// <param name="logManager">Log Manager to use.</param>
-        public Program(IJuvoClient juvoClient, ILogManager logManager)
+        public Program(IJuvoClient juvoClient)
         {
-            this.logManager = logManager ?? throw new ArgumentNullException(nameof(logManager));
             this.juvoClient = juvoClient ?? throw new ArgumentNullException(nameof(juvoClient));
-
-            this.log = this.logManager.GetLogger(typeof(Program));
         }
 
         /*/ Properties /*/
@@ -129,8 +123,7 @@ namespace JuvoProcess
             SetupDependencies();
 
             Instance = new Program(
-                serviceProvider.GetService<IJuvoClient>(),
-                serviceProvider.GetService<ILogManager>());
+                serviceProvider.GetService<IJuvoClient>());
 
             Instance.juvoClient.Run().Wait();
             WaitHandle.WaitAll(new[] { ResetEvent });
