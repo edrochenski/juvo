@@ -7,6 +7,7 @@ namespace JuvoProcess
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
+    using JuvoProcess.Net;
 
     /// <summary>
     /// Representation of a Juvo Client object.
@@ -17,6 +18,11 @@ namespace JuvoProcess
         /// Gets the config.
         /// </summary>
         Config Config { get; }
+
+        /// <summary>
+        /// Gets the HTTP client.
+        /// </summary>
+        IHttpClient HttpClient { get; }
 
         /// <summary>
         /// Gets the log.

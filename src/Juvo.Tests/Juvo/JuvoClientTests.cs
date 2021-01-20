@@ -11,6 +11,7 @@ namespace Juvo.Tests.Juvo
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
     using JuvoProcess.IO;
+    using JuvoProcess.Net;
     using Microsoft.AspNetCore.Hosting;
     using Moq;
     using Xunit;
@@ -32,6 +33,7 @@ namespace Juvo.Tests.Juvo
                 new Mock<ILogManager>().Object,
                 new Mock<IWebHostBuilder>().Object,
                 storageMock.Object,
+                new Mock<IHttpClient>().Object,
                 new ManualResetEvent(false));
             Assert.NotNull(instance);
             instance.Run().Wait(1000);

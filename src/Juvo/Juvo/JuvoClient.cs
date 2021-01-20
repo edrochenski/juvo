@@ -21,6 +21,7 @@ namespace JuvoProcess
     using JuvoProcess.Configuration;
     using JuvoProcess.IO;
     using JuvoProcess.Juvo;
+    using JuvoProcess.Net;
     using JuvoProcess.Resources;
     using JuvoProcess.Resources.Commands;
     using JuvoProcess.Resources.Logging;
@@ -53,6 +54,7 @@ namespace JuvoProcess
         private readonly Dictionary<string[], Func<IBotCommand, Task>> commands;
         private readonly Timer commandTimer;
         private readonly IDiscordBotFactory discordBotFactory;
+        private readonly IHttpClient httpClient;
         private readonly IIrcBotFactory ircBotFactory;
         private readonly object lastPerfLock;
         private readonly Dictionary<string[], IBotPlugin> plugins;
@@ -84,6 +86,7 @@ namespace JuvoProcess
         /// <param name="logManager">Log manager.</param>
         /// <param name="webHostBuilder">Webhost builder object for creating a web server.</param>
         /// <param name="storageHandler">Storage handler for working with files/dirs.</param>
+        /// <param name="httpClient">HTTP client instance for web-based requests.</param>
         /// <param name="resetEvent">Manual reset object for thread.</param>
         public JuvoClient(
             Config configuration,
@@ -94,17 +97,19 @@ namespace JuvoProcess
             ILogManager logManager,
             IWebHostBuilder webHostBuilder,
             IStorageHandler storageHandler,
+            IHttpClient httpClient,
             ManualResetEvent? resetEvent = null)
         {
-            this.Config = configuration ?? throw new ArgumentException(nameof(configuration));
+            this.Config            = configuration ?? throw new ArgumentException(nameof(configuration));
             this.discordBotFactory = discordBotFactory ?? throw new ArgumentNullException(nameof(discordBotFactory));
-            this.ircBotFactory = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
-            this.resetEvent = resetEvent ?? new ManualResetEvent(false);
-            this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-            this.slackBotFactory = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
-            this.storageHandler = storageHandler ?? throw new ArgumentNullException(nameof(storageHandler));
-            this.webHostToken = default;
-            this.webHostBuilder = webHostBuilder;
+            this.httpClient        = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            this.ircBotFactory     = ircBotFactory ?? throw new ArgumentNullException(nameof(ircBotFactory));
+            this.resetEvent        = resetEvent ?? new ManualResetEvent(false);
+            this.serviceProvider   = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            this.slackBotFactory   = slackBotFactory ?? throw new ArgumentNullException(nameof(slackBotFactory));
+            this.storageHandler    = storageHandler ?? throw new ArgumentNullException(nameof(storageHandler));
+            this.webHostToken      = default;
+            this.webHostBuilder    = webHostBuilder;
 
             this.bots = new List<IBot>();
             this.commandQueue = new Queue<IBotCommand>();
@@ -134,6 +139,9 @@ namespace JuvoProcess
 
         /// <inheritdoc/>
         public Config Config { get; }
+
+        /// <inheritdoc/>
+        public IHttpClient HttpClient => this.httpClient;
 
         /// <inheritdoc/>
         public ILog? Log { get; }
