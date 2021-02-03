@@ -4,11 +4,13 @@
 
 namespace JuvoProcess
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using JuvoProcess.Bots;
     using JuvoProcess.Configuration;
     using JuvoProcess.Net;
+    using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// Representation of a Juvo Client object.
@@ -31,9 +33,12 @@ namespace JuvoProcess
         IHttpClient HttpClient { get; }
 
         /// <summary>
-        /// Gets the log.
+        /// Logs a message to all available log outputs.
         /// </summary>
-        ILog? Log { get; }
+        /// <param name="level">Level to use.</param>
+        /// <param name="message">Message to write.</param>
+        /// <param name="exception">Exception to include.</param>
+        void Log(LogLevel level, object message, Exception? exception = null);
 
         /// <summary>
         /// Queues a command for the bot to execute.

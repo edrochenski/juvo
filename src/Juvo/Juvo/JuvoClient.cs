@@ -31,6 +31,7 @@ namespace JuvoProcess
     using Microsoft.CodeAnalysis.CSharp;
     using Microsoft.CodeAnalysis.Emit;
     using Microsoft.Extensions.FileProviders;
+    using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -116,7 +117,7 @@ namespace JuvoProcess
             this.commandQueue = new Queue<IBotCommand>();
             this.commandTimer = new Timer(this.CommandTimerTick, null, TimerTickRate, TimerTickRate);
             this.lastPerfLock = new Mutex();
-            this.Log = logManager?.GetLogger(typeof(JuvoClient));
+            this.Logger = logManager?.GetLogger(typeof(JuvoClient));
             this.plugins = new Dictionary<string[], IBotPlugin>();
             this.started = DateTime.UtcNow;
             this.State = JuvoState.Idle;
@@ -147,13 +148,15 @@ namespace JuvoProcess
         /// <inheritdoc/>
         public IHttpClient HttpClient => this.httpClient;
 
-        /// <inheritdoc/>
-        public ILog? Log { get; }
-
         /// <summary>
         /// Gets or sets the bot's current state.
         /// </summary>
         public JuvoState State { get; protected set; }
+
+        /// <summary>
+        /// Gets the log to use.
+        /// </summary>
+        protected ILog? Logger { get; }
 
         /*/ Methods /*/
 
@@ -162,6 +165,23 @@ namespace JuvoProcess
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <inheritdoc/>
+        public void Log(LogLevel level, object message, Exception? exception = null)
+        {
+            if (this.Logger is null) { return; }
+
+            switch (level)
+            {
+                case LogLevel.Critical:     this.Logger.Fatal(message, exception); break;
+                case LogLevel.Debug:        this.Logger.Debug(message, exception); break;
+                case LogLevel.Error:        this.Logger.Error(message, exception); break;
+                case LogLevel.Information:  this.Logger.Info(message, exception); break;
+                case LogLevel.None:         break;
+                case LogLevel.Trace:        this.Logger.Debug(message, exception); break;
+                case LogLevel.Warning:      this.Logger.Warn(message, exception); break;
+            }
         }
 
         /// <summary>
@@ -178,13 +198,13 @@ namespace JuvoProcess
                 this.commandQueue.Enqueue(cmd);
             }
 
-            this.Log?.Info(DebugResx.CommandEnqueued);
+            this.Logger?.Info(DebugResx.CommandEnqueued);
         }
 
         /// <inheritdoc/>
         public async Task QueueResponse(IBotCommand cmd)
         {
-            this.Log?.Debug(DebugResx.EnqueuingResponse);
+            this.Logger?.Debug(DebugResx.EnqueuingResponse);
             if (cmd.Bot != null)
             {
                 await cmd.Bot.QueueResponse(cmd);
@@ -212,11 +232,11 @@ namespace JuvoProcess
             }
             else
             {
-                this.Log?.Warn(WarnResx.WebServerDisabled);
+                this.Logger?.Warn(WarnResx.WebServerDisabled);
             }
 
             this.State = JuvoState.Running;
-            this.Log?.Info(InfoResx.BotRunning);
+            this.Logger?.Info(InfoResx.BotRunning);
         }
 
         /// <summary>
@@ -445,7 +465,7 @@ namespace JuvoProcess
             {
                 var msg = $"Error: {exc.Message}";
                 command.ResponseText = msg;
-                this.Log?.Error(msg, exc);
+                this.Logger?.Error(msg, exc);
             }
 
             await Task.CompletedTask;
@@ -481,7 +501,7 @@ namespace JuvoProcess
                     catch (Exception exc)
                     {
                         var message = $"{SetResx.ErrorSettingCulture}: {exc.Message}";
-                        this.Log?.Error(message, exc);
+                        this.Logger?.Error(message, exc);
                         command.ResponseText = message;
                     }
 
@@ -506,7 +526,7 @@ namespace JuvoProcess
                 quitMsg = string.Join(' ', cmdTokens, 1, cmdTokens.Length - 1);
             }
 
-            this.Log?.Info(InfoResx.ShuttingDown);
+            this.Logger?.Info(InfoResx.ShuttingDown);
             await this.StopBots(quitMsg);
             await this.StopWebServer();
 
@@ -620,20 +640,20 @@ namespace JuvoProcess
             }
             catch (FileNotFoundException exc)
             {
-                this.Log?.Error("This exception was most likely caused by referencing a missing version of the .NETCore runtime");
-                this.Log?.Error($"CompileAssembly(): {exc.Message}");
+                this.Logger?.Error("This exception was most likely caused by referencing a missing version of the .NETCore runtime");
+                this.Logger?.Error($"CompileAssembly(): {exc.Message}");
                 return null;
             }
             catch (Exception exc)
             {
-                this.Log?.Error($"CompileAssembly(): {exc.Message}");
+                this.Logger?.Error($"CompileAssembly(): {exc.Message}");
                 return null;
             }
         }
 
         private void CreateResources()
         {
-            this.Log?.Info(InfoResx.CreatingMissingResources);
+            this.Logger?.Info(InfoResx.CreatingMissingResources);
 
             if (this.Config.Juvo?.BasePath != null)
             { this.storageHandler.DirectoryCreate(this.Config.Juvo.BasePath); }
@@ -659,7 +679,7 @@ namespace JuvoProcess
 
         private void LoadConfig()
         {
-            this.Log?.Info(InfoResx.LoadingConfigFile);
+            this.Logger?.Info(InfoResx.LoadingConfigFile);
 
             if (this.Config.Discord != null && this.Config.Discord.Enabled)
             {
@@ -699,13 +719,13 @@ namespace JuvoProcess
         {
             var loadResult = true;
 
-            this.Log?.Info(InfoResx.LoadingPlugins);
+            this.Logger?.Info(InfoResx.LoadingPlugins);
 
             var scriptPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo?.BasePath ?? string.Empty, "scripts"));
             var binPath = Environment.ExpandEnvironmentVariables(Path.Combine(this.Config.Juvo?.DataPath ?? string.Empty, "bin"));
 
-            this.Log?.Debug($"Script Path: {scriptPath}");
-            this.Log?.Debug($"Bin Path   : {binPath}");
+            this.Logger?.Debug($"Script Path: {scriptPath}");
+            this.Logger?.Debug($"Bin Path   : {binPath}");
 
             if (this.storageHandler.DirectoryExists(scriptPath))
             {
@@ -744,23 +764,23 @@ namespace JuvoProcess
                     {
                         loadResult = false;
 
-                        this.Log?.Warn($"Failed to compile script '{scriptName}':");
+                        this.Logger?.Warn($"Failed to compile script '{scriptName}':");
                         foreach (var diag in result.Diagnostics)
                         {
-                            this.Log?.Warn($"  {diag}");
+                            this.Logger?.Warn($"  {diag}");
                         }
 
                         continue;
                     }
 
                     var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
-                    this.Log?.Info($"[Plugin: {scriptName}] Compiled {scriptName} into assembly ({stopWatch.ElapsedMilliseconds}ms)");
+                    this.Logger?.Info($"[Plugin: {scriptName}] Compiled {scriptName} into assembly ({stopWatch.ElapsedMilliseconds}ms)");
 
                     foreach (var type in assembly.GetTypes())
                     {
                         if (type.IsAbstract || type.GetInterface(typeof(IBotPlugin).ToString(), true) == null)
                         {
-                            this.Log?.Debug($"[Plugin: {scriptName}] Skipping {type.FullName}");
+                            this.Logger?.Debug($"[Plugin: {scriptName}] Skipping {type.FullName}");
                             continue;
                         }
 
@@ -768,13 +788,13 @@ namespace JuvoProcess
                         if (instance == null)
                         {
                             loadResult = false;
-                            this.Log?.Warn($"Could not instantiate plugin '{scriptName}'");
+                            this.Logger?.Warn($"Could not instantiate plugin '{scriptName}'");
                             continue;
                         }
 
                         this.plugins.Add(instance.Commands.ToArray(), instance);
-                        this.Log?.Info($"[Plugin: {scriptName}] Loaded!");
-                        this.Log?.Info($"[Plugin: {scriptName}] Commands: {string.Join(", ", instance.Commands)}");
+                        this.Logger?.Info($"[Plugin: {scriptName}] Loaded!");
+                        this.Logger?.Info($"[Plugin: {scriptName}] Commands: {string.Join(", ", instance.Commands)}");
                     }
                 }
             }
@@ -784,7 +804,7 @@ namespace JuvoProcess
 
         private void LoadUsers()
         {
-            this.Log?.Info($"{InfoResx.LoadingUsers}...");
+            this.Logger?.Info($"{InfoResx.LoadingUsers}...");
 
             var userFile = Environment.ExpandEnvironmentVariables(this.Config.Juvo?.BasePath ?? string.Empty);
             userFile = Path.Combine(userFile, UserFileName);
@@ -819,12 +839,12 @@ namespace JuvoProcess
                 this.lastPerfTime = DateTime.UtcNow;
             }
 
-            this.Log?.Info(this.lastPerf);
+            this.Logger?.Info(this.lastPerf);
         }
 
         private async Task ProcessCommand(IBotCommand cmd)
         {
-            this.Log?.Info(InfoResx.ProcessingCommand);
+            this.Logger?.Info(InfoResx.ProcessingCommand);
             var cmdName = cmd.RequestText.Split(' ')[0].ToLowerInvariant();
 
             var command = this.commands.SingleOrDefault(c => c.Key.Contains(cmdName));
@@ -837,7 +857,7 @@ namespace JuvoProcess
                 catch (Exception exc)
                 {
                     var message = string.Format(InfoResx.ErrorExecCommand, command.Value.Method.Name);
-                    this.Log?.Error(message, exc);
+                    this.Logger?.Error(message, exc);
                     cmd.ResponseText = message;
                 }
             }
@@ -853,7 +873,7 @@ namespace JuvoProcess
                     catch (Exception exc)
                     {
                         var message = string.Format(InfoResx.ErrorExecCommand, module.Value.GetType().Name);
-                        this.Log?.Error(message, exc.InnerException ?? exc);
+                        this.Logger?.Error(message, exc.InnerException ?? exc);
                         cmd.ResponseText = message;
                     }
                 }
@@ -868,7 +888,7 @@ namespace JuvoProcess
 
         private async Task StartBots()
         {
-            this.Log?.Info(InfoResx.StartingBots);
+            this.Logger?.Info(InfoResx.StartingBots);
 
             var startTasks = new List<Task>();
 
@@ -916,7 +936,7 @@ namespace JuvoProcess
 
         private async Task StopBots(string quitMessage)
         {
-            this.Log?.Info(InfoResx.StoppingBots);
+            this.Logger?.Info(InfoResx.StoppingBots);
 
             var stopTasks = new List<Task>();
             foreach (var bot in this.bots)
@@ -936,7 +956,7 @@ namespace JuvoProcess
                 return;
             }
 
-            this.Log?.Info(InfoResx.StoppingWebServer);
+            this.Logger?.Info(InfoResx.StoppingWebServer);
             await this.webHost.StopAsync(this.webHostToken);
         }
 
