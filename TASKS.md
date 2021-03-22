@@ -25,6 +25,7 @@
 
 ## `JuvoProcess`
 * `JuvoClient`: Allow configurable option to summon the but with `bot-nick[ ,.:-] \<command\>`
+* `JuvoClient`: Implement assembly unloadability with custom AssemblyLoadContext (https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability)
 * `Program`: Accept command line arguments in the process to override behavior and config file
 * Add unit tests for everything we can
 
