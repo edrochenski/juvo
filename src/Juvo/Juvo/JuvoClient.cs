@@ -229,7 +229,8 @@ namespace JuvoProcess
 
             if (this.Config.WebServer != null && this.Config.WebServer.Enabled)
             {
-                await this.StartWebServer();
+                this.webServerThread = new Thread(this.StartWebServer) { Name = "WebServer" };
+                this.webServerThread.Start();
             }
             else
             {
