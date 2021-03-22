@@ -194,13 +194,6 @@ namespace JuvoProcess.Net.Irc
         /// <summary>
         /// Sends data to the server.
         /// </summary>
-        /// <param name="format">Format string.</param>
-        /// <param name="args">Args for format string.</param>
-        void Send(string format, params object[] args);
-
-        /// <summary>
-        /// Sends data to the server.
-        /// </summary>
         /// <param name="data">Data to send.</param>
         void Send(byte[] data);
 
@@ -208,8 +201,7 @@ namespace JuvoProcess.Net.Irc
         /// Send message to the server.
         /// </summary>
         /// <param name="to">Target of the message.</param>
-        /// <param name="format">Format string.</param>
-        /// <param name="args">Args for format string.</param>
-        void SendMessage(string to, string format, params object[] args);
+        /// <param name="message">Message to send.</param>
+        void SendMessage(string to, string message);
     }
 }

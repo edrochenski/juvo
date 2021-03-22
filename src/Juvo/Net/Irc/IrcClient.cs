@@ -283,12 +283,6 @@ namespace JuvoProcess.Net.Irc
         }
 
         /// <inheritdoc/>
-        public void Send(string format, params object[] args)
-        {
-            this.Send(Encoding.UTF8.GetBytes(string.Format(format, args)));
-        }
-
-        /// <inheritdoc/>
         public void Send(byte[] data)
         {
             this.Log(Debug, $"<< Sending {data.Length} bytes");
@@ -296,11 +290,9 @@ namespace JuvoProcess.Net.Irc
         }
 
         /// <inheritdoc/>
-        public void SendMessage(string to, string format, params object[] args)
+        public void SendMessage(string to, string message)
         {
-            var msg = string.Format(format, args);
-
-            foreach (var segment in this.GetMessageSegments(msg))
+            foreach (var segment in this.GetMessageSegments(message))
             {
                 this.Send($"PRIVMSG {to} :{segment}{CrLf}");
             }
