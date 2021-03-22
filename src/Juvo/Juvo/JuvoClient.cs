@@ -124,6 +124,10 @@ namespace JuvoProcess
             this.State = JuvoState.Idle;
             this.webServerRunning = false;
 
+            this.httpClient.DefaultRequestHeaders.Add(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.0 Safari/537.36 Edg/89.0.774.4");
+
             // this block maps the bots internal commands to the appropriate
             // internal methods.
             // ?: should these commands be overridable in some way, for example
@@ -259,6 +263,8 @@ namespace JuvoProcess
         /// <param name="state">State object.</param>
         protected async void CommandTimerTick(object? state)
         {
+            if (this.State != JuvoState.Running) { return; }
+
             if (this.commandQueue.Count > 0)
             {
                 var toRun = new List<IBotCommand>();
@@ -471,9 +477,16 @@ namespace JuvoProcess
                     return;
                 }
 
-                var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(binPath, $"{name}.dll"));
-                var ret = assembly.GetType($"jr{ts}.Program")?.GetMethod("Main")?.Invoke(null, null) as string;
-                command.ResponseText = $"> {(string.IsNullOrEmpty(ret) ? "(no output)" : ret)}";
+                try
+                {
+                    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(binPath, $"{name}.dll"));
+                    var ret = assembly.GetType($"jr{ts}.Program")?.GetMethod("Main")?.Invoke(null, null) as string;
+                    command.ResponseText = $"> {(string.IsNullOrEmpty(ret) ? "(no output)" : ret)}";
+                }
+                catch (Exception exc)
+                {
+                    command.ResponseText = $"! {exc.Message}";
+                }
             }
             catch (Exception exc)
             {
@@ -629,9 +642,10 @@ namespace JuvoProcess
             {
                 // HACK: This needs to go away, look into `dotnet --info, --version, --list-runtimes`
                 var assemblyFullPath = Path.Combine(assemblyPath, $"{name}.dll");
+                var debugFullPath = Path.Combine(assemblyPath, $"{name}.pdb");
                 var runtimeRef = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                    ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\5.0.2\"
-                    : @"/usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.2/";
+                    ? @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\5.0.3\"
+                    : @"/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.3/";
 
                 var compilation = CSharpCompilation.Create(name)
                     .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
@@ -641,16 +655,19 @@ namespace JuvoProcess
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Linq.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Net.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Net.Http.dll")),
+                        MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Net.Primitives.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Private.Uri.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Runtime.dll")),
                         MetadataReference.CreateFromFile(Path.Combine(runtimeRef, "System.Threading.Tasks.dll")),
                         MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
                         MetadataReference.CreateFromFile(typeof(AngleSharp.Configuration).GetTypeInfo().Assembly.Location),
+                        MetadataReference.CreateFromFile(typeof(AngleSharp.XPath.Extensions).GetTypeInfo().Assembly.Location),
                         MetadataReference.CreateFromFile(typeof(JsonConvert).GetTypeInfo().Assembly.Location),
+                        MetadataReference.CreateFromFile(typeof(LogLevel).GetTypeInfo().Assembly.Location),
                         MetadataReference.CreateFromFile(this.GetType().Assembly.Location))
                     .AddSyntaxTrees(CSharpSyntaxTree.ParseText(code));
 
-                return compilation.Emit(assemblyFullPath);
+                return compilation.Emit(assemblyFullPath, debugFullPath);
             }
             catch (FileNotFoundException exc)
             {

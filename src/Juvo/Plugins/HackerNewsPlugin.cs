@@ -7,14 +7,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using JuvoProcess;
 using JuvoProcess.Bots;
 using Newtonsoft.Json;
 
 /// <summary>
-/// Plugin example.
+/// Plugin that interacts with HackerNews.
 /// </summary>
 public class HackerNewsPlugin : IBotPlugin
 {
@@ -115,13 +114,13 @@ public class HackerNewsPlugin : IBotPlugin
                 if (itemResponse.IsSuccessStatusCode)
                 {
                     var hnItem = JsonConvert.DeserializeObject<HnItem>(await itemResponse.Content.ReadAsStringAsync());
-                    if (hnItem is HnItem)
+                    if (hnItem is HnItem && !hnItem.Dead && !hnItem.Deleted)
                     {
                         foreach (var sub in this.subscribers)
                         {
                             if (storySent > 0) { await Task.Delay(5000); } // TODO: make configurable
 
-                            var url = string.IsNullOrEmpty(hnItem.Url) ? string.Format(UrlItemWeb, storyId) : hnItem.Url;
+                            var url = string.Format(UrlItemWeb, storyId);
                             var resp = new BotCommand(sub.Bot, CommandTriggerType.Timer, sub.Source, string.Empty)
                             { ResponseText = $"[{hnItem.By}] {hnItem.Title} @ {url}" };
                             await juvo.QueueResponse(resp);
@@ -134,9 +133,9 @@ public class HackerNewsPlugin : IBotPlugin
                 this.maxItemId = storyId;
             }
         }
-        catch (Exception /* exc */)
+        catch (Exception exc)
         {
-            // juvo.Log?.Error("Failed to retrieve new stories.", exc);
+            juvo?.LogError("Exception occurred getting new stories", exc);
         }
     }
 }
