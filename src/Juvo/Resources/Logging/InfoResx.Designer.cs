@@ -97,6 +97,24 @@ namespace JuvoProcess.Resources.Logging {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Executing Built-In Command....
+        /// </summary>
+        public static string ExecutingBuiltinCommand {
+            get {
+                return ResourceManager.GetString("ExecutingBuiltinCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Executing Plugin ({0}) Command....
+        /// </summary>
+        public static string ExecutingPluginCommand {
+            get {
+                return ResourceManager.GetString("ExecutingPluginCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid command.
         /// </summary>
         public static string InvalidCommand {

@@ -853,6 +853,7 @@ namespace JuvoProcess
             {
                 try
                 {
+                    this.Logger?.Info(InfoResx.ExecutingBuiltinCommand);
                     await command.Value(cmd);
                 }
                 catch (Exception exc)
@@ -869,6 +870,7 @@ namespace JuvoProcess
                 {
                     try
                     {
+                        this.Logger?.Info(string.Format(InfoResx.ExecutingPluginCommand, module.Value.GetType().Name));
                         await module.Value.Execute(cmd, this);
                     }
                     catch (Exception exc)

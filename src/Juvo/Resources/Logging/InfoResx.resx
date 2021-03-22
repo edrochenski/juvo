@@ -129,6 +129,12 @@
   <data name="ErrorExecModule" xml:space="preserve">
     <value>Error executing module '{0}'</value>
   </data>
+  <data name="ExecutingBuiltinCommand" xml:space="preserve">
+    <value>Executing Built-In Command...</value>
+  </data>
+  <data name="ExecutingPluginCommand" xml:space="preserve">
+    <value>Executing Plugin ({0}) Command...</value>
+  </data>
   <data name="InvalidCommand" xml:space="preserve">
     <value>Invalid command</value>
   </data>
