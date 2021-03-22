@@ -130,6 +130,7 @@ namespace JuvoProcess
             // if a plugin/module wanted to handle one of these.
             this.commands = new Dictionary<string[], Func<IBotCommand, Task>>
             {
+                { new[] { "echo" }, this.CommandEcho },
                 { new[] { "shutdown", "die" }, this.CommandShutdown },
                 { new[] { "perf", "performance" }, this.CommandPerf },
                 { new[] { "csc", "ros", "roslyn" }, this.CommandRoslyn },
@@ -239,6 +240,17 @@ namespace JuvoProcess
 
             this.State = JuvoState.Running;
             this.Logger?.Info(InfoResx.BotRunning);
+        }
+
+        /// <summary>
+        /// Command for the bot to echo back the request.
+        /// </summary>
+        /// <param name="command">Bot command.</param>
+        /// <returns>A Task object associated with the async operation.</returns>
+        protected async Task CommandEcho(IBotCommand command)
+        {
+            command.ResponseText = command.RequestText.Replace(command.RequestText.Split(' ')[0], string.Empty);
+            await Task.CompletedTask;
         }
 
         /// <summary>
