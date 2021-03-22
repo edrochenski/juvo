@@ -74,6 +74,7 @@ namespace JuvoProcess
         private List<JuvoUser>? users;
         private IWebHost? webHost;
         private bool webServerRunning;
+        private Thread? webServerThread;
 
         /*/ Constructors /*/
 
@@ -919,18 +920,17 @@ namespace JuvoProcess
             await Task.WhenAll(startTasks);
         }
 
-        private async Task StartWebServer()
+        private void StartWebServer()
         {
-            Debug.Assert(this.webHost is null && !this.webServerRunning, "Start called on running web server");
-
-            this.Log?.Info(InfoResx.StartingWebServer);
             if (this.webServerRunning)
             {
                 return;
             }
 
+            this.Logger?.Info(InfoResx.StartingWebServer);
+
             this.webHost = this.BuildWebHost();
-            await this.webHost.RunAsync(this.webHostToken);
+            this.webHost.Run();
             this.webServerRunning = true;
         }
 
