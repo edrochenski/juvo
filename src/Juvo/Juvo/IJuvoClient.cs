@@ -41,6 +41,44 @@ namespace JuvoProcess
         void Log(LogLevel level, object message, Exception? exception = null);
 
         /// <summary>
+        /// Logs a critical message to all available log outputs.
+        /// </summary>
+        /// <param name="message">Message to write.</param>
+        /// <param name="exception">Exception to include.</param>
+        void LogCritical(object message, Exception? exception) => this.Log(LogLevel.Critical, message, exception);
+
+        /// <summary>
+        /// Logs a debug message to all available log outputs.
+        /// </summary>
+        /// <param name="message">Message to write.</param>
+        void LogDebug(object message) => this.Log(LogLevel.Debug, message);
+
+        /// <summary>
+        /// Logs an error to all available log outputs.
+        /// </summary>
+        /// <param name="message">Message to write.</param>
+        /// <param name="exception">Exception to include.</param>
+        void LogError(object message, Exception? exception) => this.Log(LogLevel.Error, message, exception);
+
+        /// <summary>
+        /// Logs an informational message to all available log outputs.
+        /// </summary>
+        /// <param name="message">Message to write.</param>
+        void LogInfo(object message) => this.Log(LogLevel.Information, message);
+
+        /// <summary>
+        /// Logs a trace message to all available log outputs.
+        /// </summary>
+        /// <param name="message">Message to write.</param>
+        void LogTrace(object message) => this.Log(LogLevel.Trace, message);
+
+        /// <summary>
+        /// Logs a warning to all available log outputs.
+        /// </summary>
+        /// <param name="message">Message to write.</param>
+        void LogWarn(object message) => this.Log(LogLevel.Warning, message);
+
+        /// <summary>
         /// Queues a command for the bot to execute.
         /// </summary>
         /// <param name="cmd">Command to execute.</param>
